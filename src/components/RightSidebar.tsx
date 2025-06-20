@@ -1,15 +1,17 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ExternalLink, X } from "lucide-react"
+import { ExternalLink, X, FileText } from "lucide-react"
 import { Service } from "./ServiceTable"
+import { cn } from "@/lib/utils"
 
 interface RightSidebarProps {
   service: Service | null
   onClose: () => void
+  collapsed: boolean
 }
 
-export function RightSidebar({ service, onClose }: RightSidebarProps) {
+export function RightSidebar({ service, onClose, collapsed }: RightSidebarProps) {
   if (!service) return null
 
   const getStatusColor = (status: Service['status']) => {
@@ -21,8 +23,16 @@ export function RightSidebar({ service, onClose }: RightSidebarProps) {
     }
   }
 
+  if (collapsed) {
+    return (
+      <div className="w-full bg-card border-l border-border p-4 flex flex-col items-center gap-4 overflow-hidden h-full">
+        <FileText className="h-6 w-6" />
+      </div>
+    )
+  }
+
   return (
-    <div className="w-80 bg-card border-l border-border p-6 overflow-auto">
+    <div className="w-full bg-card border-l border-border p-6 overflow-auto h-full">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Service Details</h3>
         <Button variant="ghost" size="sm" onClick={onClose}>

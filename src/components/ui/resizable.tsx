@@ -1,7 +1,8 @@
-import { GripVertical } from "lucide-react"
+import { GripVertical, ChevronLeft, ChevronRight } from "lucide-react"
 import * as ResizablePrimitive from "react-resizable-panels"
 
 import { cn } from "@/lib/utils"
+import { Button } from "./button"
 
 const ResizablePanelGroup = ({
   className,
@@ -20,10 +21,16 @@ const ResizablePanel = ResizablePrimitive.Panel
 
 const ResizableHandle = ({
   withHandle,
+  withArrow,
+  collapsed,
+  onCollapse,
   className,
   ...props
 }: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle> & {
   withHandle?: boolean
+  withArrow?: boolean
+  collapsed?: boolean
+  onCollapse?: () => void
 }) => (
   <ResizablePrimitive.PanelResizeHandle
     className={cn(
@@ -36,6 +43,16 @@ const ResizableHandle = ({
       <div className="z-10 flex h-4 w-3 items-center justify-center rounded-sm border bg-border">
         <GripVertical className="h-2.5 w-2.5" />
       </div>
+    )}
+    {withArrow && (
+       <Button
+        onClick={onCollapse}
+        variant="ghost"
+        size="icon"
+        className="z-10 absolute top-1/2 -translate-y-1/2 border bg-background hover:bg-muted rounded-full h-8 w-8"
+      >
+        {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+      </Button>
     )}
   </ResizablePrimitive.PanelResizeHandle>
 )
