@@ -45,6 +45,7 @@
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
+    "express": "^5.1.0",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
@@ -79,5 +80,18 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
-  }
+  },
+  "description": "**URL**: https://lovable.dev/projects/8bebf269-d17d-4f46-9613-8d36b81e885d",
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tamirg/service-peek-dashboard.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tamirg/service-peek-dashboard/issues"
+  },
+  "homepage": "https://github.com/tamirg/service-peek-dashboard#readme"
 }
