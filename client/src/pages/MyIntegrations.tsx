@@ -242,18 +242,25 @@ export function MyIntegrations() {
 
   const handleAddService = (integrationId: string, service: ServiceConfig) => {
     try {
+      let updatedSelectedIntegration: IntegrationInstance | null = null;
       const updatedIntegrations = integrationInstances.map(integration => {
         if (integration.id === integrationId) {
-          return {
+          const updatedIntegration = {
             ...integration,
             services: [...(integration.services || []), service]
           };
+          updatedSelectedIntegration = updatedIntegration;
+          return updatedIntegration;
         }
         return integration;
       });
 
       setIntegrationInstances(updatedIntegrations);
+      if (updatedSelectedIntegration) {
+        setSelectedIntegration(updatedSelectedIntegration);
+      }
       localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
+      setIsAddServiceDialogOpen(false);
     } catch (error) {
       console.error("Error adding service:", error);
       toast({
@@ -264,7 +271,7 @@ export function MyIntegrations() {
     }
   };
 
-  const handleServiceStatusChange = (integrationId: string, serviceId: string, newStatus: "running" | "stopped" | "error") => {
+  const handleServiceStatusChange = (integrationId: string, serviceId: string, newStatus: "running" | "stopped" | "error" | "unknown") => {
     try {
       const updatedIntegrations = integrationInstances.map(integration => {
         if (integration.id === integrationId && integration.services) {
@@ -362,12 +369,15 @@ export function MyIntegrations() {
                   className="flex flex-col cursor-pointer transition-all hover:shadow-md"
                   onClick={() => handleRowClick(integration)}
                 >
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-primary/10 dark:bg-primary/20 text-primary p-2 rounded-lg flex-shrink-0">
                         {getIntegrationIcon(integration.type)}
                       </div>
-                      <CardTitle className="text-lg font-semibold">{integration.name}</CardTitle>
+                      <div>
+                        <CardTitle className="text-lg font-semibold leading-snug">{integration.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{getIntegrationTypeName(integration.type)}</p>
+                      </div>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -381,6 +391,15 @@ export function MyIntegrations() {
                             <RefreshCw className="mr-2 h-4 w-4" />
                             Refresh
                           </DropdownMenuItem>
+                          {integration.type === 'server' && (
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedServerForService(integration);
+                              setIsAddServiceDialogOpen(true);
+                            }}>
+                              <ListPlus className="mr-2 h-4 w-4" />
+                              Add Service
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedIntegration(integration);
@@ -395,8 +414,7 @@ export function MyIntegrations() {
                       </DropdownMenuPortal>
                     </DropdownMenu>
                   </CardHeader>
-                  <CardContent className="flex-grow">
-                     <p className="text-sm text-muted-foreground pl-14 -mt-2 mb-4">{getIntegrationTypeName(integration.type)}</p>
+                  <CardContent className="flex-grow pt-2">
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                       {Object.entries(integration.details).map(([key, value]) => (
                         <div key={key}>
@@ -440,6 +458,17 @@ export function MyIntegrations() {
         integration={selectedIntegration}
         onClose={() => setSelectedIntegration(null)}
       />
+
+      {/* Add Service Dialog */}
+      {selectedServerForService && (
+        <AddServiceDialog
+          serverId={selectedServerForService.id}
+          serverName={selectedServerForService.name}
+          open={isAddServiceDialogOpen}
+          onClose={() => setIsAddServiceDialogOpen(false)}
+          onServiceAdded={(service) => handleAddService(selectedServerForService.id, service)}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
