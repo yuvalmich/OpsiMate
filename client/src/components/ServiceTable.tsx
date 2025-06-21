@@ -2,6 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Settings, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useMemo } from "react"
@@ -22,7 +23,9 @@ export interface Service {
 interface ServiceTableProps {
   services: Service[]
   selectedService: Service | null
+  selectedServices: Service[]
   onServiceSelect: (service: Service) => void
+  onServicesSelect: (services: Service[]) => void
   onSettingsClick: () => void
   visibleColumns: Record<string, boolean>
 }
@@ -30,7 +33,9 @@ interface ServiceTableProps {
 export function ServiceTable({ 
   services, 
   selectedService, 
+  selectedServices,
   onServiceSelect, 
+  onServicesSelect,
   onSettingsClick,
   visibleColumns 
 }: ServiceTableProps) {
@@ -70,8 +75,8 @@ export function ServiceTable({
   }
 
   return (
-    <div className="flex-1 bg-card border border-border rounded-lg">
-      <div className="p-4 border-b border-border space-y-4">
+    <div className="flex-1 flex flex-col bg-card border border-border rounded-lg overflow-hidden">
+      <div className="p-4 border-b border-border space-y-4 flex-shrink-0">
         {/* Header with title and settings */}
         <div className="flex items-center justify-between">
           <div>
@@ -85,7 +90,7 @@ export function ServiceTable({
             variant="outline" 
             size="icon" 
             onClick={onSettingsClick}
-            className="h-8 w-8"
+            className="h-9 w-9 rounded-md"
           >
             <Settings className="h-4 w-4" />
             <span className="sr-only">Table Settings</span>
@@ -96,10 +101,10 @@ export function ServiceTable({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by OS, server ID, service name, status, IP, port, uptime, memory, or CPU..."
+            placeholder="Search services..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-10"
+            className="pl-10 pr-10 h-9 focus-visible:ring-1"
           />
           {searchTerm && (
             <Button
@@ -114,25 +119,38 @@ export function ServiceTable({
         </div>
       </div>
       
-      <div className="overflow-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {visibleColumns.os && <TableHead>OS</TableHead>}
-              {visibleColumns.serverId && <TableHead>Server ID</TableHead>}
-              {visibleColumns.serviceName && <TableHead>Service Name</TableHead>}
-              {visibleColumns.status && <TableHead>Status</TableHead>}
-              {visibleColumns.ipAddress && <TableHead>IP Address</TableHead>}
-              {visibleColumns.port && <TableHead>Port</TableHead>}
-              {visibleColumns.uptime && <TableHead>Uptime</TableHead>}
-              {visibleColumns.memory && <TableHead>Memory</TableHead>}
-              {visibleColumns.cpu && <TableHead>CPU</TableHead>}
+      <div className="overflow-auto flex-grow relative">
+        <Table className="relative">
+          <TableHeader className="sticky top-0 bg-card z-10">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-10">
+                <Checkbox 
+                  checked={filteredServices.length > 0 && selectedServices.length === filteredServices.length}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      onServicesSelect(filteredServices);
+                    } else {
+                      onServicesSelect([]);
+                    }
+                  }}
+                  aria-label="Select all services"
+                />
+              </TableHead>
+              {visibleColumns.os && <TableHead className="font-medium">OS</TableHead>}
+              {visibleColumns.serverId && <TableHead className="font-medium">Server ID</TableHead>}
+              {visibleColumns.serviceName && <TableHead className="font-medium">Service Name</TableHead>}
+              {visibleColumns.status && <TableHead className="font-medium">Status</TableHead>}
+              {visibleColumns.ipAddress && <TableHead className="font-medium">IP Address</TableHead>}
+              {visibleColumns.port && <TableHead className="font-medium">Port</TableHead>}
+              {visibleColumns.uptime && <TableHead className="font-medium">Uptime</TableHead>}
+              {visibleColumns.memory && <TableHead className="font-medium">Memory</TableHead>}
+              {visibleColumns.cpu && <TableHead className="font-medium">CPU</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredServices.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length} className="text-center py-8">
+                <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="text-center py-12 h-[200px]">
                   <div className="text-muted-foreground">
                     {searchTerm ? `No services found matching "${searchTerm}"` : "No services available"}
                   </div>
@@ -143,26 +161,39 @@ export function ServiceTable({
                 <TableRow 
                   key={service.id}
                   className={cn(
-                    "cursor-pointer hover:bg-muted/50 transition-colors",
+                    "hover:bg-muted/50 transition-colors",
                     selectedService?.id === service.id && "bg-muted"
                   )}
-                  onClick={() => onServiceSelect(service)}
                 >
-                  {visibleColumns.os && <TableCell className="font-medium">{service.os}</TableCell>}
-                  {visibleColumns.serverId && <TableCell>{service.serverId}</TableCell>}
-                  {visibleColumns.serviceName && <TableCell>{service.serviceName}</TableCell>}
+                  <TableCell className="w-10">
+                    <Checkbox 
+                      checked={selectedServices.some(s => s.id === service.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          onServicesSelect([...selectedServices, service]);
+                        } else {
+                          onServicesSelect(selectedServices.filter(s => s.id !== service.id));
+                        }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Select ${service.serviceName}`}
+                    />
+                  </TableCell>
+                  {visibleColumns.os && <TableCell className="font-medium" onClick={() => onServiceSelect(service)}>{service.os}</TableCell>}
+                  {visibleColumns.serverId && <TableCell onClick={() => onServiceSelect(service)}>{service.serverId}</TableCell>}
+                  {visibleColumns.serviceName && <TableCell onClick={() => onServiceSelect(service)}>{service.serviceName}</TableCell>}
                   {visibleColumns.status && (
-                    <TableCell>
-                      <Badge className={getStatusColor(service.status)}>
+                    <TableCell onClick={() => onServiceSelect(service)}>
+                      <Badge className={cn(getStatusColor(service.status), "font-medium")}>
                         {service.status}
                       </Badge>
                     </TableCell>
                   )}
-                  {visibleColumns.ipAddress && <TableCell>{service.ipAddress}</TableCell>}
-                  {visibleColumns.port && <TableCell>{service.port || '-'}</TableCell>}
-                  {visibleColumns.uptime && <TableCell>{service.uptime || '-'}</TableCell>}
-                  {visibleColumns.memory && <TableCell>{service.memory || '-'}</TableCell>}
-                  {visibleColumns.cpu && <TableCell>{service.cpu || '-'}</TableCell>}
+                  {visibleColumns.ipAddress && <TableCell className="font-mono text-xs" onClick={() => onServiceSelect(service)}>{service.ipAddress}</TableCell>}
+                  {visibleColumns.port && <TableCell onClick={() => onServiceSelect(service)}>{service.port || '-'}</TableCell>}
+                  {visibleColumns.uptime && <TableCell onClick={() => onServiceSelect(service)}>{service.uptime || '-'}</TableCell>}
+                  {visibleColumns.memory && <TableCell onClick={() => onServiceSelect(service)}>{service.memory || '-'}</TableCell>}
+                  {visibleColumns.cpu && <TableCell onClick={() => onServiceSelect(service)}>{service.cpu || '-'}</TableCell>}
                 </TableRow>
               ))
             )}
