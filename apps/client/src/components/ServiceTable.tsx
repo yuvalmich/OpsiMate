@@ -26,6 +26,8 @@ interface ServiceTableProps {
   onServicesSelect: (services: Service[]) => void
   onSettingsClick: () => void
   visibleColumns: Record<string, boolean>
+  searchTerm?: string
+  onSearchChange?: (searchTerm: string) => void
 }
 
 export function ServiceTable({ 
@@ -33,9 +35,12 @@ export function ServiceTable({
   selectedServices,
   onServicesSelect,
   onSettingsClick,
-  visibleColumns 
+  visibleColumns,
+  searchTerm: externalSearchTerm,
+  onSearchChange
 }: ServiceTableProps) {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [internalSearchTerm, setInternalSearchTerm] = useState("")
+  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm
 
   const getStatusColor = (status: Service['status']) => {
     switch (status) {
@@ -67,7 +72,11 @@ export function ServiceTable({
   }, [services, searchTerm])
 
   const clearSearch = () => {
-    setSearchTerm("")
+    if (onSearchChange) {
+      onSearchChange("");
+    } else {
+      setInternalSearchTerm("");
+    }
   }
 
   const handleRowClick = (service: Service) => {
@@ -103,7 +112,14 @@ export function ServiceTable({
           <Input
             placeholder="Search services..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              if (onSearchChange) {
+                onSearchChange(newValue);
+              } else {
+                setInternalSearchTerm(newValue);
+              }
+            }}
             className="pl-10 pr-10 h-9"
           />
           {searchTerm && (

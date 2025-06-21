@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { ServiceTable, Service } from "@/components/ServiceTable"
 import { RightSidebar } from "@/components/RightSidebar"
@@ -6,7 +6,10 @@ import { ActionButtons } from "@/components/ActionButtons"
 import { TableSettingsModal } from "@/components/TableSettingsModal"
 import { AddServiceModal } from "@/components/AddServiceModal"
 import { FilterPanel, Filters } from "@/components/FilterPanel"
+import { SavedViewsManager } from "@/components/SavedViewsManager"
 import { DashboardLayout } from "../components/DashboardLayout"
+import { SavedView } from "@/types/SavedView"
+import { getSavedViews, saveView, deleteView, getActiveViewId, setActiveViewId } from "@/lib/savedViews"
 import type { ImperativePanelHandle as PanelRef } from "react-resizable-panels"
 
 // Mock data
@@ -82,6 +85,24 @@ const Index = () => {
   const [filters, setFilters] = useState<Filters>({})
   const [filterPanelCollapsed, setFilterPanelCollapsed] = useState(false)
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [savedViews, setSavedViews] = useState<SavedView[]>([])
+  const [activeViewId, setActiveViewId] = useState<string | undefined>()
+
+  // Load saved views and active view on component mount
+  useEffect(() => {
+    const views = getSavedViews();
+    setSavedViews(views);
+    
+    const activeId = getActiveViewId();
+    if (activeId) {
+      setActiveViewId(activeId);
+      const activeView = views.find(view => view.id === activeId);
+      if (activeView) {
+        applyView(activeView);
+      }
+    }
+  }, []);
 
   const filteredServices = useMemo(() => {
     const activeFilterKeys = Object.keys(filters).filter(key => filters[key].length > 0);
@@ -103,6 +124,42 @@ const Index = () => {
 
   const toggleFilterPanel = () => {
     setFilterPanelCollapsed(!filterPanelCollapsed)
+  }
+
+  const handleSaveView = (view: SavedView) => {
+    saveView(view);
+    setSavedViews(getSavedViews());
+    setActiveViewId(view.id);
+  }
+
+  const handleDeleteView = (viewId: string) => {
+    deleteView(viewId);
+    setSavedViews(getSavedViews());
+    
+    if (activeViewId === viewId) {
+      setActiveViewId(undefined);
+    }
+
+    toast({
+      title: "View Deleted",
+      description: "The saved view has been deleted."
+    });
+  }
+
+  const applyView = (view: SavedView) => {
+    setFilters(view.filters);
+    // Ensure visibleColumns has all required properties
+    setVisibleColumns(prev => ({
+      ...prev,
+      ...view.visibleColumns
+    }));
+    setSearchTerm(view.searchTerm);
+    setActiveViewId(view.id);
+    
+    toast({
+      title: "View Applied",
+      description: `"${view.name}" view has been applied.`
+    });
   }
 
   const handleShowServices = () => {
@@ -197,12 +254,26 @@ const Index = () => {
             </div>
             <div className="flex-1 flex flex-col">
               <div className="flex-1 p-4 overflow-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <SavedViewsManager
+                    currentFilters={filters}
+                    currentVisibleColumns={visibleColumns}
+                    currentSearchTerm={searchTerm}
+                    savedViews={savedViews}
+                    onSaveView={handleSaveView}
+                    onDeleteView={handleDeleteView}
+                    onLoadView={applyView}
+                    activeViewId={activeViewId}
+                  />
+                </div>
                 <ServiceTable
                   services={filteredServices}
                   selectedServices={selectedServices}
                   onServicesSelect={handleServicesSelect}
                   onSettingsClick={() => setShowTableSettings(true)}
                   visibleColumns={visibleColumns}
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
                 />
               </div>
               <div className="flex-shrink-0 p-4 border-t border-border">
