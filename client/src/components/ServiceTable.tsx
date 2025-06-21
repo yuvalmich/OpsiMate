@@ -22,9 +22,7 @@ export interface Service {
 
 interface ServiceTableProps {
   services: Service[]
-  selectedService: Service | null
   selectedServices: Service[]
-  onServiceSelect: (service: Service) => void
   onServicesSelect: (services: Service[]) => void
   onSettingsClick: () => void
   visibleColumns: Record<string, boolean>
@@ -32,9 +30,7 @@ interface ServiceTableProps {
 
 export function ServiceTable({ 
   services, 
-  selectedService, 
   selectedServices,
-  onServiceSelect, 
   onServicesSelect,
   onSettingsClick,
   visibleColumns 
@@ -75,14 +71,7 @@ export function ServiceTable({
   }
 
   const handleRowClick = (service: Service) => {
-    onServiceSelect(service);
-
-    const isSelected = selectedServices.some(s => s.id === service.id);
-    if (isSelected) {
-      onServicesSelect(selectedServices.filter(s => s.id !== service.id));
-    } else {
-      onServicesSelect([...selectedServices, service]);
-    }
+    onServicesSelect([service]);
   };
 
   return (
@@ -177,7 +166,7 @@ export function ServiceTable({
                   )}
                   onClick={() => handleRowClick(service)}
                 >
-                  <TableCell className="w-10">
+                  <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                     <Checkbox 
                       checked={selectedServices.some(s => s.id === service.id)}
                       onCheckedChange={(checked) => {
@@ -194,7 +183,7 @@ export function ServiceTable({
                   {visibleColumns.serverId && <TableCell>{service.serverId}</TableCell>}
                   {visibleColumns.serviceName && <TableCell>{service.serviceName}</TableCell>}
                   {visibleColumns.status && (
-                    <TableCell>
+                    <TableCell className="text-center">
                       <Badge className={cn(getStatusColor(service.status), "font-medium")}>
                         {service.status}
                       </Badge>

@@ -80,7 +80,7 @@ export function FilterPanel({ services, filters, onFilterChange, collapsed }: Fi
                         />
                         {value}
                       </label>
-                      <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{count}</span>
+                      <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground">{count}</span>
                     </div>
                   ))}
                 </div>

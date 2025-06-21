@@ -44,7 +44,10 @@ export function RightSidebar({ service, onClose, collapsed }: RightSidebarProps)
 
       <div className="flex-grow overflow-auto pr-2 -mr-2 space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="font-medium text-foreground text-base">{service.serviceName}</h4>
+          <div>
+            <div className="text-muted-foreground text-xs">Name</div>
+            <h4 className="font-medium text-foreground text-base">{service.serviceName}</h4>
+          </div>
           <Badge className={cn(getStatusColor(service.status), "text-xs py-0.5 px-2 flex-shrink-0")}>
             {service.status}
           </Badge>
@@ -53,34 +56,34 @@ export function RightSidebar({ service, onClose, collapsed }: RightSidebarProps)
         <Separator />
 
         <div>
-          <div className="grid grid-cols-3 gap-x-4 gap-y-3 text-xs">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-4">
             <div>
               <div className="text-muted-foreground">Server ID</div>
-              <div className="font-medium text-foreground">{service.serverId}</div>
+              <div className="font-medium text-foreground text-sm">{service.serverId}</div>
             </div>
             <div>
               <div className="text-muted-foreground">OS</div>
-              <div className="font-medium text-foreground">{service.os}</div>
+              <div className="font-medium text-foreground text-sm">{service.os}</div>
             </div>
             <div>
               <div className="text-muted-foreground">IP Address</div>
-              <div className="font-medium text-foreground font-mono text-[11px]">{service.ipAddress}</div>
+              <div className="font-medium text-foreground font-mono text-sm">{service.ipAddress}</div>
             </div>
             <div>
               <div className="text-muted-foreground">Port</div>
-              <div className="font-medium text-foreground">{service.port || '-'}</div>
+              <div className="font-medium text-foreground text-sm">{service.port || '-'}</div>
             </div>
             <div>
               <div className="text-muted-foreground">Uptime</div>
-              <div className="font-medium text-foreground">{service.uptime || '-'}</div>
+              <div className="font-medium text-foreground text-sm">{service.uptime || '-'}</div>
             </div>
             <div>
               <div className="text-muted-foreground">Memory</div>
-              <div className="font-medium text-foreground">{service.memory || '-'}</div>
+              <div className="font-medium text-foreground text-sm">{service.memory || '-'}</div>
             </div>
             <div>
               <div className="text-muted-foreground">CPU</div>
-              <div className="font-medium text-foreground">{service.cpu || '-'}</div>
+              <div className="font-medium text-foreground text-sm">{service.cpu || '-'}</div>
             </div>
           </div>
         </div>
@@ -90,16 +93,18 @@ export function RightSidebar({ service, onClose, collapsed }: RightSidebarProps)
         <Separator />
         <div className="space-y-2 pt-4">
           <h4 className="font-medium text-foreground text-xs">External Links</h4>
-          <div className="space-y-1">
-            <Button variant="outline" size="sm" className="w-full justify-start gap-2 h-7 text-xs px-2">
-              <GrafanaIcon className="h-3 w-3" />
-              View in Grafana
-            </Button>
-            <Button variant="outline" size="sm" className="w-full justify-start gap-2 h-7 text-xs px-2">
-              <CoralogixIcon className="h-3 w-3" />
-              View in Coralogix
-            </Button>
-            <Button variant="outline" size="sm" className="w-full justify-start gap-2 h-7 text-xs px-2">
+          <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" className="justify-start gap-2 h-7 text-xs px-2">
+                <GrafanaIcon className="h-3 w-3" />
+                View in Grafana
+              </Button>
+              <Button variant="outline" size="sm" className="justify-start gap-2 h-7 text-xs px-2">
+                <CoralogixIcon className="h-3 w-3" />
+                View in Coralogix
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" className="w-full justify-center gap-2 h-7 text-xs px-2">
               <AreaChart className="h-3 w-3" />
               Server Monitoring
             </Button>

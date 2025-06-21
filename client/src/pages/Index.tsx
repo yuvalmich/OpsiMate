@@ -120,15 +120,12 @@ const Index = () => {
     })
   }
 
-  const handleServiceSelect = (service: Service) => {
-    setSelectedService(service)
-  }
-
   const handleServicesSelect = (services: Service[]) => {
     setSelectedServices(services)
-    // If a single service is selected, also set it as the selectedService for the details panel
     if (services.length === 1) {
       setSelectedService(services[0])
+    } else {
+      setSelectedService(null)
     }
   }
 
@@ -202,9 +199,7 @@ const Index = () => {
               <div className="flex-1 p-4 overflow-auto">
                 <ServiceTable
                   services={filteredServices}
-                  selectedService={selectedService}
                   selectedServices={selectedServices}
-                  onServiceSelect={handleServiceSelect}
                   onServicesSelect={handleServicesSelect}
                   onSettingsClick={() => setShowTableSettings(true)}
                   visibleColumns={visibleColumns}
@@ -221,7 +216,7 @@ const Index = () => {
                 />
               </div>
             </div>
-            {selectedService && (
+            {selectedServices.length === 1 && selectedService && (
               <div className="w-80 border-l border-border">
                 <RightSidebar
                   service={selectedService}

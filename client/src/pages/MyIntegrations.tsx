@@ -376,7 +376,7 @@ export function MyIntegrations() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuPortal>
-                        <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                           <DropdownMenuItem onClick={() => handleRefreshIntegration(integration.id)}>
                             <RefreshCw className="mr-2 h-4 w-4" />
                             Refresh
