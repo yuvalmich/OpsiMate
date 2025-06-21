@@ -163,23 +163,25 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
           </TabsList>
           
           <TabsContent value="manual" className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="service-name">Service Name</Label>
-              <Input 
-                id="service-name" 
-                placeholder="e.g., nginx, postgres, redis" 
-                value={serviceName}
-                onChange={(e) => setServiceName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="service-port">Port (optional)</Label>
-              <Input 
-                id="service-port" 
-                placeholder="e.g., 80, 5432, 6379" 
-                value={servicePort}
-                onChange={(e) => setServicePort(e.target.value.replace(/[^0-9]/g, ''))}
-              />
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="service-name">Service Name</Label>
+                <Input 
+                  id="service-name" 
+                  placeholder="e.g., nginx, postgres, redis" 
+                  value={serviceName}
+                  onChange={(e) => setServiceName(e.target.value)}
+                />
+              </div>
+              <div className="col-span-1 space-y-2">
+                <Label htmlFor="service-port">Port (optional)</Label>
+                <Input 
+                  id="service-port" 
+                  placeholder="e.g., 80" 
+                  value={servicePort}
+                  onChange={(e) => setServicePort(e.target.value.replace(/[^0-9]/g, ''))}
+                />
+              </div>
             </div>
           </TabsContent>
           
