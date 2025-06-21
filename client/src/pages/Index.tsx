@@ -72,6 +72,7 @@ const Index = () => {
   const { toast } = useToast()
   const [services, setServices] = useState<Service[]>(mockServices)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [selectedServices, setSelectedServices] = useState<Service[]>([])
   const [showTableSettings, setShowTableSettings] = useState(false)
   const [showAddService, setShowAddService] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState({
@@ -154,6 +155,14 @@ const Index = () => {
     setSelectedService(service)
   }
 
+  const handleServicesSelect = (services: Service[]) => {
+    setSelectedServices(services)
+    // If a single service is selected, also set it as the selectedService for the details panel
+    if (services.length === 1) {
+      setSelectedService(services[0])
+    }
+  }
+
   const handleColumnToggle = (column: string) => {
     setVisibleColumns(prev => ({
       ...prev,
@@ -162,71 +171,85 @@ const Index = () => {
   }
 
   const handleStart = () => {
-    if (selectedService) {
+    if (selectedServices.length > 0) {
       toast({
-        title: "Starting Service",
-        description: `Starting ${selectedService.serviceName}...`
+        title: "Starting Services",
+        description: `Starting ${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''}...`
       })
+      // Here you would call your API to start the selected services
     }
   }
 
   const handleStop = () => {
-    if (selectedService) {
+    if (selectedServices.length > 0) {
       toast({
-        title: "Stopping Service", 
-        description: `Stopping ${selectedService.serviceName}...`
+        title: "Stopping Services",
+        description: `Stopping ${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''}...`
       })
+      // Here you would call your API to stop the selected services
     }
   }
 
   const handleRestart = () => {
-    if (selectedService) {
+    if (selectedServices.length > 0) {
       toast({
-        title: "Restarting Service",
-        description: `Restarting ${selectedService.serviceName}...`
+        title: "Restarting Services",
+        description: `Restarting ${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''}...`
       })
+      // Here you would call your API to restart the selected services
     }
   }
 
   const handleOpenSSH = () => {
-    if (selectedService) {
+    if (selectedServices.length === 1) {
       toast({
         title: "Opening SSH Terminal",
-        description: `Connecting to ${selectedService.serverId}...`
+        description: `Connecting to ${selectedServices[0].serverId}...`
+      })
+      // Here you would call your API to open SSH connection
+    } else if (selectedServices.length > 1) {
+      toast({
+        title: "SSH Connection Error",
+        description: "SSH can only be opened for a single service at a time",
+        variant: "destructive"
       })
     }
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card">
+      <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card shadow-sm">
         <button
-          className="p-2 rounded-md border border-border bg-background"
+          className="p-2 rounded-md border border-border bg-background hover:bg-muted transition-colors"
           onClick={() => setMobileSidebarOpen(true)}
           aria-label="Open sidebar"
         >
-          <Menu className="h-6 w-6" />
+          <Menu className="h-5 w-5" />
         </button>
-        <span className="font-semibold text-lg">Service Manager</span>
-        <div />
+        <span className="font-semibold text-lg">Service Peek Dashboard</span>
+        <div className="w-9" /> {/* Empty div for balance */}
       </div>
 
       {/* Mobile Sidebar (Overlay) */}
-      <div className={
-        `md:hidden ${mobileSidebarOpen ? 'block fixed inset-0 z-40 bg-black/40' : 'hidden'}`
-      }>
-        <div className={`fixed left-0 top-0 h-full z-50 bg-card w-64`}>
+      <div 
+        className={`md:hidden fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 ${mobileSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setMobileSidebarOpen(false)}
+      >
+        <div 
+          className={`fixed left-0 top-0 h-full z-50 bg-card w-72 shadow-xl transition-transform duration-200 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          onClick={e => e.stopPropagation()}
+        >
           <LeftSidebar
             onShowServices={handleShowServices}
             onAddService={() => setShowAddService(true)}
             collapsed={false}
           />
           <button
-            className="absolute top-4 right-4 p-2 rounded-md border border-border bg-background"
+            className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted transition-colors"
             onClick={() => setMobileSidebarOpen(false)}
             aria-label="Close sidebar"
           >
-            <span className="text-xl">×</span>
+            <span className="text-xl font-medium">×</span>
           </button>
         </div>
       </div>
@@ -258,9 +281,10 @@ const Index = () => {
           collapsible
           collapsedSize={4}
           minSize={15}
-          defaultSize={20}
+          defaultSize={15}
           onCollapse={() => setFilterPanelCollapsed(true)}
           onExpand={() => setFilterPanelCollapsed(false)}
+          className="p-0"
         >
           <FilterPanel
             services={services}
@@ -271,51 +295,49 @@ const Index = () => {
         </ResizablePanel>
         <ResizableHandle withArrow onCollapse={toggleFilterPanel} collapsed={filterPanelCollapsed} />
 
-        {/* Main content with Right Sidebar */}
-        <ResizablePanel defaultSize={65}>
-            <div className="flex flex-1 h-full">
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="flex-1 p-2 sm:p-4 md:p-6 overflow-auto">
-                        <ServiceTable
-                            services={filteredServices}
-                            selectedService={selectedService}
-                            onServiceSelect={handleServiceSelect}
-                            onSettingsClick={() => setShowTableSettings(true)}
-                            visibleColumns={visibleColumns}
-                        />
-                    </div>
-                     <ActionButtons
-                        selectedService={selectedService}
-                        onStart={handleStart}
-                        onStop={handleStop}
-                        onRestart={handleRestart}
-                        onOpenSSH={handleOpenSSH}
-                    />
-                </div>
-
-                {selectedService && (
-                <>
-                    <Separator orientation="vertical" />
-                    <ResizablePanel
-                        ref={rightSidebarRef}
-                        collapsible
-                        collapsedSize={4}
-                        minSize={15}
-                        defaultSize={25}
-                        onCollapse={() => setRightSidebarCollapsed(true)}
-                        onExpand={() => setRightSidebarCollapsed(false)}
-                        className="h-full"
-                        >
-                        <RightSidebar
-                            service={selectedService}
-                            onClose={() => setSelectedService(null)}
-                            collapsed={rightSidebarCollapsed}
-                        />
-                    </ResizablePanel>
-                </>
-                )}
+        {/* Main content */}
+        <ResizablePanel defaultSize={65} className="flex flex-col overflow-hidden">
+            <div className="flex-1 p-3 overflow-hidden">
+                <ServiceTable
+                    services={filteredServices}
+                    selectedService={selectedService}
+                    selectedServices={selectedServices}
+                    onServiceSelect={handleServiceSelect}
+                    onServicesSelect={handleServicesSelect}
+                    onSettingsClick={() => setShowTableSettings(true)}
+                    visibleColumns={visibleColumns}
+                />
             </div>
+            <ActionButtons
+                selectedService={selectedService}
+                selectedServices={selectedServices}
+                onStart={handleStart}
+                onStop={handleStop}
+                onRestart={handleRestart}
+                onOpenSSH={handleOpenSSH}
+            />
         </ResizablePanel>
+        
+        {/* Right Sidebar - Only shown when a service is selected */}
+        {selectedService && (
+            <ResizablePanel
+                ref={rightSidebarRef}
+                collapsible
+                collapsedSize={4}
+                minSize={10}
+                maxSize={15}
+                defaultSize={12}
+                onCollapse={() => setRightSidebarCollapsed(true)}
+                onExpand={() => setRightSidebarCollapsed(false)}
+                className="p-0"
+            >
+                <RightSidebar
+                    service={selectedService}
+                    onClose={() => setSelectedService(null)}
+                    collapsed={rightSidebarCollapsed}
+                />
+            </ResizablePanel>
+        )}
       </ResizablePanelGroup>
 
       <TableSettingsModal
