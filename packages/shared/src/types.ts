@@ -3,7 +3,7 @@ export interface Provider {
   provider_name: string;
   provider_ip: string;
   username: string;
-  public_key: string;
+  private_key_filename: string;
   ssh_port: number;
   created_at: string;
 }
