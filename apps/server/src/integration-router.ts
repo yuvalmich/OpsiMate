@@ -2,12 +2,22 @@ import express from 'express';
 import sqlite3 from 'sqlite3';
 import {NodeSSH} from 'node-ssh';
 import {z} from 'zod';
-import {CreateProviderSchema, BulkServiceSchema} from '@service-peek/shared';
+import {CreateProviderSchema, BulkServiceSchema, Provider} from '@service-peek/shared';
+import path from 'path';
+import fs from 'fs';
 
 const router = express.Router();
 
 // Database setup
 const db = new sqlite3.Database('./service_peek.db');
+
+// Private keys directory
+const PRIVATE_KEYS_DIR = path.join(__dirname, '../data/private-keys');
+
+// Ensure private keys directory exists
+if (!fs.existsSync(PRIVATE_KEYS_DIR)) {
+    fs.mkdirSync(PRIVATE_KEYS_DIR, { recursive: true });
+}
 
 // Initialize database tables
 db.serialize(() => {
@@ -32,7 +42,7 @@ db.serialize(() => {
             TEXT
             NOT
             NULL,
-            public_key
+            private_key_filename
             TEXT
             NOT
             NULL,
@@ -87,11 +97,11 @@ db.serialize(() => {
 });
 
 // Helper function to get provider by ID
-const getProviderById = (id: number): Promise<any> => {
+const getProviderById = (id: number): Promise<Provider | null> => {
     return new Promise((resolve, reject) => {
         db.get('SELECT * FROM providers WHERE id = ?', [id], (err, row) => {
             if (err) reject(err);
-            else resolve(row);
+            else resolve(row as Provider | null);
         });
     });
 };
@@ -105,8 +115,8 @@ router.post('/providers', async (req: express.Request, res: express.Response) =>
         // Insert provider into database
         const result = await new Promise<{ lastID: number }>((resolve, reject) => {
             db.run(
-                'INSERT INTO providers (provider_name, provider_ip, username, public_key, ssh_port) VALUES (?, ?, ?, ?, ?)',
-                [validatedData.provider_name, validatedData.provider_ip, validatedData.username, validatedData.public_key, validatedData.ssh_port],
+                'INSERT INTO providers (provider_name, provider_ip, username, private_key_filename, ssh_port) VALUES (?, ?, ?, ?, ?)',
+                [validatedData.provider_name, validatedData.provider_ip, validatedData.username, validatedData.private_key_filename, validatedData.ssh_port],
                 function (err) {
                     if (err) reject(err);
                     else resolve({lastID: this.lastID});
@@ -115,10 +125,10 @@ router.post('/providers', async (req: express.Request, res: express.Response) =>
         });
 
         // Get the created provider
-        const provider = await new Promise<any>((resolve, reject) => {
+        const provider = await new Promise<Provider>((resolve, reject) => {
             db.get('SELECT * FROM providers WHERE id = ?', [result.lastID], (err, row) => {
                 if (err) reject(err);
-                else resolve(row);
+                else resolve(row as Provider);
             });
         });
 
@@ -167,12 +177,23 @@ router.get('/providers/:providerId/instance', async (req: express.Request, res: 
         // Connect via SSH and get running services
         const ssh = new NodeSSH();
 
-        // todo: fix private key
+        // Construct the full path to the private key file
+        const privateKeyPath = path.join(PRIVATE_KEYS_DIR, provider.private_key_filename);
+
+        // Check if private key file exists
+        if (!fs.existsSync(privateKeyPath)) {
+            return res.status(500).json({
+                success: false,
+                error: 'Private key file not found',
+                details: `Private key file '${provider.private_key_filename}' not found in ${PRIVATE_KEYS_DIR}`
+            });
+        }
+
         try {
             await ssh.connect({
                 host: provider.provider_ip,
                 username: provider.username,
-                privateKey: provider.public_key,
+                privateKey: privateKeyPath,
                 port: provider.ssh_port,
             });
 
@@ -293,10 +314,10 @@ router.post('/providers/:providerId/instance/bulk', async (req: express.Request,
 // GET /api/v1/integration/providers
 router.get('/providers', async (req: express.Request, res: express.Response) => {
     try {
-        const providers = await new Promise<any[]>((resolve, reject) => {
+        const providers = await new Promise<Provider[]>((resolve, reject) => {
             db.all('SELECT * FROM providers ORDER BY created_at DESC', (err, rows) => {
                 if (err) reject(err);
-                else resolve(rows);
+                else resolve(rows as Provider[]);
             });
         });
 
