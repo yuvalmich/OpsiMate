@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Settings, Layers, LayoutDashboard } from "lucide-react"
+import { Settings, Layers, LayoutDashboard, Database } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
 
@@ -38,7 +38,18 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
         >
           <Link to="/integrations">
             <Layers className="h-5 w-5" />
-            <span className={cn("font-medium", collapsed && "sr-only")}>Integrations</span>
+            <span className={cn("font-medium", collapsed && "sr-only")}>Add Integration</span>
+          </Link>
+        </Button>
+        
+        <Button 
+          variant={location.pathname === "/my-integrations" ? "default" : "outline"}
+          className={cn("w-full justify-start gap-2 h-10", collapsed && "justify-center px-2")}
+          asChild
+        >
+          <Link to="/my-integrations">
+            <Database className="h-5 w-5" />
+            <span className={cn("font-medium", collapsed && "sr-only")}>My Integrations</span>
           </Link>
         </Button>
       </div>
