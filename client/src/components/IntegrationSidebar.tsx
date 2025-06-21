@@ -115,13 +115,43 @@ export function IntegrationSidebar({ integration, onClose }: IntegrationSidebarP
       return;
     }
 
-    // Here you would normally send the data to your backend
-    console.log("Integration data:", { type: integration.type, ...formData });
-    
-    toast({
-      title: "Integration added",
-      description: `Successfully added ${integration.name} integration`
-    });
+    // Create a new integration instance
+    const newIntegration = {
+      id: `${integration.type}-${Date.now()}`,
+      name: formData.name || integration.name,
+      type: integration.type,
+      status: "online",
+      details: { ...formData },
+      lastConnected: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+
+    // Save to localStorage
+    try {
+      // Get existing integrations
+      const existingIntegrationsJson = localStorage.getItem('integrations');
+      const existingIntegrations = existingIntegrationsJson ? JSON.parse(existingIntegrationsJson) : [];
+      
+      // Add new integration
+      const updatedIntegrations = [...existingIntegrations, newIntegration];
+      
+      // Save back to localStorage
+      localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
+      
+      console.log("Integration data saved:", newIntegration);
+      
+      toast({
+        title: "Integration added",
+        description: `Successfully added ${integration.name} integration`
+      });
+    } catch (error) {
+      console.error("Error saving integration:", error);
+      toast({
+        title: "Error adding integration",
+        description: "There was a problem saving your integration",
+        variant: "destructive"
+      });
+    }
     
     onClose();
   };
