@@ -193,7 +193,7 @@ router.get('/providers/:providerId/instance', async (req: express.Request, res: 
             await ssh.connect({
                 host: provider.provider_ip,
                 username: provider.username,
-                privateKey: privateKeyPath,
+                privateKeyPath: privateKeyPath,
                 port: provider.ssh_port,
             });
 
