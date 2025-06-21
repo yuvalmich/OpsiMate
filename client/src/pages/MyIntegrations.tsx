@@ -16,7 +16,7 @@ import { ServicesList } from "@/components/ServicesList";
 import { ServiceDetailsSheet } from "@/components/ServiceDetailsSheet";
 
 // Define the structure of an integration instance
-interface IntegrationInstance {
+export interface IntegrationInstance {
   id: string;
   name: string;
   type: IntegrationType;
@@ -111,7 +111,7 @@ const getIntegrationIcon = (type: IntegrationType) => {
 };
 
 // Helper function to get a readable name for an integration type
-const getIntegrationTypeName = (type: IntegrationType): string => {
+export const getIntegrationTypeName = (type: IntegrationType): string => {
   switch (type) {
     case "server": return "Server";
     case "kubernetes": return "Kubernetes";
@@ -139,7 +139,7 @@ const getIntegrationCategory = (type: IntegrationType): string => {
 };
 
 // Helper function to get status badge color
-const getStatusBadgeColor = (status: IntegrationInstance["status"]) => {
+export const getStatusBadgeColor = (status: IntegrationInstance["status"]) => {
   switch (status) {
     case "online": return "bg-green-500/20 text-green-700 hover:bg-green-500/30";
     case "offline": return "bg-red-500/20 text-red-700 hover:bg-red-500/30";
@@ -292,206 +292,172 @@ export function MyIntegrations() {
 
   const handleDeleteIntegration = () => {
     if (!selectedIntegration) return;
-    
     try {
-      // Update state
       const updatedIntegrations = integrationInstances.filter(
-        integration => integration.id !== selectedIntegration.id
+        (integration) => integration.id !== selectedIntegration.id
       );
-      
       setIntegrationInstances(updatedIntegrations);
-      
-      // Update localStorage
-      localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
-      
+      localStorage.setItem("integrations", JSON.stringify(updatedIntegrations));
+
       toast({
         title: "Integration deleted",
-        description: `${selectedIntegration.name} has been removed`
+        description: `${selectedIntegration.name} has been successfully deleted.`,
       });
+      setSelectedIntegration(null);
+      setIsDeleteDialogOpen(false);
     } catch (error) {
       console.error("Error deleting integration:", error);
       toast({
         title: "Error deleting integration",
-        description: "There was a problem removing the integration",
-        variant: "destructive"
+        description: "There was a problem deleting your integration.",
+        variant: "destructive",
       });
     }
-    
-    setIsDeleteDialogOpen(false);
-    setSelectedIntegration(null);
   };
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-4 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <header className="bg-background border-b border-border p-4">
+          <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">My Integrations</h1>
-            <p className="text-muted-foreground">Manage your connected infrastructure</p>
-          </div>
-          <Button asChild>
             <Link to="/integrations">
-              <Plus className="mr-2 h-4 w-4" /> Add Integration
-            </Link>
-          </Button>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="server">Servers</TabsTrigger>
-              <TabsTrigger value="kubernetes">Kubernetes</TabsTrigger>
-              <TabsTrigger value="cloud">Cloud</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search integrations..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {filteredIntegrations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="rounded-full bg-muted p-3 mb-4">
-              <Database className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-medium">No integrations found</h3>
-            <p className="text-muted-foreground mt-1 mb-4">
-              {searchQuery 
-                ? "Try adjusting your search or filter criteria" 
-                : "Add your first integration to get started"}
-            </p>
-            {!searchQuery && (
-              <Button asChild>
-                <Link to="/integrations">
-                  <Plus className="mr-2 h-4 w-4" /> Add Integration
-                </Link>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Integration
               </Button>
-            )}
+            </Link>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredIntegrations.map((integration) => (
-              <Card 
-                key={integration.id} 
-                className={`flex flex-col justify-between transition-all duration-200 ease-in-out hover:shadow-lg ${selectedIntegration?.id === integration.id ? "ring-2 ring-primary shadow-lg" : "ring-0"}`}
-                onClick={() => handleRowClick(integration)}
-              >
-                <CardHeader className="flex flex-row items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-lg bg-primary/10`}>
-                      {getIntegrationIcon(integration.type)}
-                    </div>
-                    <div>
+          <div className="mt-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="Search integrations..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+        </header>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="p-4 bg-background">
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="server">Servers</TabsTrigger>
+            <TabsTrigger value="kubernetes">Kubernetes</TabsTrigger>
+            <TabsTrigger value="cloud">Cloud</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* Integrations Grid */}
+        <div className="flex-1 overflow-auto p-4">
+          {filteredIntegrations.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredIntegrations.map((integration) => (
+                <Card 
+                  key={integration.id} 
+                  className="flex flex-col cursor-pointer transition-all hover:shadow-md"
+                  onClick={() => handleRowClick(integration)}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                        {getIntegrationIcon(integration.type)}
+                      </div>
                       <CardTitle className="text-lg font-semibold">{integration.name}</CardTitle>
-                      <CardDescription>{getIntegrationTypeName(integration.type)}</CardDescription>
                     </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <MoreVertical className="h-5 w-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenuItem onClick={() => handleRefreshIntegration(integration.id)}>
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          <span>Refresh</span>
-                        </DropdownMenuItem>
-                        {integration.type === "server" && (
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedServerForService(integration);
-                            setIsAddServiceDialogOpen(true);
-                          }}>
-                            <ListPlus className="mr-2 h-4 w-4" />
-                            <span>Add Service</span>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={() => handleRefreshIntegration(integration.id)}>
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Refresh
                           </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={() => {
-                          setSelectedIntegration(integration);
-                          setIsDeleteDialogOpen(true);
-                        }}>
-                          <Trash className="mr-2 h-4 w-4" />
-                          <span>Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenu>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  {selectedIntegration?.id === integration.id && integration.services && integration.services.length > 0 ? (
-                    <ServicesList 
-                      services={integration.services}
-                      onStatusChange={(serviceId, newStatus) => handleServiceStatusChange(integration.id, serviceId, newStatus)}
-                      onServiceClick={handleServiceClick}
-                    />
-                  ) : (
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedIntegration(integration);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                            className="text-red-500 focus:text-red-500"
+                          >
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenu>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                     <p className="text-sm text-muted-foreground pl-14 -mt-2 mb-4">{getIntegrationTypeName(integration.type)}</p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                       {Object.entries(integration.details).map(([key, value]) => (
-                        <div key={key} className="flex flex-col">
-                          <span className="font-medium capitalize text-foreground">{key.replace(/([A-Z])/g, ' $1')}</span>
-                          <span>{value}</span>
+                        <div key={key}>
+                          <p className="text-xs text-muted-foreground capitalize">{key}</p>
+                          <p className="font-medium">{value}</p>
                         </div>
                       ))}
                     </div>
-                  )}
-                </CardContent>
-                <CardFooter className="flex items-center justify-between text-xs text-muted-foreground">
-                   <Badge className={getStatusBadgeColor(integration.status) + " capitalize"}>{integration.status}</Badge>
-                   <span>
-                    Last connected: {integration.lastConnected ? new Date(integration.lastConnected).toLocaleDateString() : 'Never'}
-                   </span>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )}
+                  </CardContent>
+                  <CardFooter className="flex items-center justify-between text-xs text-muted-foreground">
+                    <Badge className={getStatusBadgeColor(integration.status)}>{integration.status}</Badge>
+                    {integration.lastConnected && (
+                      <p>Last connected: {new Date(integration.lastConnected).toLocaleDateString()}</p>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <ListPlus className="h-12 w-12 text-muted-foreground" />
+              <h2 className="mt-4 text-xl font-semibold">No integrations found</h2>
+              <p className="mt-1 text-muted-foreground">
+                {searchQuery ? "Try a different search term." : "Get started by adding a new integration."}
+              </p>
+              {!searchQuery && (
+                <Link to="/integrations" className="mt-4">
+                   <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Integration
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+      
+      {/* Service Details Sheet */}
+      <ServiceDetailsSheet 
+        integration={selectedIntegration}
+        onClose={() => setSelectedIntegration(null)}
+      />
 
+      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Integration</DialogTitle>
+            <DialogTitle>Are you sure you want to delete this integration?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedIntegration?.name}"? This action cannot be undone.
+              This action cannot be undone. This will permanently delete the
+              <span className="font-semibold"> {selectedIntegration?.name} </span>
+              integration.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteIntegration}>
-              Delete
-            </Button>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteIntegration}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Add Service Dialog */}
-      {selectedServerForService && (
-        <AddServiceDialog
-          serverId={selectedServerForService.id}
-          serverName={selectedServerForService.name}
-          open={isAddServiceDialogOpen}
-          onClose={() => setIsAddServiceDialogOpen(false)}
-          onServiceAdded={(service) => handleAddService(selectedServerForService.id, service)}
-        />
-      )}
-
-      <ServiceDetailsSheet 
-        service={selectedService}
-        serverName={selectedIntegration?.name || ""}
-        onClose={() => setSelectedService(null)}
-      />
     </DashboardLayout>
   );
 }
