@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Server, Cloud, Database, Globe, MoreVertical, Search, Plus, Trash, RefreshCw, Settings, ListPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { IntegrationType } from "./Integrations";
 import { AddServiceDialog, ServiceConfig } from "@/components/AddServiceDialog";
 import { ServicesList } from "@/components/ServicesList";
+import { ServiceDetailsSheet } from "@/components/ServiceDetailsSheet";
 
 // Define the structure of an integration instance
 interface IntegrationInstance {
@@ -157,6 +158,7 @@ export function MyIntegrations() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
   const [selectedServerForService, setSelectedServerForService] = useState<IntegrationInstance | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceConfig | null>(null);
   
   // Load integrations from localStorage
   useEffect(() => {
@@ -228,6 +230,14 @@ export function MyIntegrations() {
         });
       }
     }, 1500);
+  };
+
+  const handleRowClick = (integration: IntegrationInstance) => {
+    setSelectedIntegration(integration);
+  };
+
+  const handleServiceClick = (service: ServiceConfig) => {
+    setSelectedService(service);
   };
 
   const handleAddService = (integrationId: string, service: ServiceConfig) => {
@@ -368,82 +378,78 @@ export function MyIntegrations() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredIntegrations.map((integration) => (
-              <Card key={integration.id} className="overflow-hidden">
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-primary/10 p-1.5 rounded-md">
-                        {getIntegrationIcon(integration.type)}
-                      </div>
-                      <div>
-                        <CardTitle className="text-base">{integration.name}</CardTitle>
-                        <CardDescription>{getIntegrationTypeName(integration.type)}</CardDescription>
-                      </div>
+              <Card 
+                key={integration.id} 
+                className={`flex flex-col justify-between transition-all duration-200 ease-in-out hover:shadow-lg ${selectedIntegration?.id === integration.id ? "ring-2 ring-primary shadow-lg" : "ring-0"}`}
+                onClick={() => handleRowClick(integration)}
+              >
+                <CardHeader className="flex flex-row items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-lg bg-primary/10`}>
+                      {getIntegrationIcon(integration.type)}
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                    <div>
+                      <CardTitle className="text-lg font-semibold">{integration.name}</CardTitle>
+                      <CardDescription>{getIntegrationTypeName(integration.type)}</CardDescription>
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <MoreVertical className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenuItem onClick={() => handleRefreshIntegration(integration.id)}>
-                          <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          <span>Refresh</span>
                         </DropdownMenuItem>
                         {integration.type === "server" && (
                           <DropdownMenuItem onClick={() => {
                             setSelectedServerForService(integration);
                             setIsAddServiceDialogOpen(true);
                           }}>
-                            <ListPlus className="mr-2 h-4 w-4" /> Add Service
+                            <ListPlus className="mr-2 h-4 w-4" />
+                            <span>Add Service</span>
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem>
-                          <Settings className="mr-2 h-4 w-4" /> Configure
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-red-600" 
-                          onClick={() => {
-                            setSelectedIntegration(integration);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash className="mr-2 h-4 w-4" /> Delete
+                        <DropdownMenuItem onClick={() => {
+                          setSelectedIntegration(integration);
+                          setIsDeleteDialogOpen(true);
+                        }}>
+                          <Trash className="mr-2 h-4 w-4" />
+                          <span>Delete</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                    </DropdownMenuPortal>
+                  </DropdownMenu>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <div className="space-y-2">
-                    {Object.entries(integration.details).map(([key, value]) => (
-                      <div key={key} className="flex justify-between text-sm">
-                        <span className="text-muted-foreground capitalize">{key}</span>
-                        <span className="font-medium">{value}</span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {integration.type === "server" && (
-                    <div className="mt-4">
-                      <ServicesList 
-                        services={integration.services || []} 
-                        onServiceStatusChange={(serviceId, newStatus) => handleServiceStatusChange(integration.id, serviceId, newStatus)}
-                      />
+                <CardContent className="flex-grow">
+                  {selectedIntegration?.id === integration.id && integration.services && integration.services.length > 0 ? (
+                    <ServicesList 
+                      services={integration.services}
+                      onStatusChange={(serviceId, newStatus) => handleServiceStatusChange(integration.id, serviceId, newStatus)}
+                      onServiceClick={handleServiceClick}
+                    />
+                  ) : (
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                      {Object.entries(integration.details).map(([key, value]) => (
+                        <div key={key} className="flex flex-col">
+                          <span className="font-medium capitalize text-foreground">{key.replace(/([A-Z])/g, ' $1')}</span>
+                          <span>{value}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>
-                <CardFooter className="flex justify-between pt-2">
-                  <Badge className={getStatusBadgeColor(integration.status)}>
-                    {integration.status.charAt(0).toUpperCase() + integration.status.slice(1)}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    Last connected: {integration.lastConnected 
-                      ? new Date(integration.lastConnected).toLocaleString() 
-                      : "Never"}
-                  </span>
+                <CardFooter className="flex items-center justify-between text-xs text-muted-foreground">
+                   <Badge className={getStatusBadgeColor(integration.status) + " capitalize"}>{integration.status}</Badge>
+                   <span>
+                    Last connected: {integration.lastConnected ? new Date(integration.lastConnected).toLocaleDateString() : 'Never'}
+                   </span>
                 </CardFooter>
               </Card>
             ))}
@@ -480,6 +486,12 @@ export function MyIntegrations() {
           onServiceAdded={(service) => handleAddService(selectedServerForService.id, service)}
         />
       )}
+
+      <ServiceDetailsSheet 
+        service={selectedService}
+        serverName={selectedIntegration?.name || ""}
+        onClose={() => setSelectedService(null)}
+      />
     </DashboardLayout>
   );
 }

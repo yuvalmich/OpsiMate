@@ -20,6 +20,7 @@ export function ActionButtons({
   onOpenSSH 
 }: ActionButtonsProps) {
   const isDisabled = selectedServices.length === 0
+  const isSshDisabled = selectedServices.length !== 1
 
   return (
     <div className="bg-card border-t border-border p-3 shadow-sm">
@@ -75,7 +76,7 @@ export function ActionButtons({
           <Button 
             variant="default" 
             size="sm" 
-            disabled={isDisabled}
+            disabled={isSshDisabled}
             onClick={onOpenSSH}
             className="gap-2 h-9"
           >

@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ExternalLink, X, FileText } from "lucide-react"
+import { X, AreaChart, FileText } from "lucide-react"
 import { Service } from "./ServiceTable"
 import { cn } from "@/lib/utils"
+import { GrafanaIcon } from "./icons/GrafanaIcon"
+import { CoralogixIcon } from "./icons/CoralogixIcon"
 
 interface RightSidebarProps {
   service: Service | null
@@ -32,80 +34,73 @@ export function RightSidebar({ service, onClose, collapsed }: RightSidebarProps)
   }
 
   return (
-    <div className="w-full bg-card border-l border-border p-2 overflow-auto h-full text-xs">
-      <div className="flex items-center justify-between mb-2">
+    <div className="w-full bg-card border-l border-border p-4 h-full text-xs flex flex-col">
+      <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-foreground">Service Details</h3>
         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onClose}>
           <X className="h-3 w-3" />
         </Button>
       </div>
 
-      <div className="space-y-2">
-        <div>
-          <h4 className="font-medium text-foreground mb-1 text-xs">{service.serviceName}</h4>
-          <Badge className={cn(getStatusColor(service.status), "text-xs py-0 px-1.5")}>
+      <div className="flex-grow overflow-auto pr-2 -mr-2 space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="font-medium text-foreground text-base">{service.serviceName}</h4>
+          <Badge className={cn(getStatusColor(service.status), "text-xs py-0.5 px-2 flex-shrink-0")}>
             {service.status}
           </Badge>
         </div>
 
-        <Separator className="my-1" />
+        <Separator />
 
         <div>
-          <div className="grid grid-cols-[70px_1fr] gap-y-1 text-xs">
-            <span className="text-muted-foreground">Server ID:</span>
-            <span className="text-foreground font-medium">{service.serverId}</span>
-            
-            <span className="text-muted-foreground">OS:</span>
-            <span className="text-foreground font-medium">{service.os}</span>
-            
-            <span className="text-muted-foreground">IP:</span>
-            <span className="text-foreground font-medium">{service.ipAddress}</span>
-            
-            {service.port && (
-              <>
-                <span className="text-muted-foreground">Port:</span>
-                <span className="text-foreground font-medium">{service.port}</span>
-              </>
-            )}
-            
-            {service.uptime && (
-              <>
-                <span className="text-muted-foreground">Uptime:</span>
-                <span className="text-foreground font-medium">{service.uptime}</span>
-              </>
-            )}
-            
-            {service.memory && (
-              <>
-                <span className="text-muted-foreground">Memory:</span>
-                <span className="text-foreground font-medium">{service.memory}</span>
-              </>
-            )}
-            
-            {service.cpu && (
-              <>
-                <span className="text-muted-foreground">CPU:</span>
-                <span className="text-foreground font-medium">{service.cpu}</span>
-              </>
-            )}
+          <div className="grid grid-cols-3 gap-x-4 gap-y-3 text-xs">
+            <div>
+              <div className="text-muted-foreground">Server ID</div>
+              <div className="font-medium text-foreground">{service.serverId}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">OS</div>
+              <div className="font-medium text-foreground">{service.os}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">IP Address</div>
+              <div className="font-medium text-foreground font-mono text-[11px]">{service.ipAddress}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Port</div>
+              <div className="font-medium text-foreground">{service.port || '-'}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Uptime</div>
+              <div className="font-medium text-foreground">{service.uptime || '-'}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Memory</div>
+              <div className="font-medium text-foreground">{service.memory || '-'}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">CPU</div>
+              <div className="font-medium text-foreground">{service.cpu || '-'}</div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <Separator className="my-1" />
-
-        <div className="space-y-1">
+      <div className="pt-4 flex-shrink-0">
+        <Separator />
+        <div className="space-y-2 pt-4">
           <h4 className="font-medium text-foreground text-xs">External Links</h4>
           <div className="space-y-1">
-            <Button variant="outline" size="sm" className="w-full justify-start gap-1 h-7 text-xs px-2">
-              <ExternalLink className="h-3 w-3" />
+            <Button variant="outline" size="sm" className="w-full justify-start gap-2 h-7 text-xs px-2">
+              <GrafanaIcon className="h-3 w-3" />
               View in Grafana
             </Button>
-            <Button variant="outline" size="sm" className="w-full justify-start gap-1 h-7 text-xs px-2">
-              <ExternalLink className="h-3 w-3" />
+            <Button variant="outline" size="sm" className="w-full justify-start gap-2 h-7 text-xs px-2">
+              <CoralogixIcon className="h-3 w-3" />
               View in Coralogix
             </Button>
-            <Button variant="outline" size="sm" className="w-full justify-start gap-1 h-7 text-xs px-2">
-              <ExternalLink className="h-3 w-3" />
+            <Button variant="outline" size="sm" className="w-full justify-start gap-2 h-7 text-xs px-2">
+              <AreaChart className="h-3 w-3" />
               Server Monitoring
             </Button>
           </div>

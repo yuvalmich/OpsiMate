@@ -3,66 +3,39 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ServiceConfig } from "./AddServiceDialog";
-import { ChevronDown, ChevronUp, Play, Square, RotateCcw, Terminal, Container, Server } from "lucide-react";
+import { ChevronDown, ChevronUp, Play, Square, RotateCcw, Terminal, Container, Server, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 interface ServicesListProps {
   services: ServiceConfig[];
-  onServiceStatusChange: (serviceId: string, newStatus: "running" | "stopped" | "error") => void;
+  onStatusChange: (serviceId: string, newStatus: "running" | "stopped" | "error") => void;
+  onServiceClick: (service: ServiceConfig) => void;
 }
 
-export function ServicesList({ services, onServiceStatusChange }: ServicesListProps) {
+export function ServicesList({ services, onStatusChange, onServiceClick }: ServicesListProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(true);
+  const [activeService, setActiveService] = useState<string | null>(null);
 
   if (services.length === 0) {
     return null;
   }
 
-  const handleStart = (serviceId: string) => {
+  const handleAction = (serviceId: string, status: "running" | "stopped" | "error", action: string) => {
     toast({
-      title: "Starting service",
-      description: "Service is starting..."
+      title: `${action} service`,
+      description: `Service is ${action.toLowerCase()}...`
     });
     
     setTimeout(() => {
-      onServiceStatusChange(serviceId, "running");
+      onStatusChange(serviceId, status);
       toast({
-        title: "Service started",
-        description: "Service is now running"
+        title: `Service ${action}`,
+        description: `Service has been ${action.toLowerCase()}`
       });
     }, 1000);
-  };
-
-  const handleStop = (serviceId: string) => {
-    toast({
-      title: "Stopping service",
-      description: "Service is stopping..."
-    });
-    
-    setTimeout(() => {
-      onServiceStatusChange(serviceId, "stopped");
-      toast({
-        title: "Service stopped",
-        description: "Service has been stopped"
-      });
-    }, 1000);
-  };
-
-  const handleRestart = (serviceId: string) => {
-    toast({
-      title: "Restarting service",
-      description: "Service is restarting..."
-    });
-    
-    setTimeout(() => {
-      onServiceStatusChange(serviceId, "running");
-      toast({
-        title: "Service restarted",
-        description: "Service has been restarted"
-      });
-    }, 1500);
   };
 
   return (
@@ -73,84 +46,69 @@ export function ServicesList({ services, onServiceStatusChange }: ServicesListPr
           {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </Button>
       </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2 space-y-2">
+      <CollapsibleContent className="pt-2 space-y-1">
         {services.map((service) => (
-          <div 
-            key={service.id} 
-            className="flex items-center justify-between p-2 rounded-md bg-background border"
-          >
-            <div className="flex items-center gap-2">
-              {service.type === "container" ? (
-                <Container className="h-4 w-4 text-blue-500" />
-              ) : (
-                <Server className="h-4 w-4 text-purple-500" />
-              )}
-              <div>
-                <div className="font-medium text-sm">{service.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {service.type === "container" 
-                    ? `Container: ${service.containerDetails?.image}` 
-                    : service.port 
-                      ? `Port: ${service.port}` 
-                      : "Manual service"
-                  }
+          <DropdownMenu key={service.id} open={activeService === service.id} onOpenChange={(isOpen) => !isOpen && setActiveService(null)}>
+            <DropdownMenuTrigger asChild>
+              <div 
+                className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer"
+                onClick={() => setActiveService(service.id)}
+              >
+                <div className="flex items-center gap-2">
+                  {service.type === "container" ? (
+                    <Container className="h-4 w-4 text-blue-500" />
+                  ) : (
+                    <Server className="h-4 w-4 text-purple-500" />
+                  )}
+                  <div>
+                    <div className="font-medium text-sm">{service.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {service.type === "container" 
+                        ? `Container: ${service.containerDetails?.image}` 
+                        : service.port 
+                          ? `Port: ${service.port}` 
+                          : "Manual service"
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Badge 
+                    className={cn(
+                      "text-xs",
+                      service.status === "running" && "bg-green-500/20 text-green-700",
+                      service.status === "stopped" && "bg-gray-500/20 text-gray-700",
+                      service.status === "error" && "bg-red-500/20 text-red-700"
+                    )}
+                  >
+                    {service.status}
+                  </Badge>
+                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <Badge 
-                className={cn(
-                  "text-xs",
-                  service.status === "running" && "bg-green-500/20 text-green-700 hover:bg-green-500/30",
-                  service.status === "stopped" && "bg-gray-500/20 text-gray-700 hover:bg-gray-500/30",
-                  service.status === "error" && "bg-red-500/20 text-red-700 hover:bg-red-500/30"
-                )}
-              >
-                {service.status}
-              </Badge>
-              <div className="flex gap-1">
-                {service.status !== "running" && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-6 w-6" 
-                    onClick={() => handleStart(service.id)}
-                    title="Start"
-                  >
-                    <Play className="h-3 w-3" />
-                  </Button>
-                )}
-                {service.status === "running" && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-6 w-6" 
-                    onClick={() => handleStop(service.id)}
-                    title="Stop"
-                  >
-                    <Square className="h-3 w-3" />
-                  </Button>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-6 w-6" 
-                  onClick={() => handleRestart(service.id)}
-                  title="Restart"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-6 w-6" 
-                  title="SSH"
-                >
-                  <Terminal className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={() => onServiceClick(service)}>
+                <Terminal className="mr-2 h-4 w-4" /> View Details
+              </DropdownMenuItem>
+              {service.status !== 'running' && (
+                <DropdownMenuItem onClick={() => handleAction(service.id, 'running', 'Starting')}>
+                  <Play className="mr-2 h-4 w-4" /> Start
+                </DropdownMenuItem>
+              )}
+              {service.status === 'running' && (
+                <DropdownMenuItem onClick={() => handleAction(service.id, 'stopped', 'Stopping')}>
+                  <Square className="mr-2 h-4 w-4" /> Stop
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => handleAction(service.id, 'running', 'Restarting')}>
+                <RotateCcw className="mr-2 h-4 w-4" /> Restart
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ))}
       </CollapsibleContent>
     </Collapsible>

@@ -199,7 +199,7 @@ const Index = () => {
               />
             </div>
             <div className="flex-1 flex flex-col">
-              <div className="flex-1 p-4">
+              <div className="flex-1 p-4 overflow-auto">
                 <ServiceTable
                   services={filteredServices}
                   selectedService={selectedService}
@@ -210,7 +210,7 @@ const Index = () => {
                   visibleColumns={visibleColumns}
                 />
               </div>
-              <div className="p-4 border-t border-border">
+              <div className="flex-shrink-0 p-4 border-t border-border">
                 <ActionButtons 
                   selectedService={selectedService}
                   selectedServices={selectedServices}

@@ -10,17 +10,16 @@ interface LeftSidebarProps {
 export function LeftSidebar({ collapsed }: LeftSidebarProps) {
   const location = useLocation();
   return (
-    <div className={cn("w-full bg-card border-r border-border flex flex-col overflow-hidden h-full", collapsed && "items-center")}>
-      <div className={cn("p-4 border-b border-border", collapsed && "py-4 px-2")}>
-        <h2 className={cn("text-lg font-semibold text-foreground", collapsed && "sr-only")}>Service Manager</h2>
-        <p className={cn("text-sm text-muted-foreground mt-1", collapsed && "sr-only")}>Manage your server services</p>
+    <div className={cn("w-full bg-background flex flex-col h-full", collapsed && "items-center")}>
+      <div className={cn("p-6", collapsed && "p-4")}>
+        <h2 className={cn("text-xl font-bold text-foreground", collapsed && "sr-only")}>Service Peek</h2>
         {collapsed && <Settings className="h-6 w-6" />}
       </div>
       
-      <div className={cn("p-3 space-y-2 w-full flex-grow", collapsed && "px-2")}>
+      <div className={cn("px-4 space-y-2 w-full flex-grow", collapsed && "px-2")}>
         <Button 
-          variant={location.pathname === "/" ? "default" : "outline"}
-          className={cn("w-full justify-start gap-2 h-10", collapsed && "justify-center px-2")}
+          variant={location.pathname === "/" ? "secondary" : "ghost"}
+          className={cn("w-full justify-start gap-3", collapsed && "justify-center")}
           asChild
         >
           <Link to="/">
@@ -29,11 +28,9 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
           </Link>
         </Button>
         
-
-        
         <Button 
-          variant={location.pathname === "/integrations" ? "default" : "outline"}
-          className={cn("w-full justify-start gap-2 h-10", collapsed && "justify-center px-2")}
+          variant={location.pathname === "/integrations" ? "secondary" : "ghost"}
+          className={cn("w-full justify-start gap-3", collapsed && "justify-center")}
           asChild
         >
           <Link to="/integrations">
@@ -43,8 +40,8 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
         </Button>
         
         <Button 
-          variant={location.pathname === "/my-integrations" ? "default" : "outline"}
-          className={cn("w-full justify-start gap-2 h-10", collapsed && "justify-center px-2")}
+          variant={location.pathname === "/my-integrations" ? "secondary" : "ghost"}
+          className={cn("w-full justify-start gap-3", collapsed && "justify-center")}
           asChild
         >
           <Link to="/my-integrations">
@@ -54,8 +51,8 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
         </Button>
       </div>
       
-      <div className={cn("p-4 mt-auto border-t border-border text-xs text-muted-foreground", collapsed && "sr-only")}>
-        <p>Service Peek Dashboard v1.0</p>
+      <div className={cn("p-4 mt-auto text-xs text-muted-foreground", collapsed && "sr-only")}>
+        <p>© 2024 Service Peek</p>
       </div>
     </div>
   )

@@ -74,6 +74,17 @@ export function ServiceTable({
     setSearchTerm("")
   }
 
+  const handleRowClick = (service: Service) => {
+    onServiceSelect(service);
+
+    const isSelected = selectedServices.some(s => s.id === service.id);
+    if (isSelected) {
+      onServicesSelect(selectedServices.filter(s => s.id !== service.id));
+    } else {
+      onServicesSelect([...selectedServices, service]);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-card border border-border rounded-lg overflow-hidden">
       <div className="p-4 border-b border-border space-y-4 flex-shrink-0">
@@ -104,7 +115,7 @@ export function ServiceTable({
             placeholder="Search services..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-10 h-9 focus-visible:ring-1"
+            className="pl-10 pr-10 h-9"
           />
           {searchTerm && (
             <Button
@@ -161,9 +172,10 @@ export function ServiceTable({
                 <TableRow 
                   key={service.id}
                   className={cn(
-                    "hover:bg-muted/50 transition-colors",
-                    selectedService?.id === service.id && "bg-muted"
+                    "hover:bg-muted/50 transition-colors cursor-pointer",
+                    selectedServices.some(s => s.id === service.id) && "bg-muted"
                   )}
+                  onClick={() => handleRowClick(service)}
                 >
                   <TableCell className="w-10">
                     <Checkbox 
@@ -175,25 +187,24 @@ export function ServiceTable({
                           onServicesSelect(selectedServices.filter(s => s.id !== service.id));
                         }
                       }}
-                      onClick={(e) => e.stopPropagation()}
                       aria-label={`Select ${service.serviceName}`}
                     />
                   </TableCell>
-                  {visibleColumns.os && <TableCell className="font-medium" onClick={() => onServiceSelect(service)}>{service.os}</TableCell>}
-                  {visibleColumns.serverId && <TableCell onClick={() => onServiceSelect(service)}>{service.serverId}</TableCell>}
-                  {visibleColumns.serviceName && <TableCell onClick={() => onServiceSelect(service)}>{service.serviceName}</TableCell>}
+                  {visibleColumns.os && <TableCell className="font-medium">{service.os}</TableCell>}
+                  {visibleColumns.serverId && <TableCell>{service.serverId}</TableCell>}
+                  {visibleColumns.serviceName && <TableCell>{service.serviceName}</TableCell>}
                   {visibleColumns.status && (
-                    <TableCell onClick={() => onServiceSelect(service)}>
+                    <TableCell>
                       <Badge className={cn(getStatusColor(service.status), "font-medium")}>
                         {service.status}
                       </Badge>
                     </TableCell>
                   )}
-                  {visibleColumns.ipAddress && <TableCell className="font-mono text-xs" onClick={() => onServiceSelect(service)}>{service.ipAddress}</TableCell>}
-                  {visibleColumns.port && <TableCell onClick={() => onServiceSelect(service)}>{service.port || '-'}</TableCell>}
-                  {visibleColumns.uptime && <TableCell onClick={() => onServiceSelect(service)}>{service.uptime || '-'}</TableCell>}
-                  {visibleColumns.memory && <TableCell onClick={() => onServiceSelect(service)}>{service.memory || '-'}</TableCell>}
-                  {visibleColumns.cpu && <TableCell onClick={() => onServiceSelect(service)}>{service.cpu || '-'}</TableCell>}
+                  {visibleColumns.ipAddress && <TableCell className="font-mono text-xs">{service.ipAddress}</TableCell>}
+                  {visibleColumns.port && <TableCell>{service.port || '-'}</TableCell>}
+                  {visibleColumns.uptime && <TableCell>{service.uptime || '-'}</TableCell>}
+                  {visibleColumns.memory && <TableCell>{service.memory || '-'}</TableCell>}
+                  {visibleColumns.cpu && <TableCell>{service.cpu || '-'}</TableCell>}
                 </TableRow>
               ))
             )}
