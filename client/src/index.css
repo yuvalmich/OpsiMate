@@ -9,15 +9,13 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%; /* Dark Gray - Hof */
-
+    --foreground: 224 71.4% 4.1%;
     --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
-
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 358 100% 67%; /* Pink-Red - Rausch */
+    --popover-foreground: 224 71.4% 4.1%;
+    
+    --primary: 210 100% 13%; /* Dark Blue from icon */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 174 100% 32%; /* Green - Babu */
@@ -26,21 +24,20 @@
     --muted: 220 13% 91%;
     --muted-foreground: 220 9% 45%; /* Medium Gray - Foggy */
 
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 224 71.4% 4.1%;
+    --accent: 210 100% 13%; /* Dark Blue from icon */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 358 100% 67%; /* Pink-Red - Rausch */
+    --ring: 210 100% 13%; /* Dark Blue from icon */
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
 
     --sidebar-primary: 240 5.9% 10%;
 
@@ -58,31 +55,30 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 0 0% 100%;
-
     --card: 224 71.4% 4.1%;
     --card-foreground: 0 0% 100%;
-
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 0 0% 100%;
-
-    --primary: 358 100% 67%;
+    
+    --primary: 210 100% 25%; /* A slightly lighter blue for dark mode */
     --primary-foreground: 0 0% 100%;
-
+    
     --secondary: 174 100% 32%;
     --secondary-foreground: 0 0% 100%;
-
+    
     --muted: 220 3.8% 15.9%;
     --muted-foreground: 215 27.9% 70.2%;
-
-    --accent: 220 3.8% 15.9%;
+    
+    --accent: 210 100% 25%; /* A slightly lighter blue for dark mode */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 85.7% 97.3%;
-
+    
     --border: 220 3.8% 15.9%;
     --input: 220 3.8% 15.9%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 210 100% 25%; /* A slightly lighter blue for dark mode */
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -102,6 +98,7 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Nunito Sans', sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   *:focus-visible {

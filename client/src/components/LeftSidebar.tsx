@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Settings, Layers, LayoutDashboard, Database } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
+import { AppIcon } from "./icons/AppIcon"
 
 interface LeftSidebarProps {
   collapsed: boolean
@@ -10,42 +11,54 @@ interface LeftSidebarProps {
 export function LeftSidebar({ collapsed }: LeftSidebarProps) {
   const location = useLocation();
   return (
-    <div className={cn("w-full bg-background flex flex-col h-full", collapsed && "items-center")}>
-      <div className={cn("p-6", collapsed && "p-4")}>
-        <h2 className={cn("text-xl font-bold text-foreground", collapsed && "sr-only")}>Service Peek</h2>
-        {collapsed && <Settings className="h-6 w-6" />}
+    <div className={cn("w-full bg-background flex flex-col h-full overflow-hidden", collapsed && "items-center")}>
+      <div className={cn("flex items-center h-16 px-4", collapsed && "justify-center px-2")}>
+        <AppIcon className="h-7 w-7 text-primary flex-shrink-0" />
+        <h2 className={cn("ml-2 text-xl font-bold text-foreground whitespace-nowrap", collapsed && "sr-only")}>Service Peek</h2>
       </div>
       
-      <div className={cn("px-4 space-y-2 w-full flex-grow", collapsed && "px-2")}>
+      <div className={cn("px-4 space-y-2 w-full flex-grow flex flex-col", collapsed && "px-2 items-center")}>
         <Button 
-          variant={location.pathname === "/" ? "secondary" : "ghost"}
-          className={cn("w-full justify-start gap-3", collapsed && "justify-center")}
+          variant={location.pathname === "/" ? "default" : "ghost"}
+          className={cn(
+            "gap-3 h-10", 
+            collapsed ? "w-10 justify-center p-0" : "w-full justify-start px-3",
+            location.pathname === "/" && "text-primary-foreground"
+          )}
           asChild
         >
           <Link to="/">
-            <LayoutDashboard className="h-5 w-5" />
+            <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
             <span className={cn("font-medium", collapsed && "sr-only")}>Dashboard</span>
           </Link>
         </Button>
         
         <Button 
-          variant={location.pathname === "/integrations" ? "secondary" : "ghost"}
-          className={cn("w-full justify-start gap-3", collapsed && "justify-center")}
+          variant={location.pathname === "/integrations" ? "default" : "ghost"}
+          className={cn(
+            "gap-3 h-10", 
+            collapsed ? "w-10 justify-center p-0" : "w-full justify-start px-3",
+            location.pathname === "/integrations" && "text-primary-foreground"
+          )}
           asChild
         >
           <Link to="/integrations">
-            <Layers className="h-5 w-5" />
+            <Layers className="h-5 w-5 flex-shrink-0" />
             <span className={cn("font-medium", collapsed && "sr-only")}>Add Integration</span>
           </Link>
         </Button>
         
         <Button 
-          variant={location.pathname === "/my-integrations" ? "secondary" : "ghost"}
-          className={cn("w-full justify-start gap-3", collapsed && "justify-center")}
+          variant={location.pathname === "/my-integrations" ? "default" : "ghost"}
+          className={cn(
+            "gap-3 h-10", 
+            collapsed ? "w-10 justify-center p-0" : "w-full justify-start px-3",
+            location.pathname === "/my-integrations" && "text-primary-foreground"
+          )}
           asChild
         >
           <Link to="/my-integrations">
-            <Database className="h-5 w-5" />
+            <Database className="h-5 w-5 flex-shrink-0" />
             <span className={cn("font-medium", collapsed && "sr-only")}>My Integrations</span>
           </Link>
         </Button>
