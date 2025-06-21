@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { ExternalLink, X } from "lucide-react";
 import { IntegrationInstance } from "@/pages/MyIntegrations";
 import { getIntegrationTypeName, getStatusBadgeColor } from "@/pages/MyIntegrations";
+import { ServiceConfig } from "./AddServiceDialog";
 
 interface ServiceDetailsSheetProps {
   integration: IntegrationInstance | null;
@@ -18,6 +19,16 @@ const DetailRow = ({ label, value }: { label: string; value: string }) => (
   </>
 );
 
+const getServiceStatusBadgeColor = (status: ServiceConfig["status"]) => {
+  switch (status) {
+    case "running": return "bg-green-500/20 text-green-700 hover:bg-green-500/30";
+    case "stopped": return "bg-gray-500/20 text-gray-700 hover:bg-gray-500/30";
+    case "error": return "bg-red-500/20 text-red-700 hover:bg-red-500/30";
+    case "unknown":
+    default: return "bg-gray-500/20 text-gray-700 hover:bg-gray-500/30";
+  }
+};
+
 export function ServiceDetailsSheet({
   integration,
   onClose,
@@ -27,18 +38,10 @@ export function ServiceDetailsSheet({
   return (
     <Sheet open={true} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-md">
-        <SheetHeader className="flex-row items-center justify-between">
+        <SheetHeader>
           <SheetTitle className="text-xl font-bold">
             Integration Details
           </SheetTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="shrink-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </SheetHeader>
         <Separator className="my-4" />
         <div className="space-y-6 py-2">
@@ -55,6 +58,27 @@ export function ServiceDetailsSheet({
               <DetailRow key={key} label={`${key.charAt(0).toUpperCase() + key.slice(1)}:`} value={value} />
             ))}
           </div>
+
+          {integration.services && integration.services.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-lg mb-2">Services</h4>
+              <div className="space-y-2">
+                {integration.services.map((service) => (
+                   <div key={service.id} className="p-3 rounded-lg border bg-card">
+                     <div className="flex justify-between items-center">
+                       <div>
+                         <p className="font-semibold">{service.name}</p>
+                         {service.port && <p className="text-sm text-muted-foreground">Port: {service.port}</p>}
+                       </div>
+                       <Badge className={`${getServiceStatusBadgeColor(service.status)} capitalize`}>
+                         {service.status}
+                       </Badge>
+                     </div>
+                   </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
             <h4 className="font-semibold text-lg mb-2">External Links</h4>
