@@ -12,16 +12,3 @@ app.use('/', healthRouter);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-/*
-public key
-ssh port
-username
-
-integrate with provider (VM, K8S, Aws ec2) -> service[]
-
-
-service_name
-service_ip
-service_status
- */

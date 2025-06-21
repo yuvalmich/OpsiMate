@@ -310,11 +310,3 @@ router.get('/providers/:providerId/services', async (req: express.Request, res: 
 });
 
 export default router;
-
-/*
-Provider Azure VM
-  Integration - connect, get_images
-    Service[] - start / stop
-  Integration
-    Service[]
- */

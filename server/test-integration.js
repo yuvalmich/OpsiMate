@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3001/api/v1/integration';
+const BASE_URL = 'http://localhost:3001/api/v1';
 
 async function testIntegration() {
   try {
