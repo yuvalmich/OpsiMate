@@ -1,0 +1,27 @@
+import { z } from 'zod';
+
+export const CreateProviderSchema = z.object({
+  provider_name: z.string().min(1, 'Provider name is required'),
+  provider_ip: z.string().ip('Invalid IP address'),
+  username: z.string().min(1, 'Username is required'),
+  public_key: z.string().min(1, 'Public key is required'),
+  ssh_port: z.number().int().min(1).max(65535).optional().default(22)
+});
+
+export const BulkServiceSchema = z.object({
+  service_names: z.array(z.string().min(1, 'Service name is required'))
+});
+
+export const ProviderIdSchema = z.object({
+  providerId: z.string().transform((val) => {
+    const parsed = parseInt(val);
+    if (isNaN(parsed)) {
+      throw new Error('Invalid provider ID');
+    }
+    return parsed;
+  })
+});
+
+export type CreateProviderRequest = z.infer<typeof CreateProviderSchema>;
+export type BulkServiceRequest = z.infer<typeof BulkServiceSchema>;
+export type ProviderIdParams = z.infer<typeof ProviderIdSchema>; 
