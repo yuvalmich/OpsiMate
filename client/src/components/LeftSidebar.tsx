@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button"
-import { Server, Plus, Settings } from "lucide-react"
+import { Settings, Layers, LayoutDashboard } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Link, useLocation } from "react-router-dom"
 
 interface LeftSidebarProps {
-  onShowServices: () => void
-  onAddService: () => void
   collapsed: boolean
 }
 
-export function LeftSidebar({ onShowServices, onAddService, collapsed }: LeftSidebarProps) {
+export function LeftSidebar({ collapsed }: LeftSidebarProps) {
+  const location = useLocation();
   return (
     <div className={cn("w-full bg-card border-r border-border flex flex-col overflow-hidden h-full", collapsed && "items-center")}>
       <div className={cn("p-4 border-b border-border", collapsed && "py-4 px-2")}>
@@ -19,21 +19,27 @@ export function LeftSidebar({ onShowServices, onAddService, collapsed }: LeftSid
       
       <div className={cn("p-3 space-y-2 w-full flex-grow", collapsed && "px-2")}>
         <Button 
-          onClick={onShowServices}
-          variant="default" 
+          variant={location.pathname === "/" ? "default" : "outline"}
           className={cn("w-full justify-start gap-2 h-10", collapsed && "justify-center px-2")}
+          asChild
         >
-          <Server className="h-5 w-5" />
-          <span className={cn("font-medium", collapsed && "sr-only")}>Show My Services</span>
+          <Link to="/">
+            <LayoutDashboard className="h-5 w-5" />
+            <span className={cn("font-medium", collapsed && "sr-only")}>Dashboard</span>
+          </Link>
         </Button>
         
+
+        
         <Button 
-          onClick={onAddService}
-          variant="outline" 
+          variant={location.pathname === "/integrations" ? "default" : "outline"}
           className={cn("w-full justify-start gap-2 h-10", collapsed && "justify-center px-2")}
+          asChild
         >
-          <Plus className="h-5 w-5" />
-          <span className={cn("font-medium", collapsed && "sr-only")}>Add New Service</span>
+          <Link to="/integrations">
+            <Layers className="h-5 w-5" />
+            <span className={cn("font-medium", collapsed && "sr-only")}>Integrations</span>
+          </Link>
         </Button>
       </div>
       

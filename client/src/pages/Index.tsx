@@ -1,19 +1,12 @@
 import { useState, useMemo, useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { LeftSidebar } from "@/components/LeftSidebar"
 import { ServiceTable, Service } from "@/components/ServiceTable"
 import { RightSidebar } from "@/components/RightSidebar"
 import { ActionButtons } from "@/components/ActionButtons"
 import { TableSettingsModal } from "@/components/TableSettingsModal"
 import { AddServiceModal } from "@/components/AddServiceModal"
-import { Menu } from "lucide-react"
 import { FilterPanel, Filters } from "@/components/FilterPanel"
-import { Separator } from "@/components/ui/separator"
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable"
+import { DashboardLayout } from "../components/DashboardLayout"
 import type { ImperativePanelHandle as PanelRef } from "react-resizable-panels"
 
 // Mock data
@@ -86,16 +79,9 @@ const Index = () => {
     memory: false,
     cpu: false
   })
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
   const [filters, setFilters] = useState<Filters>({})
-  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false)
   const [filterPanelCollapsed, setFilterPanelCollapsed] = useState(false)
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false)
-
-  const leftSidebarRef = useRef<PanelRef>(null)
-  const filterPanelRef = useRef<PanelRef>(null)
-  const rightSidebarRef = useRef<PanelRef>(null)
 
   const filteredServices = useMemo(() => {
     const activeFilterKeys = Object.keys(filters).filter(key => filters[key].length > 0);
@@ -115,25 +101,8 @@ const Index = () => {
     });
   }, [services, filters]);
 
-  const toggleLeftSidebar = () => {
-    const panel = leftSidebarRef.current
-    if (panel) {
-      panel.isCollapsed() ? panel.expand() : panel.collapse()
-    }
-  }
-
   const toggleFilterPanel = () => {
-    const panel = filterPanelRef.current
-    if (panel) {
-      panel.isCollapsed() ? panel.expand() : panel.collapse()
-    }
-  }
-
-  const toggleRightSidebar = () => {
-    const panel = rightSidebarRef.current
-    if (panel) {
-      panel.isCollapsed() ? panel.expand() : panel.collapse()
-    }
+    setFilterPanelCollapsed(!filterPanelCollapsed)
   }
 
   const handleShowServices = () => {
@@ -217,128 +186,53 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card shadow-sm">
-        <button
-          className="p-2 rounded-md border border-border bg-background hover:bg-muted transition-colors"
-          onClick={() => setMobileSidebarOpen(true)}
-          aria-label="Open sidebar"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-        <span className="font-semibold text-lg">Service Peek Dashboard</span>
-        <div className="w-9" /> {/* Empty div for balance */}
-      </div>
-
-      {/* Mobile Sidebar (Overlay) */}
-      <div 
-        className={`md:hidden fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 ${mobileSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => setMobileSidebarOpen(false)}
-      >
-        <div 
-          className={`fixed left-0 top-0 h-full z-50 bg-card w-72 shadow-xl transition-transform duration-200 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-          onClick={e => e.stopPropagation()}
-        >
-          <LeftSidebar
-            onShowServices={handleShowServices}
-            onAddService={() => setShowAddService(true)}
-            collapsed={false}
-          />
-          <button
-            className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted transition-colors"
-            onClick={() => setMobileSidebarOpen(false)}
-            aria-label="Close sidebar"
-          >
-            <span className="text-xl font-medium">×</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Desktop Layout (Resizable) */}
-      <ResizablePanelGroup direction="horizontal" className="hidden md:flex h-screen w-full">
-        {/* Left Action Sidebar */}
-        <ResizablePanel
-          ref={leftSidebarRef}
-          collapsible
-          collapsedSize={4}
-          minSize={15}
-          defaultSize={15}
-          onCollapse={() => setLeftSidebarCollapsed(true)}
-          onExpand={() => setLeftSidebarCollapsed(false)}
-          className="p-0"
-        >
-          <LeftSidebar
-            onShowServices={handleShowServices}
-            onAddService={() => setShowAddService(true)}
-            collapsed={leftSidebarCollapsed}
-          />
-        </ResizablePanel>
-        <ResizableHandle withArrow onCollapse={toggleLeftSidebar} collapsed={leftSidebarCollapsed} />
-
-        {/* Filter Panel */}
-        <ResizablePanel
-          ref={filterPanelRef}
-          collapsible
-          collapsedSize={4}
-          minSize={15}
-          defaultSize={15}
-          onCollapse={() => setFilterPanelCollapsed(true)}
-          onExpand={() => setFilterPanelCollapsed(false)}
-          className="p-0"
-        >
-          <FilterPanel
-            services={services}
-            filters={filters}
-            onFilterChange={setFilters}
-            collapsed={filterPanelCollapsed}
-          />
-        </ResizablePanel>
-        <ResizableHandle withArrow onCollapse={toggleFilterPanel} collapsed={filterPanelCollapsed} />
-
-        {/* Main content */}
-        <ResizablePanel defaultSize={65} className="flex flex-col overflow-hidden">
-            <div className="flex-1 p-3 overflow-hidden">
-                <ServiceTable
-                    services={filteredServices}
-                    selectedService={selectedService}
-                    selectedServices={selectedServices}
-                    onServiceSelect={handleServiceSelect}
-                    onServicesSelect={handleServicesSelect}
-                    onSettingsClick={() => setShowTableSettings(true)}
-                    visibleColumns={visibleColumns}
-                />
+    <div className="flex flex-col h-screen">
+      <DashboardLayout>
+        <div className="flex flex-col h-full">
+          <div className="flex flex-row h-full">
+            <div className="w-64 border-r border-border p-4">
+              <FilterPanel
+                services={services}
+                filters={filters}
+                onFilterChange={setFilters}
+                collapsed={filterPanelCollapsed}
+              />
             </div>
-            <ActionButtons
-                selectedService={selectedService}
-                selectedServices={selectedServices}
-                onStart={handleStart}
-                onStop={handleStop}
-                onRestart={handleRestart}
-                onOpenSSH={handleOpenSSH}
-            />
-        </ResizablePanel>
-        
-        {/* Right Sidebar - Only shown when a service is selected */}
-        {selectedService && (
-            <ResizablePanel
-                ref={rightSidebarRef}
-                collapsible
-                collapsedSize={4}
-                minSize={10}
-                maxSize={15}
-                defaultSize={12}
-                onCollapse={() => setRightSidebarCollapsed(true)}
-                onExpand={() => setRightSidebarCollapsed(false)}
-                className="p-0"
-            >
-                <RightSidebar
-                    service={selectedService}
-                    onClose={() => setSelectedService(null)}
-                    collapsed={rightSidebarCollapsed}
+            <div className="flex-1 flex flex-col">
+              <div className="flex-1 p-4">
+                <ServiceTable
+                  services={filteredServices}
+                  selectedService={selectedService}
+                  selectedServices={selectedServices}
+                  onServiceSelect={handleServiceSelect}
+                  onServicesSelect={handleServicesSelect}
+                  onSettingsClick={() => setShowTableSettings(true)}
+                  visibleColumns={visibleColumns}
                 />
-            </ResizablePanel>
-        )}
-      </ResizablePanelGroup>
+              </div>
+              <div className="p-4 border-t border-border">
+                <ActionButtons 
+                  selectedService={selectedService}
+                  selectedServices={selectedServices}
+                  onStart={handleStart}
+                  onStop={handleStop}
+                  onRestart={handleRestart}
+                  onOpenSSH={handleOpenSSH}
+                />
+              </div>
+            </div>
+            {selectedService && (
+              <div className="w-80 border-l border-border">
+                <RightSidebar
+                  service={selectedService}
+                  onClose={() => setSelectedService(null)}
+                  collapsed={rightSidebarCollapsed}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </DashboardLayout>
 
       <TableSettingsModal
         open={showTableSettings}
