@@ -197,28 +197,45 @@ router.get('/providers/:providerId/instance', async (req: express.Request, res: 
                 port: provider.ssh_port,
             });
 
-            // Get running services (this is a generic example - adjust based on your needs)
-            const result = await ssh.execCommand('systemctl list-units --type=service --state=running --no-pager --no-legend');
-
-            const services = result.stdout
-                .split('\n')
-                .filter(line => line.trim())
-                .map(line => {
-                    const parts = line.split(/\s+/);
-                    return {
-                        service_name: parts[0],
-                        service_status: 'running',
-                        service_ip: provider.provider_ip
-                    };
-                });
-
-            res.json({
-                success: true,
-                data: {
-                    provider: provider,
-                    services: services
+            try {
+                // First check if docker is available
+                const dockerCheck = await ssh.execCommand('docker --version');
+                if (dockerCheck.code !== 0) {
+                    throw new Error('Docker is not installed or not accessible');
                 }
-            });
+    
+                const result = await ssh.execCommand('sudo docker ps -a --format "{{.Names}}\t{{.Status}}\t{{.Image}}"');
+                
+                const containers = result.stdout
+                    .split('\n')
+                    .filter(line => line.trim())
+                    .map(line => {
+                        const [name, status, image] = line.split('\t');
+                        return {
+                            service_name: name,
+                            service_status: status.toLowerCase().includes('up') ? 'running' : 'stopped',
+                            service_ip: provider.provider_ip,
+                            image: image
+                        };
+                    });
+    
+                res.json({
+                    success: true,
+                    data: {
+                        provider: provider,
+                        containers: containers  // renamed from services to containers
+                    }
+                });
+            } catch (sshError) {
+                console.error('Docker command failed:', sshError);
+                res.status(500).json({
+                    success: false,
+                    error: 'Failed to retrieve Docker containers',
+                    details: sshError instanceof Error ? sshError.message : 'Unknown Docker error'
+                });
+            } finally {
+                ssh.dispose();
+            }
         } catch (sshError) {
             console.error('SSH connection error:', sshError);
             res.status(500).json({
