@@ -1,4 +1,5 @@
 import { ApiResponse, Provider } from '@service-peek/shared';
+import { SavedView } from '@/types/SavedView';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
 
@@ -36,6 +37,44 @@ async function apiRequest<T>(
     };
   }
 }
+
+/**
+ * Integration API endpoints
+ */
+/**
+ * Views API endpoints
+ */
+export const viewsApi = {
+  // Get all views for the current user
+  getViews: () => {
+    return apiRequest<SavedView[]>('/views');
+  },
+  
+  // Get a specific view
+  getView: (viewId: string) => {
+    return apiRequest<SavedView>(`/views/${viewId}`);
+  },
+  
+  // Save a view (create or update)
+  saveView: (view: SavedView) => {
+    return apiRequest<SavedView>('/views', 'POST', view);
+  },
+  
+  // Delete a view
+  deleteView: (viewId: string) => {
+    return apiRequest<{message: string}>(`/views/${viewId}`, 'DELETE');
+  },
+  
+  // Set active view
+  setActiveView: (viewId: string) => {
+    return apiRequest<{message: string}>(`/views/active/${viewId}`, 'POST');
+  },
+  
+  // Get active view ID
+  getActiveViewId: () => {
+    return apiRequest<{activeViewId: string | null}>('/views/active');
+  },
+};
 
 /**
  * Integration API endpoints

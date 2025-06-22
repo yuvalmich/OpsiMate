@@ -8,4 +8,5 @@ export interface SavedView {
   filters: Filters;
   visibleColumns: Record<string, boolean>;
   searchTerm: string;
+  isDefault?: number;
 }

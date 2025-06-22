@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,9 +30,9 @@ interface SavedViewsManagerProps {
   currentVisibleColumns: Record<string, boolean>;
   currentSearchTerm: string;
   savedViews: SavedView[];
-  onSaveView: (view: SavedView) => void;
-  onDeleteView: (viewId: string) => void;
-  onLoadView: (view: SavedView) => void;
+  onSaveView: (view: SavedView) => Promise<void>;
+  onDeleteView: (viewId: string) => Promise<void>;
+  onLoadView: (view: SavedView) => Promise<void>;
   activeViewId?: string;
 }
 
@@ -63,7 +63,7 @@ export function SavedViewsManager({
     );
   }, [savedViews, searchQuery]);
 
-  const handleSaveView = () => {
+  const handleSaveView = async () => {
     if (!viewName.trim()) {
       toast({
         title: "Error",
@@ -83,14 +83,22 @@ export function SavedViewsManager({
       searchTerm: currentSearchTerm,
     };
 
-    onSaveView(newView);
-    setIsDialogOpen(false);
-    resetForm();
+    try {
+      await onSaveView(newView);
+      setIsDialogOpen(false);
+      resetForm();
 
-    toast({
-      title: "View Saved",
-      description: `"${viewName}" has been saved successfully.`,
-    });
+      toast({
+        title: "View Saved",
+        description: `"${viewName}" has been saved successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save view. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditView = (view: SavedView) => {
@@ -98,6 +106,18 @@ export function SavedViewsManager({
     setViewDescription(view.description || "");
     setEditingViewId(view.id);
     setIsDialogOpen(true);
+  };
+
+  const handleDeleteView = async (view: SavedView) => {
+    try {
+      await onDeleteView(view.id);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete view",
+        variant: "destructive",
+      });
+    }
   };
 
   const resetForm = () => {
@@ -170,9 +190,17 @@ export function SavedViewsManager({
                 <DropdownMenuItem
                   key={view.id}
                   className="flex justify-between items-center"
-                  onSelect={(e) => {
+                  onSelect={async (e) => {
                     e.preventDefault();
-                    onLoadView(view);
+                    try {
+                      await onLoadView(view);
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to apply view",
+                        variant: "destructive",
+                      });
+                    }
                   }}
                 >
                   <span className="flex-1 truncate">{view.name}</span>
@@ -192,9 +220,17 @@ export function SavedViewsManager({
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 text-destructive"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        onDeleteView(view.id);
+                        try {
+                          await onDeleteView(view.id);
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Failed to delete view",
+                            variant: "destructive",
+                          });
+                        }
                       }}
                     >
                       <Trash className="h-3 w-3" />

@@ -91,17 +91,32 @@ const Index = () => {
 
   // Load saved views and active view on component mount
   useEffect(() => {
-    const views = getSavedViews();
-    setSavedViews(views);
-    
-    const activeId = getActiveViewId();
-    if (activeId) {
-      setActiveViewId(activeId);
-      const activeView = views.find(view => view.id === activeId);
-      if (activeView) {
-        applyView(activeView);
+    const loadViews = async () => {
+      try {
+        // Load saved views from API
+        const views = await getSavedViews();
+        setSavedViews(views);
+        
+        // Get active view ID from API
+        const activeId = await getActiveViewId();
+        if (activeId) {
+          setActiveViewId(activeId);
+          const activeView = views.find(view => view.id === activeId);
+          if (activeView) {
+            applyView(activeView);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading saved views:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load saved views",
+          variant: "destructive"
+        });
       }
-    }
+    };
+    
+    loadViews();
   }, []);
 
   const filteredServices = useMemo(() => {
@@ -126,40 +141,66 @@ const Index = () => {
     setFilterPanelCollapsed(!filterPanelCollapsed)
   }
 
-  const handleSaveView = (view: SavedView) => {
-    saveView(view);
-    setSavedViews(getSavedViews());
-    setActiveViewId(view.id);
-  }
-
-  const handleDeleteView = (viewId: string) => {
-    deleteView(viewId);
-    setSavedViews(getSavedViews());
-    
-    if (activeViewId === viewId) {
-      setActiveViewId(undefined);
+  const handleSaveView = async (view: SavedView) => {
+    try {
+      await saveView(view);
+      const updatedViews = await getSavedViews();
+      setSavedViews(updatedViews);
+      await setActiveViewId(view.id);
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error saving view:', error);
+      return Promise.reject(error);
     }
-
-    toast({
-      title: "View Deleted",
-      description: "The saved view has been deleted."
-    });
   }
 
-  const applyView = (view: SavedView) => {
-    setFilters(view.filters);
-    // Ensure visibleColumns has all required properties
-    setVisibleColumns(prev => ({
-      ...prev,
-      ...view.visibleColumns
-    }));
-    setSearchTerm(view.searchTerm);
-    setActiveViewId(view.id);
-    
-    toast({
-      title: "View Applied",
-      description: `"${view.name}" view has been applied.`
-    });
+  const handleDeleteView = async (viewId: string) => {
+    try {
+      await deleteView(viewId);
+      const updatedViews = await getSavedViews();
+      setSavedViews(updatedViews);
+      
+      if (activeViewId === viewId) {
+        await setActiveViewId(undefined);
+      }
+
+      toast({
+        title: "View Deleted",
+        description: "The saved view has been deleted."
+      });
+    } catch (error) {
+      console.error('Error deleting view:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete view",
+        variant: "destructive"
+      });
+    }
+  }
+
+  const applyView = async (view: SavedView) => {
+    try {
+      setFilters(view.filters);
+      // Ensure visibleColumns has all required properties
+      setVisibleColumns(prev => ({
+        ...prev,
+        ...view.visibleColumns
+      }));
+      setSearchTerm(view.searchTerm);
+      await setActiveViewId(view.id);
+      
+      toast({
+        title: "View Applied",
+        description: `"${view.name}" view has been applied.`
+      });
+    } catch (error) {
+      console.error('Error applying view:', error);
+      toast({
+        title: "Error",
+        description: "Failed to apply view",
+        variant: "destructive"
+      });
+    }
   }
 
   const handleShowServices = () => {
