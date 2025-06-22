@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { integrationApi } from "../lib/api";
 
 // Define service types
 export interface ServiceConfig {
@@ -22,13 +23,13 @@ export interface ServiceConfig {
   };
 }
 
-// Mock container data
-const mockContainers = [
-  { id: "c1", name: "nginx", image: "nginx:latest", created: "2025-06-20T10:30:00Z" },
-  { id: "c2", name: "postgres", image: "postgres:14", created: "2025-06-20T10:35:00Z" },
-  { id: "c3", name: "redis", image: "redis:alpine", created: "2025-06-20T10:40:00Z" },
-  { id: "c4", name: "node-app", image: "node:16", created: "2025-06-20T11:00:00Z" }
-];
+// Container interface
+interface Container {
+  service_name: string;
+  service_status: string;
+  service_ip: string;
+  image: string;
+}
 
 interface AddServiceDialogProps {
   serverId: string;
@@ -44,22 +45,49 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
   const [serviceName, setServiceName] = useState("");
   const [servicePort, setServicePort] = useState("");
   const [loading, setLoading] = useState(false);
-  const [containers, setContainers] = useState<Array<typeof mockContainers[0] & { selected: boolean }>>(
-    mockContainers.map(container => ({ ...container, selected: false }))
-  );
+  const [containers, setContainers] = useState<Array<Container & { id: string; selected: boolean; name: string; created: string }>>([]);
   const [loadingContainers, setLoadingContainers] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Simulate loading containers from the server
+  // Load containers from the server using API
   useEffect(() => {
     if (open && activeTab === "container") {
       setLoadingContainers(true);
-      // Simulate API call
-      setTimeout(() => {
-        setContainers(mockContainers.map(container => ({ ...container, selected: false })));
-        setLoadingContainers(false);
-      }, 1000);
+      setError(null);
+      
+      // Fetch containers from API
+      const fetchContainers = async () => {
+        try {
+          const response = await integrationApi.getProviderInstances(parseInt(serverId));
+          
+          if (response.success && response.data && response.data.containers) {
+            // Transform API container data to match our UI format
+            const containerData = response.data.containers.map((container, index) => ({
+              ...container,
+              id: `container-${index}`,
+              name: container.service_name,
+              selected: false,
+              created: new Date().toISOString() // API doesn't provide creation date, so we use current time
+            }));
+            
+            setContainers(containerData);
+          } else {
+            setError('Failed to load containers');
+            // Fall back to empty array
+            setContainers([]);
+          }
+        } catch (err) {
+          console.error('Error fetching containers:', err);
+          setError('Error loading containers. Please try again.');
+          setContainers([]);
+        } finally {
+          setLoadingContainers(false);
+        }
+      };
+      
+      fetchContainers();
     }
-  }, [open, activeTab]);
+  }, [open, activeTab, serverId]);
 
   const handleAddManualService = () => {
     if (!serviceName) {
@@ -97,7 +125,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     }, 800);
   };
 
-  const handleAddContainers = () => {
+  const handleAddContainers = async () => {
     const selectedContainers = containers.filter(container => container.selected);
     
     if (selectedContainers.length === 0) {
@@ -111,31 +139,55 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
 
     setLoading(true);
 
-    // Create new services from selected containers
-    const newServices = selectedContainers.map(container => ({
-      id: `container-${container.id}-${Date.now()}`,
-      name: container.name,
-      type: "container" as const,
-      status: "running" as const,
-      containerDetails: {
-        id: container.id,
-        image: container.image,
-        created: container.created
-      }
-    }));
-
-    // Simulate API call
-    setTimeout(() => {
-      newServices.forEach(service => onServiceAdded(service));
-      setLoading(false);
-      setContainers(containers.map(container => ({ ...container, selected: false })));
-      onClose();
+    try {
+      // Extract service names for API call
+      const serviceNames = selectedContainers.map(container => container.service_name);
       
+      // Call the API to add services in bulk
+      const response = await integrationApi.addServicesBulk(parseInt(serverId), serviceNames);
+      
+      if (response.success) {
+        // Create new services from selected containers for UI
+        const newServices = selectedContainers.map(container => ({
+          id: `container-${container.id}-${Date.now()}`,
+          name: container.name,
+          type: "container" as const,
+          status: container.service_status === "running" ? "running" : "stopped" as const,
+          containerDetails: {
+            id: container.id,
+            image: container.image,
+            created: container.created
+          }
+        }));
+
+        // Add services to UI
+        newServices.forEach(service => onServiceAdded(service));
+        
+        toast({
+          title: `${newServices.length} container${newServices.length > 1 ? 's' : ''} added`,
+          description: `Added to ${serverName}`
+        });
+        
+        // Reset and close
+        setContainers(containers.map(container => ({ ...container, selected: false })));
+        onClose();
+      } else {
+        toast({
+          title: "Failed to add containers",
+          description: response.error || "An error occurred while adding containers",
+          variant: "destructive"
+        });
+      }
+    } catch (err) {
+      console.error("Error adding containers:", err);
       toast({
-        title: `${newServices.length} container${newServices.length > 1 ? 's' : ''} added`,
-        description: `Added to ${serverName}`
+        title: "Error adding containers",
+        description: "An unexpected error occurred",
+        variant: "destructive"
       });
-    }, 800);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleContainerSelection = (containerId: string) => {
@@ -186,34 +238,49 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
           </TabsContent>
           
           <TabsContent value="container" className="py-4">
+            {/* Container list */}
             {loadingContainers ? (
               <div className="flex justify-center items-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading containers...</span>
+              </div>
+            ) : error ? (
+              <div className="text-center py-8 text-destructive">
+                <p>{error}</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4" 
+                  onClick={() => {
+                    setActiveTab("container");
+                  }}
+                >
+                  Retry
+                </Button>
               </div>
             ) : containers.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No containers found on this server</p>
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No containers found on this server.</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {containers.map((container) => (
-                  <div key={container.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted">
-                    <Checkbox 
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {containers.map(container => (
+                  <div
+                    key={container.id}
+                    className="flex items-center space-x-3 border rounded-md p-3 hover:bg-accent cursor-pointer"
+                    onClick={() => toggleContainerSelection(container.id)}
+                  >
+                    <Checkbox
                       id={`container-${container.id}`}
                       checked={container.selected}
                       onCheckedChange={() => toggleContainerSelection(container.id)}
                     />
-                    <div className="grid gap-1.5 leading-none">
-                      <Label 
-                        htmlFor={`container-${container.id}`}
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        {container.name}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {container.image}
-                      </p>
+                    <div className="flex-1">
+                      <div className="font-medium">{container.name}</div>
+                      <div className="text-sm text-muted-foreground">{container.image}</div>
+                      <div className="text-xs mt-1">
+                        <span className={`inline-block px-2 py-1 rounded-full ${container.service_status === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {container.service_status}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -228,15 +295,12 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
           </Button>
           {activeTab === "manual" ? (
             <Button onClick={handleAddManualService} disabled={loading || !serviceName}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Add Service
             </Button>
           ) : (
-            <Button 
-              onClick={handleAddContainers} 
-              disabled={loading || loadingContainers || !containers.some(c => c.selected)}
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button onClick={handleAddContainers} disabled={loading || loadingContainers || containers.filter(c => c.selected).length === 0}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Add Selected
             </Button>
           )}

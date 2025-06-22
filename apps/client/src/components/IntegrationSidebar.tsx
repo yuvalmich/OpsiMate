@@ -4,13 +4,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { IntegrationType } from "@/pages/Integrations";
 import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
+import { integrationApi } from "@/lib/api";
+import { useState } from "react";
 
 // --- FORM SCHEMAS ---
 
@@ -86,9 +88,9 @@ const FieldWrapper = ({ children, error }: { children: React.ReactNode, error?: 
 // --- FORM COMPONENTS ---
 
 const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>) => {
-    const { control, handleSubmit, watch, formState: { errors } } = useForm<ServerFormData>({
+    const { control, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<ServerFormData>({
         resolver: zodResolver(serverSchema),
-        defaultValues: { port: 22, authType: "password" },
+        defaultValues: { port: 22, authType: "key" },
     });
     const authType = watch("authType");
 
@@ -139,14 +141,23 @@ const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>)
             )}
             {authType === 'key' && (
                 <FieldWrapper error={errors.sshKey}>
-                    <Label htmlFor="sshKey">SSH Key Path</Label>
-                    <Controller name="sshKey" control={control} render={({ field }) => <Input id="sshKey" placeholder="~/.ssh/id_rsa" {...field} />} />
+                    <Label htmlFor="sshKey">SSH Key Filename</Label>
+                    <Controller name="sshKey" control={control} render={({ field }) => <Input id="sshKey" placeholder="id_rsa" {...field} />} />
                 </FieldWrapper>
             )}
             
             <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                <Button type="submit">Add Integration</Button>
+                <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Adding...
+                        </>
+                    ) : (
+                        "Add Integration"
+                    )}
+                </Button>
             </div>
         </form>
     );
@@ -244,36 +255,77 @@ interface IntegrationSidebarProps {
 
 export function IntegrationSidebar({ integration, onClose }: IntegrationSidebarProps) {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFormSubmit: SubmitHandler<AnyFormData> = (data) => {
-    const newIntegration = {
-      id: `${integration.type}-${Date.now()}`,
-      name: data.name,
-      type: integration.type,
-      status: "online",
-      details: { ...data },
-      lastConnected: new Date().toISOString(),
-      createdAt: new Date().toISOString()
-    };
+  const handleFormSubmit: SubmitHandler<AnyFormData> = async (data) => {
+    if (integration.type !== 'server') {
+      // For non-server integrations, use the old localStorage approach
+      const newIntegration = {
+        id: `${integration.type}-${Date.now()}`,
+        name: data.name,
+        type: integration.type,
+        status: "online",
+        details: { ...data },
+        lastConnected: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      };
 
+      try {
+        const existingIntegrationsJson = localStorage.getItem('integrations');
+        const existingIntegrations = existingIntegrationsJson ? JSON.parse(existingIntegrationsJson) : [];
+        const updatedIntegrations = [...existingIntegrations, newIntegration];
+        localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
+        
+        toast({
+          title: "Integration added",
+          description: `Successfully added ${integration.name} integration`
+        });
+        onClose();
+      } catch (error) {
+        console.error("Error saving integration:", error);
+        toast({
+          title: "Error adding integration",
+          description: "There was a problem saving your integration",
+          variant: "destructive"
+        });
+      }
+      return;
+    }
+    
+    // For server integration, use the API
+    setIsSubmitting(true);
     try {
-      const existingIntegrationsJson = localStorage.getItem('integrations');
-      const existingIntegrations = existingIntegrationsJson ? JSON.parse(existingIntegrationsJson) : [];
-      const updatedIntegrations = [...existingIntegrations, newIntegration];
-      localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
+      // Map form data to API request format
+      const serverData = data as ServerFormData;
+      const providerData = {
+        provider_name: serverData.name,
+        provider_ip: serverData.hostname,
+        username: serverData.username,
+        private_key_filename: serverData.authType === 'key' ? serverData.sshKey || 'id_rsa' : 'none',
+        ssh_port: serverData.port
+      };
       
-      toast({
-        title: "Integration added",
-        description: `Successfully added ${integration.name} integration`
-      });
-      onClose();
+      // Call the API to create a new provider
+      const response = await integrationApi.createProvider(providerData);
+      
+      if (response.success && response.data) {
+        toast({
+          title: "Integration added",
+          description: `Successfully added ${serverData.name} server integration`
+        });
+        onClose();
+      } else {
+        throw new Error(response.error || 'Failed to create integration');
+      }
     } catch (error) {
-      console.error("Error saving integration:", error);
+      console.error("Error creating server integration:", error);
       toast({
         title: "Error adding integration",
-        description: "There was a problem saving your integration",
+        description: error instanceof Error ? error.message : "There was a problem creating your integration",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
