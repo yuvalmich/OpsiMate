@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import integrationRouter from './integration-router';
-import healthRouter from './health-router';
+import integrationRouter from './api/integration';
+import healthRouter from './api/health';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
