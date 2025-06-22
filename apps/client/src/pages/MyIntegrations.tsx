@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { integrationApi } from "../lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -154,31 +155,60 @@ export function MyIntegrations() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [integrationInstances, setIntegrationInstances] = useState<IntegrationInstance[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationInstance | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
   const [selectedServerForService, setSelectedServerForService] = useState<IntegrationInstance | null>(null);
   const [selectedService, setSelectedService] = useState<ServiceConfig | null>(null);
   
-  // Load integrations from localStorage
+  // Load integrations from API
   useEffect(() => {
-    try {
-      const savedIntegrationsJson = localStorage.getItem('integrations');
-      if (savedIntegrationsJson) {
-        const savedIntegrations = JSON.parse(savedIntegrationsJson);
-        setIntegrationInstances(savedIntegrations);
-      } else if (import.meta.env.DEV) {
-        // In development, use mock data if no saved integrations exist
-        setIntegrationInstances(mockIntegrationInstances);
+    const fetchIntegrations = async () => {
+      setIsLoading(true);
+      try {
+        const response = await integrationApi.getProviders();
+        
+        if (response.success && response.data) {
+          // Convert API data to IntegrationInstance format
+          const apiIntegrations: IntegrationInstance[] = response.data.map(provider => ({
+            id: provider.id.toString(),
+            name: provider.provider_name,
+            type: "server" as IntegrationType,
+            status: "online", // Default to online since we don't have status info from API yet
+            details: {
+              hostname: provider.provider_ip,
+              port: provider.ssh_port.toString(),
+              username: provider.username
+            },
+            lastConnected: new Date().toISOString(),
+            createdAt: provider.created_at || new Date().toISOString(),
+            services: []
+          }));
+          
+          setIntegrationInstances(apiIntegrations);
+        } else if (import.meta.env.DEV && (!response.data || response.data.length === 0)) {
+          // In development, use mock data if no saved integrations exist
+          setIntegrationInstances(mockIntegrationInstances);
+        }
+      } catch (error) {
+        console.error("Error loading integrations:", error);
+        toast({
+          title: "Error loading integrations",
+          description: "There was a problem loading your integrations",
+          variant: "destructive"
+        });
+        
+        // Fall back to mock data in development
+        if (import.meta.env.DEV) {
+          setIntegrationInstances(mockIntegrationInstances);
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading integrations:", error);
-      toast({
-        title: "Error loading integrations",
-        description: "There was a problem loading your integrations",
-        variant: "destructive"
-      });
-    }
+    };
+    
+    fetchIntegrations();
   }, [toast]);
 
   // Filter integrations based on search query and active tab
@@ -192,44 +222,51 @@ export function MyIntegrations() {
     return matchesSearch && matchesTab;
   });
 
-  const handleRefreshIntegration = (id: string) => {
+  const handleRefreshIntegration = async (id: string) => {
     toast({
       title: "Refreshing integration",
       description: "Checking connection status..."
     });
     
-    // Simulate a refresh with a status update
-    setTimeout(() => {
-      try {
-        // Update state with new status
+    try {
+      // Get the latest data from the API
+      const response = await integrationApi.getProvider(parseInt(id));
+      
+      if (response.success && response.data) {
+        // Update just this integration with fresh data
         const updatedIntegrations = integrationInstances.map(integration => 
           integration.id === id 
             ? { 
                 ...integration, 
+                name: response.data.provider_name,
+                details: {
+                  hostname: response.data.provider_ip,
+                  port: response.data.ssh_port.toString(),
+                  username: response.data.username
+                },
                 lastConnected: new Date().toISOString(),
-                status: Math.random() > 0.3 ? "online" as const : "warning" as const
+                status: Math.random() > 0.3 ? "online" as const : "warning" as const // Simulate status check
               } 
             : integration
         );
         
         setIntegrationInstances(updatedIntegrations);
         
-        // Update localStorage
-        localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
-        
         toast({
           title: "Integration refreshed",
           description: "Connection status updated"
         });
-      } catch (error) {
-        console.error("Error refreshing integration:", error);
-        toast({
-          title: "Error refreshing",
-          description: "There was a problem updating the integration status",
-          variant: "destructive"
-        });
+      } else {
+        throw new Error("Failed to refresh integration");
       }
-    }, 1500);
+    } catch (error) {
+      console.error("Error refreshing integration:", error);
+      toast({
+        title: "Error refreshing",
+        description: "There was a problem updating the integration status",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleRowClick = (integration: IntegrationInstance) => {
@@ -240,8 +277,11 @@ export function MyIntegrations() {
     setSelectedService(service);
   };
 
-  const handleAddService = (integrationId: string, service: ServiceConfig) => {
+  const handleAddService = async (integrationId: string, service: ServiceConfig) => {
     try {
+      // TODO: Add API endpoint for adding services
+      // For now, we'll just update the UI
+      
       let updatedSelectedIntegration: IntegrationInstance | null = null;
       const updatedIntegrations = integrationInstances.map(integration => {
         if (integration.id === integrationId) {
@@ -259,7 +299,6 @@ export function MyIntegrations() {
       if (updatedSelectedIntegration) {
         setSelectedIntegration(updatedSelectedIntegration);
       }
-      localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
       setIsAddServiceDialogOpen(false);
     } catch (error) {
       console.error("Error adding service:", error);
@@ -271,8 +310,11 @@ export function MyIntegrations() {
     }
   };
 
-  const handleServiceStatusChange = (integrationId: string, serviceId: string, newStatus: "running" | "stopped" | "error" | "unknown") => {
+  const handleServiceStatusChange = async (integrationId: string, serviceId: string, newStatus: "running" | "stopped" | "error" | "unknown") => {
     try {
+      // TODO: Add API endpoint for updating service status
+      // For now, we'll just update the UI
+      
       const updatedIntegrations = integrationInstances.map(integration => {
         if (integration.id === integrationId && integration.services) {
           return {
@@ -286,7 +328,6 @@ export function MyIntegrations() {
       });
 
       setIntegrationInstances(updatedIntegrations);
-      localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
     } catch (error) {
       console.error("Error updating service status:", error);
       toast({
@@ -297,14 +338,16 @@ export function MyIntegrations() {
     }
   };
 
-  const handleDeleteIntegration = () => {
+  const handleDeleteIntegration = async () => {
     if (!selectedIntegration) return;
     try {
+      // TODO: Add API endpoint for deleting providers
+      // For now, we'll just update the UI
+      
       const updatedIntegrations = integrationInstances.filter(
         (integration) => integration.id !== selectedIntegration.id
       );
       setIntegrationInstances(updatedIntegrations);
-      localStorage.setItem("integrations", JSON.stringify(updatedIntegrations));
 
       toast({
         title: "Integration deleted",
@@ -361,7 +404,11 @@ export function MyIntegrations() {
 
         {/* Integrations Grid */}
         <div className="flex-1 overflow-auto p-4">
-          {filteredIntegrations.length > 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : filteredIntegrations.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filteredIntegrations.map((integration) => (
                 <Card 
@@ -434,20 +481,20 @@ export function MyIntegrations() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <ListPlus className="h-12 w-12 text-muted-foreground" />
-              <h2 className="mt-4 text-xl font-semibold">No integrations found</h2>
-              <p className="mt-1 text-muted-foreground">
-                {searchQuery ? "Try a different search term." : "Get started by adding a new integration."}
+            <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+              <div className="bg-muted/30 p-4 rounded-full mb-4">
+                <Database className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">No integrations found</h3>
+              <p className="text-muted-foreground mb-4">
+                {searchQuery ? "No integrations match your search query." : "You haven't added any integrations yet."}
               </p>
-              {!searchQuery && (
-                <Link to="/integrations" className="mt-4">
-                   <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Integration
-                  </Button>
-                </Link>
-              )}
+              <Link to="/integrations">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Integration
+                </Button>
+              </Link>
             </div>
           )}
         </div>
