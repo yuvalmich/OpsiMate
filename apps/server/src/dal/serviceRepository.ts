@@ -127,7 +127,23 @@ export async function deleteService(id: number): Promise<void> {
 export async function getServicesWithProvider(): Promise<any[]> {
   return new Promise<any[]>((resolve, reject) => {
     const query = `
-      SELECT s.*, p.* 
+      SELECT 
+        s.id as service_id, 
+        s.provider_id, 
+        s.service_name, 
+        s.service_ip, 
+        s.service_status, 
+        s.service_type, 
+        s.created_at as service_created_at, 
+        s.container_details,
+        p.id as provider_id, 
+        p.provider_name, 
+        p.provider_ip, 
+        p.username, 
+        p.private_key_filename, 
+        p.ssh_port, 
+        p.created_at as provider_created_at, 
+        p.provider_type
       FROM services s
       JOIN providers p ON s.provider_id = p.id
       ORDER BY s.created_at DESC
@@ -150,13 +166,13 @@ export async function getServicesWithProvider(): Promise<any[]> {
           
           // Create the service object with provider nested
           return {
-            id: row.id,
+            id: row.service_id,
             provider_id: row.provider_id,
             service_name: row.service_name,
             service_ip: row.service_ip,
             service_status: row.service_status,
             service_type: row.service_type,
-            created_at: row.created_at,
+            created_at: row.service_created_at,
             container_details: containerDetails,
             provider: {
               id: row.provider_id,
@@ -165,7 +181,7 @@ export async function getServicesWithProvider(): Promise<any[]> {
               username: row.username,
               private_key_filename: row.private_key_filename,
               ssh_port: row.ssh_port,
-              created_at: row.created_at,
+              created_at: row.provider_created_at,
               provider_type: row.provider_type
             }
           };
@@ -180,7 +196,23 @@ export async function getServicesWithProvider(): Promise<any[]> {
 export async function getServiceWithProvider(id: number): Promise<any | null> {
   return new Promise<any | null>((resolve, reject) => {
     const query = `
-      SELECT s.*, p.* 
+      SELECT 
+        s.id as service_id, 
+        s.provider_id, 
+        s.service_name, 
+        s.service_ip, 
+        s.service_status, 
+        s.service_type, 
+        s.created_at as service_created_at, 
+        s.container_details,
+        p.id as provider_id, 
+        p.provider_name, 
+        p.provider_ip, 
+        p.username, 
+        p.private_key_filename, 
+        p.ssh_port, 
+        p.created_at as provider_created_at, 
+        p.provider_type
       FROM services s
       JOIN providers p ON s.provider_id = p.id
       WHERE s.id = ?
@@ -206,13 +238,13 @@ export async function getServiceWithProvider(id: number): Promise<any | null> {
         
         // Create the service object with provider nested
         const service = {
-          id: row.id,
+          id: row.service_id,
           provider_id: row.provider_id,
           service_name: row.service_name,
           service_ip: row.service_ip,
           service_status: row.service_status,
           service_type: row.service_type,
-          created_at: row.created_at,
+          created_at: row.service_created_at,
           container_details: containerDetails,
           provider: {
             id: row.provider_id,
@@ -221,7 +253,7 @@ export async function getServiceWithProvider(id: number): Promise<any | null> {
             username: row.username,
             private_key_filename: row.private_key_filename,
             ssh_port: row.ssh_port,
-            created_at: row.created_at,
+            created_at: row.provider_created_at,
             provider_type: row.provider_type
           }
         };

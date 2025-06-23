@@ -388,6 +388,31 @@ export function MyIntegrations() {
     }
   };
   
+  // Helper function to update UI after service deletion
+  const updateUIAfterServiceDeletion = (serviceId: string) => {
+    // Update the UI by removing the deleted service
+    const updatedIntegrations = integrationInstances.map(integration => {
+      if (integration.id === selectedIntegration?.id && integration.services) {
+        return {
+          ...integration,
+          services: integration.services.filter(service => service.id !== serviceId)
+        };
+      }
+      return integration;
+    });
+    
+    setIntegrationInstances(updatedIntegrations);
+    
+    // Update the selected integration if it's the one with the deleted service
+    if (selectedIntegration && selectedIntegration.services) {
+      const updatedSelectedIntegration = {
+        ...selectedIntegration,
+        services: selectedIntegration.services.filter(service => service.id !== serviceId)
+      };
+      setSelectedIntegration(updatedSelectedIntegration);
+    }
+  };
+
   const handleDeleteService = async (serviceId: string) => {
     console.log('handleDeleteService called with serviceId:', serviceId);
     if (!selectedIntegration) {
@@ -396,33 +421,31 @@ export function MyIntegrations() {
     }
     
     try {
-      console.log('Calling API to delete service with ID:', parseInt(serviceId));
+      // Convert serviceId to number
+      const serviceIdNum = parseInt(serviceId);
+      console.log('Calling API to delete service with ID:', serviceIdNum);
+      
+      // First check if the service still exists in the database
+      const serviceCheck = await integrationApi.getServiceById(serviceIdNum);
+      
+      if (!serviceCheck.success || !serviceCheck.data) {
+        console.log('Service not found in database, updating UI only');
+        // Service doesn't exist in database, just update the UI
+        updateUIAfterServiceDeletion(serviceId);
+        toast({
+          title: "Service removed",
+          description: "The service has been removed from the list."
+        });
+        return;
+      }
+      
       // Call the API to delete the service
-      const response = await integrationApi.deleteService(parseInt(serviceId));
+      const response = await integrationApi.deleteService(serviceIdNum);
       console.log('Delete service API response:', response);
       
       if (response.success) {
-        // Update the UI by removing the deleted service
-        const updatedIntegrations = integrationInstances.map(integration => {
-          if (integration.id === selectedIntegration.id && integration.services) {
-            return {
-              ...integration,
-              services: integration.services.filter(service => service.id !== serviceId)
-            };
-          }
-          return integration;
-        });
-        
-        setIntegrationInstances(updatedIntegrations);
-        
-        // Update the selected integration if it's the one with the deleted service
-        if (selectedIntegration && selectedIntegration.services) {
-          const updatedSelectedIntegration = {
-            ...selectedIntegration,
-            services: selectedIntegration.services.filter(service => service.id !== serviceId)
-          };
-          setSelectedIntegration(updatedSelectedIntegration);
-        }
+        // Update the UI after successful deletion
+        updateUIAfterServiceDeletion(serviceId);
         
         toast({
           title: "Service deleted",
