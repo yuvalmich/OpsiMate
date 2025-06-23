@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Server, Cloud, Database, Globe, MoreVertical, Search, Plus, Trash, RefreshCw, Settings, ListPlus } from "lucide-react";
+import { Server, Cloud, Database, Globe, MoreVertical, Search, Plus, Trash, RefreshCw, Settings, ListPlus, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { IntegrationType } from "./Integrations";
 import { AddServiceDialog, ServiceConfig } from "@/components/AddServiceDialog";
 import { ServicesList } from "@/components/ServicesList";
 import { ServiceDetailsSheet } from "@/components/ServiceDetailsSheet";
+import { EditIntegrationDialog } from "@/components/EditIntegrationDialog";
 
 // Define the structure of an integration instance
 export interface IntegrationInstance {
@@ -158,6 +159,7 @@ export function MyIntegrations() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationInstance | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
   const [selectedServerForService, setSelectedServerForService] = useState<IntegrationInstance | null>(null);
   const [selectedService, setSelectedService] = useState<ServiceConfig | null>(null);
@@ -179,7 +181,8 @@ export function MyIntegrations() {
             details: {
               hostname: provider.provider_ip,
               port: provider.ssh_port.toString(),
-              username: provider.username
+              username: provider.username,
+              private_key_filename: provider.private_key_filename
             },
             lastConnected: new Date().toISOString(),
             createdAt: provider.created_at || new Date().toISOString(),
@@ -341,20 +344,25 @@ export function MyIntegrations() {
   const handleDeleteIntegration = async () => {
     if (!selectedIntegration) return;
     try {
-      // TODO: Add API endpoint for deleting providers
-      // For now, we'll just update the UI
+      // Call the API to delete the provider
+      const response = await integrationApi.deleteProvider(parseInt(selectedIntegration.id));
       
-      const updatedIntegrations = integrationInstances.filter(
-        (integration) => integration.id !== selectedIntegration.id
-      );
-      setIntegrationInstances(updatedIntegrations);
+      if (response.success) {
+        // Update the UI by removing the deleted integration
+        const updatedIntegrations = integrationInstances.filter(
+          (integration) => integration.id !== selectedIntegration.id
+        );
+        setIntegrationInstances(updatedIntegrations);
 
-      toast({
-        title: "Integration deleted",
-        description: `${selectedIntegration.name} has been successfully deleted.`,
-      });
-      setSelectedIntegration(null);
-      setIsDeleteDialogOpen(false);
+        toast({
+          title: "Integration deleted",
+          description: `${selectedIntegration.name} has been successfully deleted.`,
+        });
+        setSelectedIntegration(null);
+        setIsDeleteDialogOpen(false);
+      } else {
+        throw new Error(response.error || 'Failed to delete integration');
+      }
     } catch (error) {
       console.error("Error deleting integration:", error);
       toast({
@@ -362,6 +370,65 @@ export function MyIntegrations() {
         description: "There was a problem deleting your integration.",
         variant: "destructive",
       });
+    }
+  };
+  
+  const handleUpdateIntegration = async (integrationId: string, updatedData: {
+    provider_name: string;
+    provider_ip: string;
+    username: string;
+    private_key_filename: string;
+    ssh_port: number;
+  }) => {
+    try {
+      // Call the API to update the provider
+      const response = await integrationApi.updateProvider(parseInt(integrationId), updatedData);
+      
+      if (response.success && response.data) {
+        // Update the UI with the updated integration
+        const updatedIntegrations = integrationInstances.map(integration => {
+          if (integration.id === integrationId) {
+            return {
+              ...integration,
+              name: updatedData.provider_name,
+              details: {
+                ...integration.details,
+                hostname: updatedData.provider_ip,
+                port: updatedData.ssh_port.toString(),
+                username: updatedData.username,
+                private_key_filename: updatedData.private_key_filename
+              },
+              lastConnected: new Date().toISOString()
+            };
+          }
+          return integration;
+        });
+        
+        setIntegrationInstances(updatedIntegrations);
+        
+        // If this is the currently selected integration, update it
+        if (selectedIntegration && selectedIntegration.id === integrationId) {
+          const updatedIntegration = updatedIntegrations.find(i => i.id === integrationId);
+          if (updatedIntegration) {
+            setSelectedIntegration(updatedIntegration);
+          }
+        }
+        
+        toast({
+          title: "Integration updated",
+          description: `${updatedData.provider_name} has been successfully updated.`,
+        });
+      } else {
+        throw new Error(response.error || 'Failed to update integration');
+      }
+    } catch (error) {
+      console.error("Error updating integration:", error);
+      toast({
+        title: "Error updating integration",
+        description: "There was a problem updating your integration.",
+        variant: "destructive",
+      });
+      throw error; // Re-throw to be caught by the EditIntegrationDialog
     }
   };
 
@@ -437,6 +504,13 @@ export function MyIntegrations() {
                           <DropdownMenuItem onClick={() => handleRefreshIntegration(integration.id)}>
                             <RefreshCw className="mr-2 h-4 w-4" />
                             Refresh
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedIntegration(integration);
+                            setIsEditDialogOpen(true);
+                          }}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
                           </DropdownMenuItem>
                           {integration.type === 'server' && (
                             <DropdownMenuItem onClick={() => {
@@ -534,6 +608,14 @@ export function MyIntegrations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Edit Integration Dialog */}
+      <EditIntegrationDialog
+        integration={selectedIntegration}
+        open={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        onSave={handleUpdateIntegration}
+      />
     </DashboardLayout>
   );
 }

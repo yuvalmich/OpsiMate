@@ -78,4 +78,20 @@ export const integrationApi = {
   getServices: (providerId: number) => {
     return apiRequest<any[]>(`/providers/${providerId}/services`);
   },
+  
+  // Delete a provider
+  deleteProvider: (providerId: number) => {
+    return apiRequest<{ message: string }>(`/providers/${providerId}`, 'DELETE');
+  },
+  
+  // Update a provider
+  updateProvider: (providerId: number, providerData: {
+    provider_name: string;
+    provider_ip: string;
+    username: string;
+    private_key_filename: string;
+    ssh_port?: number;
+  }) => {
+    return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', providerData);
+  },
 };
