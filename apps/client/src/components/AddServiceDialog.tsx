@@ -49,42 +49,42 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
   const [loadingContainers, setLoadingContainers] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load containers from the server using API
+  // Function to fetch containers from the API
+  const fetchContainers = async () => {
+    setLoadingContainers(true);
+    setError(null);
+    
+    try {
+      const response = await integrationApi.getProviderInstances(parseInt(serverId));
+      
+      if (response.success && response.data && response.data.containers) {
+        // Transform API container data to match our UI format
+        const containerData = response.data.containers.map((container, index) => ({
+          ...container,
+          id: `container-${index}`,
+          name: container.service_name,
+          selected: false,
+          created: new Date().toISOString() // API doesn't provide creation date, so we use current time
+        }));
+        
+        setContainers(containerData);
+      } else {
+        setError('Failed to load containers');
+        // Fall back to empty array
+        setContainers([]);
+      }
+    } catch (err) {
+      console.error('Error fetching containers:', err);
+      setError('Error loading containers. Please try again.');
+      setContainers([]);
+    } finally {
+      setLoadingContainers(false);
+    }
+  };
+  
+  // Load containers from the server using API when the dialog opens or tab changes
   useEffect(() => {
     if (open && activeTab === "container") {
-      setLoadingContainers(true);
-      setError(null);
-      
-      // Fetch containers from API
-      const fetchContainers = async () => {
-        try {
-          const response = await integrationApi.getProviderInstances(parseInt(serverId));
-          
-          if (response.success && response.data && response.data.containers) {
-            // Transform API container data to match our UI format
-            const containerData = response.data.containers.map((container, index) => ({
-              ...container,
-              id: `container-${index}`,
-              name: container.service_name,
-              selected: false,
-              created: new Date().toISOString() // API doesn't provide creation date, so we use current time
-            }));
-            
-            setContainers(containerData);
-          } else {
-            setError('Failed to load containers');
-            // Fall back to empty array
-            setContainers([]);
-          }
-        } catch (err) {
-          console.error('Error fetching containers:', err);
-          setError('Error loading containers. Please try again.');
-          setContainers([]);
-        } finally {
-          setLoadingContainers(false);
-        }
-      };
-      
       fetchContainers();
     }
   }, [open, activeTab, serverId]);
@@ -257,7 +257,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
                   variant="outline" 
                   className="mt-4" 
                   onClick={() => {
-                    setActiveTab("container");
+                    fetchContainers();
                   }}
                 >
                   Retry
