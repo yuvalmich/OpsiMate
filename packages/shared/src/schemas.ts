@@ -1,11 +1,13 @@
 import { z } from 'zod';
+import { ProviderType } from './types';
 
 export const CreateProviderSchema = z.object({
   provider_name: z.string().min(1, 'Provider name is required'),
   provider_ip: z.string().ip('Invalid IP address'),
   username: z.string().min(1, 'Username is required'),
   private_key_filename: z.string().min(1, 'Private key filename is required'),
-  ssh_port: z.number().int().min(1).max(65535).optional().default(22)
+  ssh_port: z.number().int().min(1).max(65535).optional().default(22),
+  provider_type: z.nativeEnum(ProviderType),
 });
 
 export const BulkServiceSchema = z.object({

@@ -1,3 +1,8 @@
+export enum ProviderType {
+  VM = 'VM',
+  K8S = 'K8S',
+}
+
 export interface Provider {
   id: number;
   provider_name: string;
@@ -6,6 +11,7 @@ export interface Provider {
   private_key_filename: string;
   ssh_port: number;
   created_at: string;
+  provider_type: ProviderType;
 }
 
 export interface Service {

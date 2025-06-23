@@ -4,6 +4,7 @@ import { CreateProviderSchema, BulkServiceSchema, Provider } from '@service-peek
 import * as providerRepo from '../dal/providerRepository';
 import * as serviceRepo from '../dal/serviceRepository';
 import * as sshClient from '../dal/sshClient';
+import {providerConnectorFactory} from "./providers/providerConnectorFactory";
 
 export async function createProvider(req: Request, res: Response) {
   try {
@@ -32,7 +33,11 @@ export async function getProviderInstance(req: Request, res: Response) {
       return res.status(404).json({ success: false, error: 'Provider not found' });
     }
     try {
-      const containers = await sshClient.connectAndListContainers(provider, provider.private_key_filename);
+      const providerConnector = providerConnectorFactory(provider.provider_type)
+      if (!providerConnector) {
+        return res.status(501).json({ success: false, error: 'Provider not implemented' });
+      }
+      const containers = await providerConnector.connectAndListContainers(provider, provider.private_key_filename);
       res.json({ success: true, data: { provider, containers } });
     } catch (sshError) {
       console.error('SSH/Docker error:', sshError);
