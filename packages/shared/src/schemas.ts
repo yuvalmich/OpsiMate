@@ -26,10 +26,31 @@ export const ProviderIdSchema = z.object({
 
 export const ServiceSchema = z.object({
   provider_id: z.number(),
-  service_name: z.string(),
+  service_name: z.string().min(1, 'Service name is required'),
   service_ip: z.string().optional(),
   service_status: z.string().optional(),
   service_type: z.nativeEnum(ServiceType),
+  container_details: z.object({
+    id: z.string().optional(),
+    image: z.string().optional(),
+    created: z.string().optional()
+  }).optional()
+});
+
+export const CreateServiceSchema = ServiceSchema;
+
+export const UpdateServiceSchema = ServiceSchema.partial().extend({
+  id: z.number()
+});
+
+export const ServiceIdSchema = z.object({
+  serviceId: z.string().transform((val) => {
+    const parsed = parseInt(val);
+    if (isNaN(parsed)) {
+      throw new Error('Invalid service ID');
+    }
+    return parsed;
+  })
 });
 
 export type CreateProviderRequest = z.infer<typeof CreateProviderSchema>;

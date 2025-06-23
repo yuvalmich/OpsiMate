@@ -13,13 +13,13 @@ import { integrationApi } from "../lib/api";
 export interface ServiceConfig {
   id: string;
   name: string;
-  type: "manual" | "container";
+  type: string; // Updated to accept any string type from API ("MANUAL", "DOCKER", etc.)
   status: "running" | "stopped" | "error" | "unknown";
-  port?: number | string;
+  service_ip?: string;
   containerDetails?: {
-    id: string;
-    image: string;
-    created: string;
+    id?: string;
+    image?: string;
+    created?: string;
   };
 }
 
@@ -89,7 +89,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     }
   }, [open, activeTab, serverId]);
 
-  const handleAddManualService = () => {
+  const handleAddManualService = async () => {
     if (!serviceName) {
       toast({
         title: "Service name required",
@@ -101,28 +101,52 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
 
     setLoading(true);
 
-    // Create new service
-    const newService: ServiceConfig = {
-      id: `service-${Date.now()}`,
-      name: serviceName,
-      type: "manual",
-      status: "running",
-      port: servicePort ? parseInt(servicePort, 10) : undefined
-    };
-
-    // Simulate API call
-    setTimeout(() => {
-      onServiceAdded(newService);
-      setLoading(false);
-      setServiceName("");
-      setServicePort("");
-      onClose();
-      
-      toast({
-        title: "Service added",
-        description: `${serviceName} has been added to ${serverName}`
+    try {
+      // Create service using the new API
+      const response = await integrationApi.createService({
+        provider_id: parseInt(serverId),
+        service_name: serviceName,
+        service_type: "MANUAL",
+        service_ip: servicePort ? `localhost:${servicePort}` : undefined,
+        service_status: "running"
       });
-    }, 800);
+
+      if (response.success && response.data) {
+        // Create UI service object from API response
+        const newService: ServiceConfig = {
+          id: response.data.id.toString(),
+          name: serviceName,
+          type: "MANUAL", // Match the API service_type
+          status: "running",
+          service_ip: servicePort ? `localhost:${servicePort}` : undefined
+        };
+
+        onServiceAdded(newService);
+        setServiceName("");
+        setServicePort("");
+        onClose();
+        
+        toast({
+          title: "Service added",
+          description: `${serviceName} has been added to ${serverName}`
+        });
+      } else {
+        toast({
+          title: "Failed to add service",
+          description: response.error || "An error occurred while adding the service",
+          variant: "destructive"
+        });
+      }
+    } catch (err) {
+      console.error("Error adding service:", err);
+      toast({
+        title: "Error adding service",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddContainers = async () => {
@@ -140,48 +164,70 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     setLoading(true);
 
     try {
-      // Extract service names for API call
-      const serviceNames = selectedContainers.map(container => container.service_name);
+      // Create an array to store successful service creations
+      const createdServices: ServiceConfig[] = [];
+      const failedContainers: string[] = [];
       
-      // Call the API to add services in bulk
-      const response = await integrationApi.addServicesBulk(parseInt(serverId), serviceNames);
-      
-      if (response.success) {
-        // Create new services from selected containers for UI
-        const newServices = selectedContainers.map(container => {
-          // Ensure status is one of the allowed values: "running", "stopped", "error", or "unknown"
-          const status = container.service_status === "running" ? "running" : 
-                        container.service_status === "stopped" ? "stopped" : 
-                        container.service_status === "error" ? "error" : "unknown";
-          
-          return {
-            id: `container-${container.id}-${Date.now()}`,
-            name: container.name,
-            type: "container" as const,
-            status: status as "running" | "stopped" | "error" | "unknown",
-            containerDetails: {
+      // Create each service individually using the new API
+      for (const container of selectedContainers) {
+        // Ensure status is one of the allowed values
+        const status = container.service_status === "running" ? "running" : 
+                      container.service_status === "stopped" ? "stopped" : 
+                      container.service_status === "error" ? "error" : "unknown";
+        
+        try {
+          // Create service using the new API
+          const response = await integrationApi.createService({
+            provider_id: parseInt(serverId),
+            service_name: container.name,
+            service_type: "DOCKER",
+            service_status: status,
+            service_ip: container.service_ip,
+            container_details: {
               id: container.id,
               image: container.image,
               created: container.created
             }
-          };
-        });
-
-        // Add services to UI
-        newServices.forEach(service => onServiceAdded(service));
-        
+          });
+          
+          if (response.success && response.data) {
+            // Create UI service object from API response
+            const newService: ServiceConfig = {
+              id: response.data.id.toString(),
+              name: response.data.service_name,
+              type: "DOCKER", // Match the API service_type
+              status: response.data.service_status as "running" | "stopped" | "error" | "unknown",
+              service_ip: response.data.service_ip,
+              containerDetails: response.data.container_details
+            };
+            
+            createdServices.push(newService);
+          } else {
+            failedContainers.push(container.name);
+          }
+        } catch (error) {
+          console.error(`Error creating service for container ${container.name}:`, error);
+          failedContainers.push(container.name);
+        }
+      }
+      
+      // Add successful services to UI
+      createdServices.forEach(service => onServiceAdded(service));
+      
+      // Show appropriate toast message
+      if (createdServices.length > 0) {
         toast({
-          title: `${newServices.length} container${newServices.length > 1 ? 's' : ''} added`,
-          description: `Added to ${serverName}`
+          title: `${createdServices.length} container${createdServices.length > 1 ? 's' : ''} added`,
+          description: `Added to ${serverName}${failedContainers.length > 0 ? '. Some containers failed.' : ''}`
         });
         
-        // Reset and close
+        // Reset and close if at least one service was created
         setContainers(containers.map(container => ({ ...container, selected: false })));
         onClose();
       } else {
         toast({
           title: "Failed to add containers",
-          description: response.error || "An error occurred while adding containers",
+          description: "None of the selected containers could be added",
           variant: "destructive"
         });
       }

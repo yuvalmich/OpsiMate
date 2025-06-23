@@ -1,4 +1,4 @@
-import { ApiResponse, Provider } from '@service-peek/shared';
+import { ApiResponse, Provider, Service, ServiceWithProvider } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
@@ -80,6 +80,8 @@ export const viewsApi = {
  * Integration API endpoints
  */
 export const integrationApi = {
+  // Provider APIs
+  
   // Get all providers
   getProviders: () => {
     return apiRequest<Provider[]>('/providers');
@@ -115,13 +117,13 @@ export const integrationApi = {
   },
   
   // Get services for a provider
-  getServices: (providerId: number) => {
+  getProviderServices: (providerId: number) => {
     return apiRequest<any[]>(`/providers/${providerId}/services`);
   },
   
   // Delete a provider
   deleteProvider: (providerId: number) => {
-    return apiRequest<{ message: string }>(`/providers/${providerId}`, 'DELETE');
+    return apiRequest<void>(`/providers/${providerId}`, 'DELETE');
   },
   
   // Update a provider
@@ -134,5 +136,55 @@ export const integrationApi = {
     provider_type: string;
   }) => {
     return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', providerData);
+  },
+  
+  // Service APIs
+  
+  // Get all services with provider details
+  getAllServices: () => {
+    return apiRequest<ServiceWithProvider[]>('/services');
+  },
+  
+  // Get a specific service with provider details
+  getServiceById: (serviceId: number) => {
+    return apiRequest<ServiceWithProvider>(`/services/${serviceId}`);
+  },
+  
+  // Create a new service
+  createService: (serviceData: {
+    provider_id: number;
+    service_name: string;
+    service_ip?: string;
+    service_status?: string;
+    service_type: string;
+    container_details?: {
+      id?: string;
+      image?: string;
+      created?: string;
+    };
+  }) => {
+    return apiRequest<ServiceWithProvider>('/services', 'POST', serviceData);
+  },
+  
+  // Update a service
+  updateService: (serviceId: number, serviceData: Partial<{
+    provider_id: number;
+    service_name: string;
+    service_ip: string;
+    service_status: string;
+    service_type: string;
+    container_details: {
+      id?: string;
+      image?: string;
+      created?: string;
+    };
+  }>) => {
+    return apiRequest<ServiceWithProvider>(`/services/${serviceId}`, 'PUT', serviceData);
+  },
+  
+  // Delete a service
+  deleteService: (serviceId: number) => {
+    console.log('API deleteService called with ID:', serviceId);
+    return apiRequest<void>(`/services/${serviceId}`, 'DELETE');
   },
 };
