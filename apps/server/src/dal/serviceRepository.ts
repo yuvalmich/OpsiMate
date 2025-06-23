@@ -4,8 +4,8 @@ import { db } from './providerRepository';
 export async function createService(data: any) {
   return new Promise<{ lastID: number }>((resolve, reject) => {
     db.run(
-      'INSERT INTO services (provider_id, service_name, service_ip) VALUES (?, ?, ?)',
-      [data.provider_id, data.service_name, data.service_ip],
+      'INSERT INTO services (provider_id, service_name, service_ip, service_status, service_type) VALUES (?, ?, ?, ?, ?)',
+      [data.provider_id, data.service_name, data.service_ip, data.service_status, data.service_type],
       function (err) {
         if (err) reject(err);
         else resolve({ lastID: this.lastID });
@@ -38,6 +38,19 @@ export async function bulkCreateServices(providerId: number, serviceNames: strin
   return storedServices;
 }
 
+export async function updateService(id: number, data: any) {
+  return new Promise<void>((resolve, reject) => {
+    db.run(
+      'UPDATE services SET service_name = ?, service_ip = ?, service_status = ?, service_type = ? WHERE id = ?',
+      [data.service_name, data.service_ip, data.service_status, data.service_type, id],
+      function (err) {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
+}
+
 export async function initServicesTable(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     db.run(`
@@ -47,6 +60,7 @@ export async function initServicesTable(): Promise<void> {
         service_name TEXT NOT NULL,
         service_ip TEXT,
         service_status TEXT DEFAULT 'unknown',
+        service_type TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (provider_id) REFERENCES providers(id)
       )
