@@ -96,10 +96,12 @@ const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>)
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+            <FormSectionHeader title="Server Details" />
             <FieldWrapper error={errors.name}>
                 <Label htmlFor="name">Server Name <span className="text-destructive">*</span></Label>
                 <Controller name="name" control={control} render={({ field }) => <Input id="name" placeholder="My Production Server" {...field} />} />
             </FieldWrapper>
+
             <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-2">
                     <FieldWrapper error={errors.hostname}>
@@ -297,12 +299,22 @@ export function IntegrationSidebar({ integration, onClose }: IntegrationSidebarP
     try {
       // Map form data to API request format
       const serverData = data as ServerFormData;
+      // Determine provider_type based on integration.type
+      let providerType = 'VM'; // Default to VM
+      
+      // Map integration types to provider types
+      // Using type assertion to handle the comparison
+      if (integration.type.includes('kubernetes')) {
+        providerType = 'K8S';
+      }
+      
       const providerData = {
         provider_name: serverData.name,
         provider_ip: serverData.hostname,
         username: serverData.username,
         private_key_filename: serverData.authType === 'key' ? serverData.sshKey || 'id_rsa' : 'none',
-        ssh_port: serverData.port
+        ssh_port: serverData.port,
+        provider_type: providerType
       };
       
       // Call the API to create a new provider

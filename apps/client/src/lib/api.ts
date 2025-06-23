@@ -97,6 +97,7 @@ export const integrationApi = {
     username: string;
     private_key_filename: string;
     ssh_port?: number;
+    provider_type: string;
   }) => {
     return apiRequest<Provider>('/providers', 'POST', providerData);
   },
@@ -130,6 +131,7 @@ export const integrationApi = {
     username: string;
     private_key_filename: string;
     ssh_port?: number;
+    provider_type: string;
   }) => {
     return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', providerData);
   },

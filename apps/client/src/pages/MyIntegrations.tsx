@@ -379,6 +379,7 @@ export function MyIntegrations() {
     username: string;
     private_key_filename: string;
     ssh_port: number;
+    provider_type: string;
   }) => {
     try {
       // Call the API to update the provider
@@ -396,7 +397,8 @@ export function MyIntegrations() {
                 hostname: updatedData.provider_ip,
                 port: updatedData.ssh_port.toString(),
                 username: updatedData.username,
-                private_key_filename: updatedData.private_key_filename
+                private_key_filename: updatedData.private_key_filename,
+                provider_type: updatedData.provider_type
               },
               lastConnected: new Date().toISOString()
             };

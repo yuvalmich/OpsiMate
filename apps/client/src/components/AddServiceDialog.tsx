@@ -148,17 +148,24 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
       
       if (response.success) {
         // Create new services from selected containers for UI
-        const newServices = selectedContainers.map(container => ({
-          id: `container-${container.id}-${Date.now()}`,
-          name: container.name,
-          type: "container" as const,
-          status: container.service_status === "running" ? "running" : "stopped" as const,
-          containerDetails: {
-            id: container.id,
-            image: container.image,
-            created: container.created
-          }
-        }));
+        const newServices = selectedContainers.map(container => {
+          // Ensure status is one of the allowed values: "running", "stopped", "error", or "unknown"
+          const status = container.service_status === "running" ? "running" : 
+                        container.service_status === "stopped" ? "stopped" : 
+                        container.service_status === "error" ? "error" : "unknown";
+          
+          return {
+            id: `container-${container.id}-${Date.now()}`,
+            name: container.name,
+            type: "container" as const,
+            status: status as "running" | "stopped" | "error" | "unknown",
+            containerDetails: {
+              id: container.id,
+              image: container.image,
+              created: container.created
+            }
+          };
+        });
 
         // Add services to UI
         newServices.forEach(service => onServiceAdded(service));

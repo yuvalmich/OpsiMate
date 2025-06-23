@@ -22,6 +22,7 @@ interface EditIntegrationDialogProps {
     username: string;
     private_key_filename: string;
     ssh_port: number;
+    provider_type: string;
   }) => Promise<void>;
 }
 
@@ -37,6 +38,7 @@ export function EditIntegrationDialog({
     username: "",
     private_key_filename: "",
     ssh_port: 22,
+    provider_type: "VM", // Default to VM
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -46,12 +48,21 @@ export function EditIntegrationDialog({
       // Get the private key filename from the integration details
       console.log('Integration details:', integration.details);
       
+      // Determine provider_type based on integration.type
+      let providerType = 'VM'; // Default to VM
+      
+      // Map integration types to provider types
+      if (integration.type.includes('kubernetes')) {
+        providerType = 'K8S';
+      }
+      
       setFormData({
         provider_name: integration.name,
         provider_ip: integration.details?.hostname || "",
         username: integration.details?.username || "",
         private_key_filename: integration.details?.private_key_filename || "",
         ssh_port: parseInt(integration.details?.port || "22"),
+        provider_type: providerType
       });
     }
   }, [integration, open]);
