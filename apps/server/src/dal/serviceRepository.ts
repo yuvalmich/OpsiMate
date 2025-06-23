@@ -1,4 +1,5 @@
 import { db } from './providerRepository';
+import {ServiceType} from "@service-peek/shared";
 
 // Data access for services
 export async function createService(data: any) {
@@ -23,10 +24,11 @@ export async function getServicesByProviderId(providerId: number) {
   });
 }
 
+// todo: get service params instead of just names
 export async function bulkCreateServices(providerId: number, serviceNames: string[], providerIp: string) {
   const storedServices = [];
   for (const serviceName of serviceNames) {
-    const result = await createService({ provider_id: providerId, service_name: serviceName, service_ip: providerIp });
+    const result = await createService({ provider_id: providerId, service_type: ServiceType.VM, service_name: serviceName, service_ip: providerIp });
     const service = await new Promise<any>((resolve, reject) => {
       db.get('SELECT * FROM services WHERE id = ?', [result.lastID], (err, row) => {
         if (err) reject(err);
@@ -36,19 +38,6 @@ export async function bulkCreateServices(providerId: number, serviceNames: strin
     storedServices.push(service);
   }
   return storedServices;
-}
-
-export async function updateService(id: number, data: any) {
-  return new Promise<void>((resolve, reject) => {
-    db.run(
-      'UPDATE services SET service_name = ?, service_ip = ?, service_status = ?, service_type = ? WHERE id = ?',
-      [data.service_name, data.service_ip, data.service_status, data.service_type, id],
-      function (err) {
-        if (err) reject(err);
-        else resolve();
-      }
-    );
-  });
 }
 
 export async function initServicesTable(): Promise<void> {
