@@ -36,4 +36,23 @@ export async function bulkCreateServices(providerId: number, serviceNames: strin
     storedServices.push(service);
   }
   return storedServices;
+}
+
+export async function initServicesTable(): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS services (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        provider_id INTEGER NOT NULL,
+        service_name TEXT NOT NULL,
+        service_ip TEXT,
+        service_status TEXT DEFAULT 'unknown',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (provider_id) REFERENCES providers(id)
+      )
+    `, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
 } 
