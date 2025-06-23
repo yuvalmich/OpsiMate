@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ProviderType } from './types';
+import { ProviderType, ServiceType } from './types';
 
 export const CreateProviderSchema = z.object({
   provider_name: z.string().min(1, 'Provider name is required'),
@@ -22,6 +22,14 @@ export const ProviderIdSchema = z.object({
     }
     return parsed;
   })
+});
+
+export const ServiceSchema = z.object({
+  provider_id: z.number(),
+  service_name: z.string(),
+  service_ip: z.string().optional(),
+  service_status: z.string().optional(),
+  service_type: z.nativeEnum(ServiceType),
 });
 
 export type CreateProviderRequest = z.infer<typeof CreateProviderSchema>;

@@ -3,6 +3,11 @@ export enum ProviderType {
   K8S = 'K8S',
 }
 
+export enum ServiceType {
+  DOCKER = 'DOCKER',
+  SYSTEMD = 'SYSTEMD',
+}
+
 export interface Provider {
   id: number;
   provider_name: string;
@@ -21,6 +26,7 @@ export interface Service {
   service_ip?: string;
   service_status: string;
   created_at: string;
+  service_type: ServiceType;
 }
 
 export interface ServiceInstance {
