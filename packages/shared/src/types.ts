@@ -6,6 +6,7 @@ export enum ProviderType {
 export enum ServiceType {
   DOCKER = 'DOCKER',
   SYSTEMD = 'SYSTEMD',
+  MANUAL = 'MANUAL',
 }
 
 export interface Provider {
@@ -19,6 +20,12 @@ export interface Provider {
   provider_type: ProviderType;
 }
 
+export interface ContainerDetails {
+  id?: string;
+  image?: string;
+  created?: string;
+}
+
 export interface Service {
   id: number;
   provider_id: number;
@@ -27,6 +34,11 @@ export interface Service {
   service_status: string;
   created_at: string;
   service_type: ServiceType;
+  container_details?: ContainerDetails;
+}
+
+export interface ServiceWithProvider extends Service {
+  provider: Provider;
 }
 
 export interface ServiceInstance {

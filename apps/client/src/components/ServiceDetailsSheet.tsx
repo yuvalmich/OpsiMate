@@ -6,10 +6,13 @@ import { ExternalLink, X } from "lucide-react";
 import { IntegrationInstance } from "@/pages/MyIntegrations";
 import { getIntegrationTypeName, getStatusBadgeColor } from "@/pages/MyIntegrations";
 import { ServiceConfig } from "./AddServiceDialog";
+import { ServicesList } from "./ServicesList";
 
 interface ServiceDetailsSheetProps {
   integration: IntegrationInstance | null;
   onClose: () => void;
+  onDeleteService?: (serviceId: string) => void;
+  onStatusChange?: (serviceId: string, newStatus: "running" | "stopped" | "error") => void;
 }
 
 const DetailRow = ({ label, value }: { label: string; value: string }) => (
@@ -32,6 +35,8 @@ const getServiceStatusBadgeColor = (status: ServiceConfig["status"]) => {
 export function ServiceDetailsSheet({
   integration,
   onClose,
+  onDeleteService,
+  onStatusChange,
 }: ServiceDetailsSheetProps) {
   if (!integration) return null;
 
@@ -62,21 +67,16 @@ export function ServiceDetailsSheet({
           {integration.services && integration.services.length > 0 && (
             <div>
               <h4 className="font-semibold text-lg mb-2">Services</h4>
-              <div className="space-y-2">
-                {integration.services.map((service) => (
-                   <div key={service.id} className="p-3 rounded-lg border bg-card">
-                     <div className="flex justify-between items-center">
-                       <div>
-                         <p className="font-semibold">{service.name}</p>
-                         {service.port && <p className="text-sm text-muted-foreground">Port: {service.port}</p>}
-                       </div>
-                       <Badge className={`${getServiceStatusBadgeColor(service.status)} capitalize`}>
-                         {service.status}
-                       </Badge>
-                     </div>
-                   </div>
-                ))}
-              </div>
+              <ServicesList 
+                services={integration.services} 
+                onServiceClick={(service) => {/* Handle service click if needed */}}
+                onStatusChange={(serviceId, newStatus) => {
+                  if (onStatusChange && integration.id) {
+                    onStatusChange(serviceId, newStatus);
+                  }
+                }}
+                onDeleteService={onDeleteService}
+              />
             </div>
           )}
 

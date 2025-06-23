@@ -272,8 +272,55 @@ export function MyIntegrations() {
     }
   };
 
-  const handleRowClick = (integration: IntegrationInstance) => {
-    setSelectedIntegration(integration);
+  const handleRowClick = async (integration: IntegrationInstance) => {
+    try {
+      // Fetch services for this integration from the API
+      const response = await integrationApi.getAllServices();
+      
+      if (response.success && response.data) {
+        // Filter services that belong to this provider
+        const providerServices = response.data.filter(service => 
+          service.provider_id.toString() === integration.id
+        );
+        
+        // Map API services to ServiceConfig format
+        const serviceConfigs: ServiceConfig[] = providerServices.map(service => ({
+          id: service.id.toString(),
+          name: service.service_name,
+          status: service.service_status as "running" | "stopped" | "error" | "unknown",
+          type: service.service_type,
+          service_ip: service.service_ip,
+          containerDetails: service.container_details || undefined
+        }));
+        
+        // Update the integration with its services
+        const updatedIntegration = {
+          ...integration,
+          services: serviceConfigs
+        };
+        
+        // Update the integrations list with the updated integration
+        const updatedIntegrations = integrationInstances.map(item => 
+          item.id === integration.id ? updatedIntegration : item
+        );
+        
+        setIntegrationInstances(updatedIntegrations);
+        setSelectedIntegration(updatedIntegration);
+      } else {
+        // If no services or API call failed, just select the integration without services
+        setSelectedIntegration(integration);
+      }
+    } catch (error) {
+      console.error("Error fetching services for integration:", error);
+      toast({
+        title: "Error loading services",
+        description: "There was a problem loading services for this integration",
+        variant: "destructive"
+      });
+      
+      // Select the integration anyway, even if service loading failed
+      setSelectedIntegration(integration);
+    }
   };
 
   const handleServiceClick = (service: ServiceConfig) => {
@@ -336,6 +383,82 @@ export function MyIntegrations() {
       toast({
         title: "Error updating service",
         description: "There was a problem updating the service status",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Helper function to update UI after service deletion
+  const updateUIAfterServiceDeletion = (serviceId: string) => {
+    // Update the UI by removing the deleted service
+    const updatedIntegrations = integrationInstances.map(integration => {
+      if (integration.id === selectedIntegration?.id && integration.services) {
+        return {
+          ...integration,
+          services: integration.services.filter(service => service.id !== serviceId)
+        };
+      }
+      return integration;
+    });
+    
+    setIntegrationInstances(updatedIntegrations);
+    
+    // Update the selected integration if it's the one with the deleted service
+    if (selectedIntegration && selectedIntegration.services) {
+      const updatedSelectedIntegration = {
+        ...selectedIntegration,
+        services: selectedIntegration.services.filter(service => service.id !== serviceId)
+      };
+      setSelectedIntegration(updatedSelectedIntegration);
+    }
+  };
+
+  const handleDeleteService = async (serviceId: string) => {
+    console.log('handleDeleteService called with serviceId:', serviceId);
+    if (!selectedIntegration) {
+      console.log('No selected integration, returning');
+      return;
+    }
+    
+    try {
+      // Convert serviceId to number
+      const serviceIdNum = parseInt(serviceId);
+      console.log('Calling API to delete service with ID:', serviceIdNum);
+      
+      // First check if the service still exists in the database
+      const serviceCheck = await integrationApi.getServiceById(serviceIdNum);
+      
+      if (!serviceCheck.success || !serviceCheck.data) {
+        console.log('Service not found in database, updating UI only');
+        // Service doesn't exist in database, just update the UI
+        updateUIAfterServiceDeletion(serviceId);
+        toast({
+          title: "Service removed",
+          description: "The service has been removed from the list."
+        });
+        return;
+      }
+      
+      // Call the API to delete the service
+      const response = await integrationApi.deleteService(serviceIdNum);
+      console.log('Delete service API response:', response);
+      
+      if (response.success) {
+        // Update the UI after successful deletion
+        updateUIAfterServiceDeletion(serviceId);
+        
+        toast({
+          title: "Service deleted",
+          description: "The service has been successfully deleted."
+        });
+      } else {
+        throw new Error(response.error || 'Failed to delete service');
+      }
+    } catch (error) {
+      console.error("Error deleting service:", error);
+      toast({
+        title: "Error deleting service",
+        description: "There was a problem deleting the service",
         variant: "destructive"
       });
     }
@@ -580,6 +703,12 @@ export function MyIntegrations() {
       <ServiceDetailsSheet 
         integration={selectedIntegration}
         onClose={() => setSelectedIntegration(null)}
+        onDeleteService={handleDeleteService}
+        onStatusChange={(serviceId, newStatus) => {
+          if (selectedIntegration) {
+            handleServiceStatusChange(selectedIntegration.id, serviceId, newStatus);
+          }
+        }}
       />
 
       {/* Add Service Dialog */}
