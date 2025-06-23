@@ -89,4 +89,60 @@ export async function getProviderServices(req: Request, res: Response) {
     console.error('Error getting services:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
+}
+
+export async function deleteProvider(req: Request, res: Response) {
+  try {
+    const providerId = parseInt(req.params.providerId);
+    if (isNaN(providerId)) {
+      return res.status(400).json({ success: false, error: 'Invalid provider ID' });
+    }
+    
+    // Check if provider exists
+    const provider = await providerRepo.getProviderById(providerId);
+    if (!provider) {
+      return res.status(404).json({ success: false, error: 'Provider not found' });
+    }
+    
+    // Delete the provider and its associated services
+    await providerRepo.deleteProvider(providerId);
+    
+    res.json({ success: true, message: 'Provider and associated services deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting provider:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+}
+
+export async function updateProvider(req: Request, res: Response) {
+  try {
+    const providerId = parseInt(req.params.providerId);
+    if (isNaN(providerId)) {
+      return res.status(400).json({ success: false, error: 'Invalid provider ID' });
+    }
+    
+    // Validate the request data
+    const validatedData = CreateProviderSchema.parse(req.body);
+    
+    // Check if provider exists
+    const provider = await providerRepo.getProviderById(providerId);
+    if (!provider) {
+      return res.status(404).json({ success: false, error: 'Provider not found' });
+    }
+    
+    // Update the provider
+    await providerRepo.updateProvider(providerId, validatedData);
+    
+    // Get the updated provider
+    const updatedProvider = await providerRepo.getProviderById(providerId);
+    
+    res.json({ success: true, data: updatedProvider, message: 'Provider updated successfully' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+    } else {
+      console.error('Error updating provider:', error);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  }
 } 

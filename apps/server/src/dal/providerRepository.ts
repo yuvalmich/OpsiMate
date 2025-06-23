@@ -34,4 +34,35 @@ export async function getAllProviders() {
   });
 }
 
+export async function deleteProvider(id: number) {
+  return new Promise<void>((resolve, reject) => {
+    // First delete all associated services
+    db.run('DELETE FROM services WHERE provider_id = ?', [id], (err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      // Then delete the provider
+      db.run('DELETE FROM providers WHERE id = ?', [id], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  });
+}
+
+export async function updateProvider(id: number, data: any) {
+  return new Promise<void>((resolve, reject) => {
+    db.run(
+      'UPDATE providers SET provider_name = ?, provider_ip = ?, username = ?, private_key_filename = ?, ssh_port = ? WHERE id = ?',
+      [data.provider_name, data.provider_ip, data.username, data.private_key_filename, data.ssh_port, id],
+      function (err) {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
+}
+
 export { db }; 
