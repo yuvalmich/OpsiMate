@@ -1,6 +1,7 @@
 import { ProviderType } from '@service-peek/shared';
 import {ProviderConnector} from "./providerConnector";
-import {K8SProviderConnector, VMProviderConnector} from "./vmProviderConnector";
+import {VMProviderConnector} from "./vmProviderConnector";
+import {K8SProviderConnector} from "./k8sProviderConnector";
 
 
 export function providerConnectorFactory(type: ProviderType): ProviderConnector {
