@@ -4,7 +4,7 @@ import servicesRouter from './providers/router';
 
 const router = Router();
 
-router.get('/providers', providersRouter);
-router.get('/services', servicesRouter);
+router.use('/providers', providersRouter);
+router.use('/services', servicesRouter);
 
 export default router;
