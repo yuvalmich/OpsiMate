@@ -10,9 +10,8 @@ export async function createService(req: Request, res: Response) {
     try {
         // Validate the request data
         const validatedData = CreateServiceSchema.parse(req.body);
-
         // Check if provider exists
-        const provider = await providerRepo.getProviderById(validatedData.provider_id);
+        const provider = await providerRepo.getProviderById(validatedData.providerId);
         if (!provider) {
             return res.status(404).json({ success: false, error: 'Provider not found' });
         }
