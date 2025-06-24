@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import * as integrationService from '../../../bl/integrationService';
 import { getProviders, createProvider, updateProvider, deleteProvider, bulkAddServices, getProviderInstance } from './controller'
 
 const router = Router();
