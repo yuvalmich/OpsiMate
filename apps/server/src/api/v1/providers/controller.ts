@@ -27,7 +27,7 @@ export async function createProviderHandler(req: Request, res: Response) {
         const providerToCreate = CreateProviderSchema.parse(req.body);
 
         const createdProvider = await createProvider({...providerToCreate, createdAt: Date.now()});
-        res.status(201).json({success: true, data: {provider: createdProvider}});
+        res.status(201).json({success: true, data: createdProvider});
     } catch (error) {
 
         if (error instanceof z.ZodError) {
@@ -51,7 +51,7 @@ export async function updateProviderHandler(req: Request, res: Response) {
 
         const updatedProvider = await updateProvider(providerId, validatedData)
 
-        res.json({success: true, data: {updatedProvider}, message: 'Provider updated successfully'});
+        res.json({success: true, data: updatedProvider, message: 'Provider updated successfully'});
     } catch (error) {
         if (error instanceof z.ZodError) {
             res.status(400).json({success: false, error: 'Validation error', details: error.errors});
@@ -95,7 +95,7 @@ export async function bulkAddServicesHandler(req: Request, res: Response) {
 
         const newServices = await addServicesToProvider(providerId, validatedData)
 
-        res.status(201).json({success: true, data: {newServices}});
+        res.status(201).json({success: true, data: newServices});
     } catch (error) {
         if (error instanceof z.ZodError) {
             res.status(400).json({success: false, error: 'Validation error', details: error.errors});
