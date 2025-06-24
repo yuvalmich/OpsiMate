@@ -171,26 +171,27 @@ export function MyIntegrations() {
       try {
         const response = await integrationApi.getProviders();
         
-        if (response.success && response.data) {
+        if (response.success && response.data && response.data.providers) {
           // Convert API data to IntegrationInstance format
-          const apiIntegrations: IntegrationInstance[] = response.data.map(provider => ({
-            id: provider.id.toString(),
-            name: provider.provider_name,
+          const apiIntegrations: IntegrationInstance[] = response.data.providers.map(provider => ({
+            id: provider.id ? provider.id.toString() : `temp-${Date.now()}`,
+            name: provider.name || '',
             type: "server" as IntegrationType,
             status: "online", // Default to online since we don't have status info from API yet
             details: {
-              hostname: provider.provider_ip,
-              port: provider.ssh_port.toString(),
-              username: provider.username,
-              private_key_filename: provider.private_key_filename
+              Hostname: provider.providerIp || '',
+              Port: provider.SSHPort ? provider.SSHPort.toString() : '22',
+              Username: provider.username || '',
+              Private_key_filename: provider.privateKeyFilename || '',
+              Provider_type: provider.providerType || 'VM'
             },
             lastConnected: new Date().toISOString(),
-            createdAt: provider.created_at || new Date().toISOString(),
+            createdAt: provider.createdAt ? new Date(provider.createdAt).toISOString() : new Date().toISOString(),
             services: []
           }));
           
           setIntegrationInstances(apiIntegrations);
-        } else if (import.meta.env.DEV && (!response.data || response.data.length === 0)) {
+        } else if (import.meta.env.DEV && (!response.data || !response.data.providers || response.data.providers.length === 0)) {
           // In development, use mock data if no saved integrations exist
           setIntegrationInstances(mockIntegrationInstances);
         }
@@ -216,11 +217,14 @@ export function MyIntegrations() {
 
   // Filter integrations based on search query and active tab
   const filteredIntegrations = integrationInstances.filter(integration => {
-    const matchesSearch = integration.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      integration.type.toLowerCase().includes(searchQuery.toLowerCase());
+    // Add null checks to prevent toLowerCase() on undefined
+    const name = integration?.name || '';
+    const type = integration?.type || 'server';
+    const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      type.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesTab = activeTab === "all" || 
-      getIntegrationCategory(integration.type) === activeTab;
+      getIntegrationCategory(type) === activeTab;
     
     return matchesSearch && matchesTab;
   });
@@ -278,9 +282,13 @@ export function MyIntegrations() {
       const response = await integrationApi.getAllServices();
       
       if (response.success && response.data) {
+        // Check if data is an array or if it's nested in another property
+        const servicesArray = Array.isArray(response.data) ? response.data : 
+          (response.data as any).services ? (response.data as any).services : [];
+        
         // Filter services that belong to this provider
-        const providerServices = response.data.filter(service => 
-          service.provider_id.toString() === integration.id
+        const providerServices = servicesArray.filter(service => 
+          service.provider_id && service.provider_id.toString() === integration.id
         );
         
         // Map API services to ServiceConfig format
@@ -497,12 +505,12 @@ export function MyIntegrations() {
   };
   
   const handleUpdateIntegration = async (integrationId: string, updatedData: {
-    provider_name: string;
-    provider_ip: string;
+    name: string;
+    providerIp: string;
     username: string;
-    private_key_filename: string;
-    ssh_port: number;
-    provider_type: string;
+    privateKeyFilename: string;
+    SSHPort: number;
+    providerType: string;
   }) => {
     try {
       // Call the API to update the provider
@@ -514,14 +522,14 @@ export function MyIntegrations() {
           if (integration.id === integrationId) {
             return {
               ...integration,
-              name: updatedData.provider_name,
+              name: updatedData.name,
               details: {
                 ...integration.details,
-                hostname: updatedData.provider_ip,
-                port: updatedData.ssh_port.toString(),
-                username: updatedData.username,
-                private_key_filename: updatedData.private_key_filename,
-                provider_type: updatedData.provider_type
+                Hostname: updatedData.providerIp,
+                Port: updatedData.SSHPort.toString(),
+                Username: updatedData.username,
+                Private_key_filename: updatedData.privateKeyFilename,
+                Provider_type: updatedData.providerType
               },
               lastConnected: new Date().toISOString()
             };
@@ -541,7 +549,7 @@ export function MyIntegrations() {
         
         toast({
           title: "Integration updated",
-          description: `${updatedData.provider_name} has been successfully updated.`,
+          description: `${updatedData.name} has been successfully updated.`,
         });
       } else {
         throw new Error(response.error || 'Failed to update integration');
@@ -662,12 +670,22 @@ export function MyIntegrations() {
                   </CardHeader>
                   <CardContent className="flex-grow pt-2">
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                      {Object.entries(integration.details).map(([key, value]) => (
-                        <div key={key}>
-                          <p className="text-xs text-muted-foreground capitalize">{key}</p>
-                          <p className="font-medium">{value}</p>
-                        </div>
-                      ))}
+                      <div>
+                        <p className="text-xs text-muted-foreground">Hostname</p>
+                        <p className="font-medium">{integration.details.Hostname}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Port</p>
+                        <p className="font-medium">{integration.details.Port}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Username</p>
+                        <p className="font-medium">{integration.details.Username}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">SSH Key</p>
+                        <p className="font-medium">{integration.details.Private_key_filename}</p>
+                      </div>
                     </div>
                   </CardContent>
                   <CardFooter className="flex items-center justify-between text-xs text-muted-foreground">

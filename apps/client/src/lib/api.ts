@@ -83,8 +83,34 @@ export const integrationApi = {
   // Provider APIs
   
   // Get all providers
-  getProviders: () => {
-    return apiRequest<Provider[]>('/providers');
+  getProviders: async () => {
+    try {
+      const response = await apiRequest<{providers: any[]}>('/providers');
+      
+      // Transform snake_case to camelCase for each provider
+      if (response.success && response.data && response.data.providers) {
+        const transformedProviders = response.data.providers.map((provider: any) => ({
+          id: provider.id,
+          name: provider.provider_name,
+          providerIp: provider.provider_ip,
+          username: provider.username,
+          privateKeyFilename: provider.private_key_filename,
+          SSHPort: provider.ssh_port,
+          createdAt: provider.created_at || provider.createdAt,
+          providerType: provider.provider_type
+        }));
+        
+        return {
+          success: response.success,
+          data: { providers: transformedProviders }
+        };
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      return { success: false, error: 'Failed to fetch providers' };
+    }
   },
   
   // Get a specific provider
@@ -94,12 +120,12 @@ export const integrationApi = {
   
   // Create a new provider
   createProvider: (providerData: {
-    provider_name: string;
-    provider_ip: string;
+    name: string;
+    providerIp: string;
     username: string;
-    private_key_filename: string;
-    ssh_port?: number;
-    provider_type: string;
+    privateKeyFilename: string;
+    SSHPort?: number;
+    providerType: string;
   }) => {
     return apiRequest<Provider>('/providers', 'POST', providerData);
   },
@@ -128,14 +154,23 @@ export const integrationApi = {
   
   // Update a provider
   updateProvider: (providerId: number, providerData: {
-    provider_name: string;
-    provider_ip: string;
+    name: string;
+    providerIp: string;
     username: string;
-    private_key_filename: string;
-    ssh_port?: number;
-    provider_type: string;
+    privateKeyFilename: string;
+    SSHPort?: number;
+    providerType: string;
   }) => {
-    return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', providerData);
+    // Convert camelCase to snake_case for the API
+    const convertedData = {
+      provider_name: providerData.name,
+      provider_ip: providerData.providerIp,
+      username: providerData.username,
+      private_key_filename: providerData.privateKeyFilename,
+      ssh_port: providerData.SSHPort,
+      provider_type: providerData.providerType
+    };
+    return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', convertedData);
   },
   
   // Service APIs
