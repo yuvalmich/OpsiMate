@@ -1,7 +1,8 @@
 import sqlite3 from 'sqlite3';
 import {Provider} from '@service-peek/shared';
+import path from "path";
 
-const db = new sqlite3.Database('./service_peek.db');
+const db = new sqlite3.Database(path.join(__dirname, '../../service_peek.db'));
 
 // Data access for providers
 export async function createProvider(data: Omit<Provider, 'id'>) {
@@ -17,9 +18,22 @@ export async function createProvider(data: Omit<Provider, 'id'>) {
     });
 }
 
+// todo: fix types, this query sucks.
 export async function getProviderById(id: number): Promise<Provider> {
     return new Promise<any>((resolve, reject) => {
-        db.get('SELECT * FROM providers WHERE id = ?', [id], (err, row) => {
+        db.get(`
+        SELECT 
+          id,
+          provider_name       AS name,
+          provider_ip         AS providerIp,
+          username,
+          private_key_filename AS privateKeyFilename,
+          ssh_port             AS SSHPort,
+          created_at           AS createdAt,
+          provider_type        AS providerType
+        FROM providers
+        WHERE id = ?
+      `, [id], (err, row) => {
             if (err) reject(err);
             else resolve(row as Provider);
         });

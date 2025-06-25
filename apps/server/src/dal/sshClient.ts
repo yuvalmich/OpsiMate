@@ -1,10 +1,11 @@
 import { NodeSSH } from 'node-ssh';
 import path from 'path';
 import fs from 'fs';
+import {Provider} from "@service-peek/shared";
 
 const PRIVATE_KEYS_DIR = path.join(__dirname, '../../data/private-keys');
 
-export async function connectAndListContainers(provider: any, privateKeyFilename: string) {
+export async function connectAndListContainers(provider: Provider, privateKeyFilename: string) {
   const ssh = new NodeSSH();
   const privateKeyPath = path.join(PRIVATE_KEYS_DIR, privateKeyFilename);
 
@@ -13,10 +14,10 @@ export async function connectAndListContainers(provider: any, privateKeyFilename
   }
 
   await ssh.connect({
-    host: provider.provider_ip,
+    host: provider.providerIp,
     username: provider.username,
     privateKeyPath: privateKeyPath,
-    port: provider.ssh_port,
+    port: provider.SSHPort,
   });
 
   // Check if docker is available
@@ -37,7 +38,7 @@ export async function connectAndListContainers(provider: any, privateKeyFilename
       return {
         service_name: name,
         service_status: status.toLowerCase().includes('up') ? 'running' : 'stopped',
-        service_ip: provider.provider_ip,
+        service_ip: provider.providerIp,
         image: image
       };
     });
