@@ -5,13 +5,17 @@ import {Provider} from "@service-peek/shared";
 
 const PRIVATE_KEYS_DIR = path.join(__dirname, '../../data/private-keys');
 
-export async function connectAndListContainers(provider: Provider, privateKeyFilename: string) {
-  const ssh = new NodeSSH();
-  const privateKeyPath = path.join(PRIVATE_KEYS_DIR, privateKeyFilename);
-
-  if (!fs.existsSync(privateKeyPath)) {
-    throw new Error(`Private key file '${privateKeyFilename}' not found in ${PRIVATE_KEYS_DIR}`);
+function getKeyPath(filename: string) {
+  const filePath = path.join(PRIVATE_KEYS_DIR, filename);
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Key not found: ${filePath}`);
   }
+  return filePath;
+}
+
+export async function connectAndListContainers(provider: Provider) {
+  const ssh = new NodeSSH();
+  const privateKeyPath = getKeyPath(provider.privateKeyFilename);
 
   await ssh.connect({
     host: provider.providerIp,
@@ -42,4 +46,48 @@ export async function connectAndListContainers(provider: Provider, privateKeyFil
         image: image
       };
     });
-} 
+}
+
+export async function startService(
+    provider: Provider,
+    serviceName: string
+): Promise<void> {
+  const ssh = new NodeSSH();
+  try {
+    await ssh.connect({
+      host: provider.providerIp,
+      username: provider.username,
+      privateKeyPath: getKeyPath(provider.privateKeyFilename),
+      port: provider.SSHPort,
+    });
+
+    const result = await ssh.execCommand(`sudo docker start ${serviceName}`);
+    if (result.code !== 0) {
+      throw new Error(`Failed to start ${serviceName}: ${result.stderr}`);
+    }
+  } finally {
+    ssh.dispose();
+  }
+}
+
+export async function stopService(
+    provider: Provider,
+    serviceName: string
+): Promise<void> {
+  const ssh = new NodeSSH();
+  try {
+    await ssh.connect({
+      host: provider.providerIp,
+      username: provider.username,
+      privateKeyPath: getKeyPath(provider.privateKeyFilename),
+      port: provider.SSHPort,
+    });
+
+    const result = await ssh.execCommand(`sudo docker stop ${serviceName}`);
+    if (result.code !== 0) {
+      throw new Error(`Failed to stop ${serviceName}: ${result.stderr}`);
+    }
+  } finally {
+    ssh.dispose();
+  }
+}

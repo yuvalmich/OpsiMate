@@ -3,6 +3,7 @@ import * as providerRepo from "../../../dal/providerRepository";
 import {z} from "zod";
 import * as serviceRepo from "../../../dal/serviceRepository";
 import {CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema} from "@service-peek/shared";
+import {providerConnectorFactory} from "../../../bl/providers/provider-connector/providerConnectorFactory";
 
 
 // Create a new service
@@ -125,3 +126,70 @@ export async function deleteService(req: Request, res: Response) {
         }
     }
 }
+
+// Start a service
+export async function startService(req: Request, res: Response) {
+    try {
+        // Validate and parse the service ID
+        const { serviceId } = ServiceIdSchema.parse({ serviceId: req.params.serviceId });
+
+        // Get the service with provider details
+        const service = await serviceRepo.getServiceWithProvider(serviceId);
+        if (!service) {
+            return res.status(404).json({ success: false, error: 'Service not found' });
+        }
+        const provider = service.provider;
+        if (!provider) {
+            return res.status(404).json({ success: false, error: 'Provider not found for this service' });
+        }
+
+        const providerConnector = providerConnectorFactory(provider.providerType)
+        await providerConnector.startService(provider, service.service_name);
+        // Update service status in DB
+
+        // todo: fix types, serviceStatus is broken
+        // await serviceRepo.updateService(serviceId, { serviceStatus: 'running' });
+        const updatedService = await serviceRepo.getServiceWithProvider(serviceId);
+        res.json({ success: true, data: updatedService, message: 'Service started successfully' });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+        } else {
+            console.error('Error starting service:', error);
+            res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+        }
+    }
+}
+
+// Stop a service
+export async function stopService(req: Request, res: Response) {
+    try {
+        // Validate and parse the service ID
+        const { serviceId } = ServiceIdSchema.parse({ serviceId: req.params.serviceId });
+
+        // Get the service with provider details
+        const service = await serviceRepo.getServiceWithProvider(serviceId);
+        if (!service) {
+            return res.status(404).json({ success: false, error: 'Service not found' });
+        }
+        const provider = service.provider;
+        if (!provider) {
+            return res.status(404).json({ success: false, error: 'Provider not found for this service' });
+        }
+        const providerConnector = providerConnectorFactory(provider.providerType);
+        await providerConnector.stopService(provider, service.service_name);
+        // Update service status in DB
+        // todo: fix types, serviceStatus is broken
+        // await serviceRepo.updateService(serviceId, { serviceStatus: 'stopped' });
+        const updatedService = await serviceRepo.getServiceWithProvider(serviceId);
+        res.json({ success: true, data: updatedService, message: 'Service stopped successfully' });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+        } else {
+            console.error('Error stopping service:', error);
+            res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+        }
+    }
+}
+

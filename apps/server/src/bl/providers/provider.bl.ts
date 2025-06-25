@@ -55,7 +55,7 @@ const discoverServicesInProvider = async (providerId: number): Promise<Discovere
 
         const providerConnector = providerConnectorFactory(provider.providerType)
 
-        return await providerConnector.connectAndListContainers(provider, provider.privateKeyFilename);
+        return await providerConnector.discoverServices(provider);
 
     } catch (error) {
         console.error("Error discovering services in provider:", error);

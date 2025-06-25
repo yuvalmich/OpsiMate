@@ -1,5 +1,5 @@
 import {db} from './providerRepository';
-import {Service, ServiceType, ContainerDetails} from "@service-peek/shared";
+import {Service, ServiceType, ContainerDetails, Provider} from "@service-peek/shared";
 
 // Data access for services
 export async function createService(data: {
@@ -211,9 +211,7 @@ export async function getServiceWithProvider(id: number): Promise<any | null> {
                    s.service_name,
                    s.service_ip,
                    s.service_status,
-                   s.service_type,
                    s.created_at as service_created_at,
-                   s.container_details,
                    p.id         as provider_id,
                    p.provider_name,
                    p.provider_ip,
@@ -257,14 +255,14 @@ export async function getServiceWithProvider(id: number): Promise<any | null> {
                     container_details: containerDetails,
                     provider: {
                         id: row.provider_id,
-                        provider_name: row.provider_name,
-                        provider_ip: row.provider_ip,
+                        name: row.provider_name,
+                        providerIp: row.provider_ip,
                         username: row.username,
-                        private_key_filename: row.private_key_filename,
-                        ssh_port: row.ssh_port,
-                        created_at: row.provider_created_at,
-                        provider_type: row.provider_type
-                    }
+                        privateKeyFilename: row.private_key_filename,
+                        SSHPort: row.ssh_port,
+                        createdAt: row.provider_created_at,
+                        providerType: row.provider_type
+                    } as Provider
                 };
 
                 resolve(service);

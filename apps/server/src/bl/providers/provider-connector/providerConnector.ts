@@ -1,5 +1,7 @@
 import {Provider, DiscoveredService} from "@service-peek/shared";
 
 export interface ProviderConnector {
-    connectAndListContainers(provider: Provider, privateKeyFilename: string): Promise<DiscoveredService[]>;
+    discoverServices(provider: Provider): Promise<DiscoveredService[]>;
+    startService(provider: Provider, serviceName: string): Promise<void>;
+    stopService(provider: Provider, serviceName: string): Promise<void>;
 }

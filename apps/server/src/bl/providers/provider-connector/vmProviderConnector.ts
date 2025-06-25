@@ -3,7 +3,15 @@ import * as sshClient from "../../../dal/sshClient";
 import {ProviderConnector} from "./providerConnector";
 
 export class VMProviderConnector implements ProviderConnector {
-    async connectAndListContainers(provider: Provider, privateKeyFilename: string): Promise<DiscoveredService[]> {
-        return sshClient.connectAndListContainers(provider, privateKeyFilename);
+    async discoverServices(provider: Provider): Promise<DiscoveredService[]> {
+        return sshClient.connectAndListContainers(provider);
+    }
+
+    async startService(provider: Provider, serviceName: string): Promise<void> {
+        return sshClient.startService(provider, serviceName);
+    }
+
+    async stopService(provider: Provider, serviceName: string): Promise<void> {
+        return sshClient.stopService(provider, serviceName);
     }
 }
