@@ -1,5 +1,5 @@
 import {DiscoveredService, Provider} from "@service-peek/shared";
-import * as sshClient from "../../dal/sshClient";
+import * as sshClient from "../../../dal/sshClient";
 import {ProviderConnector} from "./providerConnector";
 
 export class VMProviderConnector implements ProviderConnector {

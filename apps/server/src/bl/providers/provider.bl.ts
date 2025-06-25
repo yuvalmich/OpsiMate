@@ -2,7 +2,7 @@ import * as providerRepo from "../../dal/providerRepository";
 import {DiscoveredService, Provider, Service} from "@service-peek/shared";
 import {ProviderNotFound} from "./ProviderNotFound";
 import * as serviceRepo from "../../dal/serviceRepository";
-import {providerConnectorFactory} from "./providerConnectorFactory";
+import {providerConnectorFactory} from "./provider-connector/providerConnectorFactory";
 
 const getAllProviders = async (): Promise<Provider[]> => {
     try {
