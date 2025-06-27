@@ -17,12 +17,12 @@ interface EditIntegrationDialogProps {
   open: boolean;
   onClose: () => void;
   onSave: (integrationId: string, updatedData: {
-    provider_name: string;
-    provider_ip: string;
+    name: string;
+    providerIp: string;
     username: string;
-    private_key_filename: string;
-    ssh_port: number;
-    provider_type: string;
+    privateKeyFilename: string;
+    SSHPort: number;
+    providerType: string;
   }) => Promise<void>;
 }
 
@@ -33,12 +33,12 @@ export function EditIntegrationDialog({
   onSave,
 }: EditIntegrationDialogProps) {
   const [formData, setFormData] = useState({
-    provider_name: "",
-    provider_ip: "",
+    name: "",
+    providerIp: "",
     username: "",
-    private_key_filename: "",
-    ssh_port: 22,
-    provider_type: "VM", // Default to VM
+    privateKeyFilename: "",
+    SSHPort: 22,
+    providerType: "VM", // Default to VM
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -57,12 +57,12 @@ export function EditIntegrationDialog({
       }
       
       setFormData({
-        provider_name: integration.name,
-        provider_ip: integration.details?.hostname || "",
-        username: integration.details?.username || "",
-        private_key_filename: integration.details?.private_key_filename || "",
-        ssh_port: parseInt(integration.details?.port || "22"),
-        provider_type: providerType
+        name: integration.name,
+        providerIp: integration.details?.Hostname || "",
+        username: integration.details?.Username || "",
+        privateKeyFilename: integration.details?.Private_key_filename || "",
+        SSHPort: parseInt(integration.details?.Port || "22"),
+        providerType: providerType
       });
     }
   }, [integration, open]);
@@ -71,7 +71,7 @@ export function EditIntegrationDialog({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "ssh_port" ? parseInt(value) || 22 : value,
+      [name]: name === "SSHPort" ? parseInt(value) || 22 : value,
     }));
   };
 
@@ -102,26 +102,26 @@ export function EditIntegrationDialog({
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="provider_name" className="text-right">
+              <Label htmlFor="name" className="text-right">
                 Name
               </Label>
               <Input
-                id="provider_name"
-                name="provider_name"
-                value={formData.provider_name}
+                id="name"
+                name="name"
+                value={formData.name}
                 onChange={handleInputChange}
                 className="col-span-3"
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="provider_ip" className="text-right">
+              <Label htmlFor="providerIp" className="text-right">
                 Hostname/IP
               </Label>
               <Input
-                id="provider_ip"
-                name="provider_ip"
-                value={formData.provider_ip}
+                id="providerIp"
+                name="providerIp"
+                value={formData.providerIp}
                 onChange={handleInputChange}
                 className="col-span-3"
                 required
@@ -141,27 +141,27 @@ export function EditIntegrationDialog({
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="ssh_port" className="text-right">
+              <Label htmlFor="SSHPort" className="text-right">
                 SSH Port
               </Label>
               <Input
-                id="ssh_port"
-                name="ssh_port"
+                id="SSHPort"
+                name="SSHPort"
                 type="number"
-                value={formData.ssh_port}
+                value={formData.SSHPort}
                 onChange={handleInputChange}
                 className="col-span-3"
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="private_key_filename" className="text-right">
+              <Label htmlFor="privateKeyFilename" className="text-right">
                 SSH Key File
               </Label>
               <Input
-                id="private_key_filename"
-                name="private_key_filename"
-                value={formData.private_key_filename}
+                id="privateKeyFilename"
+                name="privateKeyFilename"
+                value={formData.privateKeyFilename}
                 onChange={handleInputChange}
                 className="col-span-3"
                 placeholder="Path to SSH private key file"

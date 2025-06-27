@@ -1,4 +1,4 @@
-import { ApiResponse, Provider, Service, ServiceWithProvider } from '@service-peek/shared';
+import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
@@ -26,14 +26,27 @@ async function apiRequest<T>(
   }
 
   try {
+    console.log(`API Request: ${method} ${url}`, data ? { data } : '');
     const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error (${response.status}):`, errorText);
+      return {
+        success: false,
+        error: `HTTP ${response.status}: ${errorText || 'Unknown error'}`,
+      };
+    }
+    
     const result = await response.json();
+    console.log(`API Response (${method} ${url}):`, result);
     return result as ApiResponse<T>;
   } catch (error) {
-    console.error(`API Error (${method} ${endpoint}):`, error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error(`API Error (${method} ${endpoint}):`, errorMessage, error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      error: errorMessage,
     };
   }
 }
@@ -83,8 +96,34 @@ export const integrationApi = {
   // Provider APIs
   
   // Get all providers
-  getProviders: () => {
-    return apiRequest<Provider[]>('/providers');
+  getProviders: async () => {
+    try {
+      const response = await apiRequest<{providers: any[]}>('/providers');
+      
+      // The server already returns camelCase, so no transformation needed
+      if (response.success && response.data && response.data.providers) {
+        const transformedProviders = response.data.providers.map((provider: any) => ({
+          id: provider.id,
+          name: provider.name,
+          providerIp: provider.providerIp,
+          username: provider.username,
+          privateKeyFilename: provider.privateKeyFilename,
+          SSHPort: provider.SSHPort,
+          createdAt: provider.createdAt,
+          providerType: provider.providerType
+        }));
+        
+        return {
+          success: response.success,
+          data: { providers: transformedProviders }
+        };
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      return { success: false, error: 'Failed to fetch providers' };
+    }
   },
   
   // Get a specific provider
@@ -94,19 +133,19 @@ export const integrationApi = {
   
   // Create a new provider
   createProvider: (providerData: {
-    provider_name: string;
-    provider_ip: string;
+    name: string;
+    providerIp: string;
     username: string;
-    private_key_filename: string;
-    ssh_port?: number;
-    provider_type: string;
+    privateKeyFilename: string;
+    SSHPort?: number;
+    providerType: string;
   }) => {
     return apiRequest<Provider>('/providers', 'POST', providerData);
   },
   
   // Get provider instances (services)
   getProviderInstances: (providerId: number) => {
-    return apiRequest<{ provider: Provider; containers: any[] }>(`/providers/${providerId}/instance`);
+    return apiRequest<DiscoveredService[]>(`/providers/${providerId}/discover-services`);
   },
   
   // Add services in bulk
@@ -128,14 +167,23 @@ export const integrationApi = {
   
   // Update a provider
   updateProvider: (providerId: number, providerData: {
-    provider_name: string;
-    provider_ip: string;
+    name: string;
+    providerIp: string;
     username: string;
-    private_key_filename: string;
-    ssh_port?: number;
-    provider_type: string;
+    privateKeyFilename: string;
+    SSHPort?: number;
+    providerType: string;
   }) => {
-    return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', providerData);
+    // Convert camelCase to snake_case for the API
+    const convertedData = {
+      provider_name: providerData.name,
+      provider_ip: providerData.providerIp,
+      username: providerData.username,
+      private_key_filename: providerData.privateKeyFilename,
+      ssh_port: providerData.SSHPort,
+      provider_type: providerData.providerType
+    };
+    return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', convertedData);
   },
   
   // Service APIs
@@ -152,18 +200,25 @@ export const integrationApi = {
   
   // Create a new service
   createService: (serviceData: {
-    provider_id: number;
-    service_name: string;
-    service_ip?: string;
-    service_status?: string;
-    service_type: string;
-    container_details?: {
+    providerId: number;
+    name: string;
+    serviceIp?: string;
+    serviceStatus?: string;
+    serviceType: 'MANUAL' | 'DOCKER' | 'SYSTEMD';
+    containerDetails?: {
       id?: string;
       image?: string;
       created?: string;
     };
   }) => {
-    return apiRequest<ServiceWithProvider>('/services', 'POST', serviceData);
+    return apiRequest<ServiceWithProvider>('/services', 'POST', {
+      providerId: serviceData.providerId,
+      name: serviceData.name,
+      serviceType: serviceData.serviceType,
+      ...(serviceData.serviceIp && { serviceIp: serviceData.serviceIp }),
+      ...(serviceData.serviceStatus && { serviceStatus: serviceData.serviceStatus }),
+      ...(serviceData.containerDetails && { containerDetails: serviceData.containerDetails })
+    });
   },
   
   // Update a service

@@ -309,12 +309,12 @@ export function IntegrationSidebar({ integration, onClose }: IntegrationSidebarP
       }
       
       const providerData = {
-        provider_name: serverData.name,
-        provider_ip: serverData.hostname,
+        name: serverData.name,
+        providerIp: serverData.hostname,
         username: serverData.username,
-        private_key_filename: serverData.authType === 'key' ? serverData.sshKey || 'id_rsa' : 'none',
-        ssh_port: serverData.port,
-        provider_type: providerType
+        privateKeyFilename: serverData.authType === 'key' ? serverData.sshKey || 'id_rsa' : 'none',
+        SSHPort: serverData.port,
+        providerType: providerType
       };
       
       // Call the API to create a new provider

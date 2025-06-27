@@ -1,22 +1,27 @@
 import { NodeSSH } from 'node-ssh';
 import path from 'path';
 import fs from 'fs';
+import {Provider} from "@service-peek/shared";
 
 const PRIVATE_KEYS_DIR = path.join(__dirname, '../../data/private-keys');
 
-export async function connectAndListContainers(provider: any, privateKeyFilename: string) {
-  const ssh = new NodeSSH();
-  const privateKeyPath = path.join(PRIVATE_KEYS_DIR, privateKeyFilename);
-
-  if (!fs.existsSync(privateKeyPath)) {
-    throw new Error(`Private key file '${privateKeyFilename}' not found in ${PRIVATE_KEYS_DIR}`);
+function getKeyPath(filename: string) {
+  const filePath = path.join(PRIVATE_KEYS_DIR, filename);
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Key not found: ${filePath}`);
   }
+  return filePath;
+}
+
+export async function connectAndListContainers(provider: Provider) {
+  const ssh = new NodeSSH();
+  const privateKeyPath = getKeyPath(provider.privateKeyFilename);
 
   await ssh.connect({
-    host: provider.provider_ip,
+    host: provider.providerIp,
     username: provider.username,
     privateKeyPath: privateKeyPath,
-    port: provider.ssh_port,
+    port: provider.SSHPort,
   });
 
   // Check if docker is available
@@ -37,8 +42,52 @@ export async function connectAndListContainers(provider: any, privateKeyFilename
       return {
         service_name: name,
         service_status: status.toLowerCase().includes('up') ? 'running' : 'stopped',
-        service_ip: provider.provider_ip,
+        service_ip: provider.providerIp,
         image: image
       };
     });
-} 
+}
+
+export async function startService(
+    provider: Provider,
+    serviceName: string
+): Promise<void> {
+  const ssh = new NodeSSH();
+  try {
+    await ssh.connect({
+      host: provider.providerIp,
+      username: provider.username,
+      privateKeyPath: getKeyPath(provider.privateKeyFilename),
+      port: provider.SSHPort,
+    });
+
+    const result = await ssh.execCommand(`sudo docker start ${serviceName}`);
+    if (result.code !== 0) {
+      throw new Error(`Failed to start ${serviceName}: ${result.stderr}`);
+    }
+  } finally {
+    ssh.dispose();
+  }
+}
+
+export async function stopService(
+    provider: Provider,
+    serviceName: string
+): Promise<void> {
+  const ssh = new NodeSSH();
+  try {
+    await ssh.connect({
+      host: provider.providerIp,
+      username: provider.username,
+      privateKeyPath: getKeyPath(provider.privateKeyFilename),
+      port: provider.SSHPort,
+    });
+
+    const result = await ssh.execCommand(`sudo docker stop ${serviceName}`);
+    if (result.code !== 0) {
+      throw new Error(`Failed to stop ${serviceName}: ${result.stderr}`);
+    }
+  } finally {
+    ssh.dispose();
+  }
+}

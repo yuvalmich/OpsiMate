@@ -1,9 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import integrationRouter from './api/integration';
 import healthRouter from './api/health';
-import viewsRouter from './api/views';
-import { viewService } from './bl/viewService';
+import v1Router from './api/v1/v1';
+import { customViewService } from './bl/custom-views/custom-view.bl';
 import { initProvidersTable } from './dal/providerRepository';
 import { initServicesTable } from './dal/serviceRepository';
 
@@ -21,9 +20,8 @@ app.use(cors({
 }));
 
 // API routes
-app.use('/api/v1', integrationRouter);
-app.use('/api/v1', viewsRouter);
 app.use('/', healthRouter);
+app.use('/api/v1', v1Router);
 
 // Initialize database tables
 initProvidersTable()
@@ -42,7 +40,7 @@ initServicesTable()
     console.error('Failed to initialize services table:', err);
   });
 
-viewService.initViewsTables()
+customViewService.initViewsTables()
   .then(() => {
     console.log('Views tables initialized');
   })

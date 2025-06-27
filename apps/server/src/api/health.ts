@@ -1,8 +1,12 @@
-import { Router } from 'express';
-import * as healthService from '../bl/healthService';
+import {Request, Response, Router} from 'express';
 
 const router = Router();
 
-router.get('/health', healthService.healthCheck);
 
-export default router; 
+function healthCheck(req: Request, res: Response) {
+    res.send('ok');
+}
+
+router.get('/health', healthCheck);
+
+export default router;
