@@ -87,17 +87,17 @@ export const integrationApi = {
     try {
       const response = await apiRequest<{providers: any[]}>('/providers');
       
-      // Transform snake_case to camelCase for each provider
+      // The server already returns camelCase, so no transformation needed
       if (response.success && response.data && response.data.providers) {
         const transformedProviders = response.data.providers.map((provider: any) => ({
           id: provider.id,
-          name: provider.provider_name,
-          providerIp: provider.provider_ip,
+          name: provider.name,
+          providerIp: provider.providerIp,
           username: provider.username,
-          privateKeyFilename: provider.private_key_filename,
-          SSHPort: provider.ssh_port,
-          createdAt: provider.created_at || provider.createdAt,
-          providerType: provider.provider_type
+          privateKeyFilename: provider.privateKeyFilename,
+          SSHPort: provider.SSHPort,
+          createdAt: provider.createdAt,
+          providerType: provider.providerType
         }));
         
         return {

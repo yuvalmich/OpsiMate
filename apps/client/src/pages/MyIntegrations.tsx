@@ -37,9 +37,11 @@ const mockIntegrationInstances: IntegrationInstance[] = [
     type: "server",
     status: "online",
     details: {
-      hostname: "192.168.1.100",
-      port: "22",
-      username: "admin"
+      Hostname: "192.168.1.100",
+      Port: "22",
+      Username: "admin",
+      Private_key_filename: "id_rsa",
+      Provider_type: "VM"
     },
     lastConnected: "2025-06-21T10:30:00Z",
     createdAt: "2025-06-01T08:00:00Z"
@@ -50,9 +52,11 @@ const mockIntegrationInstances: IntegrationInstance[] = [
     type: "server",
     status: "warning",
     details: {
-      hostname: "192.168.1.101",
-      port: "22",
-      username: "dbadmin"
+      Hostname: "192.168.1.101",
+      Port: "22",
+      Username: "dbadmin",
+      Private_key_filename: "id_rsa_db",
+      Provider_type: "VM"
     },
     lastConnected: "2025-06-21T09:15:00Z",
     createdAt: "2025-06-02T14:30:00Z"
@@ -63,8 +67,8 @@ const mockIntegrationInstances: IntegrationInstance[] = [
     type: "kubernetes",
     status: "online",
     details: {
-      context: "dev-cluster",
-      namespace: "default"
+      Context: "dev-cluster",
+      Namespace: "default"
     },
     lastConnected: "2025-06-21T11:45:00Z",
     createdAt: "2025-06-05T09:20:00Z"
@@ -75,8 +79,8 @@ const mockIntegrationInstances: IntegrationInstance[] = [
     type: "aws-ec2",
     status: "online",
     details: {
-      region: "us-west-2",
-      instanceCount: "5"
+      Region: "us-west-2",
+      InstanceCount: "5"
     },
     lastConnected: "2025-06-21T12:10:00Z",
     createdAt: "2025-06-10T16:45:00Z"
@@ -87,8 +91,8 @@ const mockIntegrationInstances: IntegrationInstance[] = [
     type: "aws-eks",
     status: "offline",
     details: {
-      region: "us-east-1",
-      clusterName: "prod-cluster"
+      Region: "us-east-1",
+      ClusterName: "prod-cluster"
     },
     lastConnected: "2025-06-20T23:50:00Z",
     createdAt: "2025-06-15T11:30:00Z"
@@ -173,22 +177,26 @@ export function MyIntegrations() {
         
         if (response.success && response.data && response.data.providers) {
           // Convert API data to IntegrationInstance format
-          const apiIntegrations: IntegrationInstance[] = response.data.providers.map(provider => ({
-            id: provider.id ? provider.id.toString() : `temp-${Date.now()}`,
-            name: provider.name || '',
-            type: "server" as IntegrationType,
-            status: "online", // Default to online since we don't have status info from API yet
-            details: {
-              Hostname: provider.providerIp || '',
-              Port: provider.SSHPort ? provider.SSHPort.toString() : '22',
-              Username: provider.username || '',
-              Private_key_filename: provider.privateKeyFilename || '',
-              Provider_type: provider.providerType || 'VM'
-            },
-            lastConnected: new Date().toISOString(),
-            createdAt: provider.createdAt ? new Date(provider.createdAt).toISOString() : new Date().toISOString(),
-            services: []
-          }));
+          const apiIntegrations: IntegrationInstance[] = response.data.providers.map(provider => {
+            const mappedIntegration = {
+              id: provider.id ? provider.id.toString() : `temp-${Date.now()}`,
+              name: provider.name || '',
+              type: "server" as IntegrationType,
+              status: "online" as const, // Default to online since we don't have status info from API yet
+              details: {
+                Hostname: provider.providerIp || '',
+                Port: provider.SSHPort ? provider.SSHPort.toString() : '22',
+                Username: provider.username || '',
+                Private_key_filename: provider.privateKeyFilename || '',
+                Provider_type: provider.providerType || 'VM'
+              },
+              lastConnected: new Date().toISOString(),
+              createdAt: provider.createdAt ? new Date(provider.createdAt).toISOString() : new Date().toISOString(),
+              services: []
+            };
+            
+            return mappedIntegration;
+          });
           
           setIntegrationInstances(apiIntegrations);
         } else if (import.meta.env.DEV && (!response.data || !response.data.providers || response.data.providers.length === 0)) {
@@ -245,11 +253,13 @@ export function MyIntegrations() {
           integration.id === id 
             ? { 
                 ...integration, 
-                name: response.data.provider_name,
+                name: response.data.name,
                 details: {
-                  hostname: response.data.provider_ip,
-                  port: response.data.ssh_port.toString(),
-                  username: response.data.username
+                  Hostname: response.data.providerIp,
+                  Port: response.data.SSHPort.toString(),
+                  Username: response.data.username,
+                  Private_key_filename: response.data.privateKeyFilename,
+                  Provider_type: response.data.providerType
                 },
                 lastConnected: new Date().toISOString(),
                 status: Math.random() > 0.3 ? "online" as const : "warning" as const // Simulate status check
@@ -422,22 +432,18 @@ export function MyIntegrations() {
   };
 
   const handleDeleteService = async (serviceId: string) => {
-    console.log('handleDeleteService called with serviceId:', serviceId);
     if (!selectedIntegration) {
-      console.log('No selected integration, returning');
       return;
     }
     
     try {
       // Convert serviceId to number
       const serviceIdNum = parseInt(serviceId);
-      console.log('Calling API to delete service with ID:', serviceIdNum);
       
       // First check if the service still exists in the database
       const serviceCheck = await integrationApi.getServiceById(serviceIdNum);
       
       if (!serviceCheck.success || !serviceCheck.data) {
-        console.log('Service not found in database, updating UI only');
         // Service doesn't exist in database, just update the UI
         updateUIAfterServiceDeletion(serviceId);
         toast({
@@ -449,7 +455,6 @@ export function MyIntegrations() {
       
       // Call the API to delete the service
       const response = await integrationApi.deleteService(serviceIdNum);
-      console.log('Delete service API response:', response);
       
       if (response.success) {
         // Update the UI after successful deletion
