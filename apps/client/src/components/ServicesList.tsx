@@ -71,7 +71,7 @@ export function ServicesList({ services, onStatusChange, onServiceClick, onDelet
                 <div className="font-medium text-sm">{service.name}</div>
                 <div className="text-xs text-muted-foreground">
                   {service.type === "DOCKER" 
-                    ? `Container: ${service.containerDetails?.image}` 
+                    ? `Container: ${service.containerDetails?.image || service.name}` 
                     : service.service_ip 
                       ? `IP: ${service.service_ip}` 
                       : "Manual service"

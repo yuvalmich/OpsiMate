@@ -1,4 +1,4 @@
-import { ApiResponse, Provider, Service, ServiceWithProvider } from '@service-peek/shared';
+import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
@@ -26,14 +26,27 @@ async function apiRequest<T>(
   }
 
   try {
+    console.log(`API Request: ${method} ${url}`, data ? { data } : '');
     const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error (${response.status}):`, errorText);
+      return {
+        success: false,
+        error: `HTTP ${response.status}: ${errorText || 'Unknown error'}`,
+      };
+    }
+    
     const result = await response.json();
+    console.log(`API Response (${method} ${url}):`, result);
     return result as ApiResponse<T>;
   } catch (error) {
-    console.error(`API Error (${method} ${endpoint}):`, error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error(`API Error (${method} ${endpoint}):`, errorMessage, error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      error: errorMessage,
     };
   }
 }
@@ -132,7 +145,7 @@ export const integrationApi = {
   
   // Get provider instances (services)
   getProviderInstances: (providerId: number) => {
-    return apiRequest<{ provider: Provider; containers: any[] }>(`/providers/${providerId}/instance`);
+    return apiRequest<DiscoveredService[]>(`/providers/${providerId}/discover-services`);
   },
   
   // Add services in bulk
@@ -187,18 +200,25 @@ export const integrationApi = {
   
   // Create a new service
   createService: (serviceData: {
-    provider_id: number;
-    service_name: string;
-    service_ip?: string;
-    service_status?: string;
-    service_type: string;
-    container_details?: {
+    providerId: number;
+    name: string;
+    serviceIp?: string;
+    serviceStatus?: string;
+    serviceType: 'MANUAL' | 'DOCKER' | 'SYSTEMD';
+    containerDetails?: {
       id?: string;
       image?: string;
       created?: string;
     };
   }) => {
-    return apiRequest<ServiceWithProvider>('/services', 'POST', serviceData);
+    return apiRequest<ServiceWithProvider>('/services', 'POST', {
+      providerId: serviceData.providerId,
+      name: serviceData.name,
+      serviceType: serviceData.serviceType,
+      ...(serviceData.serviceIp && { serviceIp: serviceData.serviceIp }),
+      ...(serviceData.serviceStatus && { serviceStatus: serviceData.serviceStatus }),
+      ...(serviceData.containerDetails && { containerDetails: serviceData.containerDetails })
+    });
   },
   
   // Update a service

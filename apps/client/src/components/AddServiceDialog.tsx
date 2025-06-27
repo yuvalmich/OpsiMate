@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { integrationApi } from "../lib/api";
+import { DiscoveredService } from "@service-peek/shared";
 
 // Define service types
 export interface ServiceConfig {
@@ -57,12 +58,15 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     try {
       const response = await integrationApi.getProviderInstances(parseInt(serverId));
       
-      if (response.success && response.data && response.data.containers) {
-        // Transform API container data to match our UI format
-        const containerData = response.data.containers.map((container, index) => ({
-          ...container,
+      if (response.success && response.data) {
+        // Transform API discovered service data to match our UI format
+        const containerData = response.data.map((service: DiscoveredService, index) => ({
+          service_name: service.service_name,
+          service_status: service.service_status,
+          service_ip: service.service_ip,
+          image: 'N/A', // DiscoveredService doesn't have image info
           id: `container-${index}`,
-          name: container.service_name,
+          name: service.service_name,
           selected: false,
           created: new Date().toISOString() // API doesn't provide creation date, so we use current time
         }));
@@ -100,25 +104,31 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     }
 
     setLoading(true);
+    const serviceData = {
+      providerId: parseInt(serverId),
+      name: serviceName,
+      serviceType: "MANUAL" as const,
+      serviceIp: servicePort ? `localhost:${servicePort}` : undefined,
+      serviceStatus: "running" as const
+    };
+    
+    console.log('Creating service with data:', serviceData);
 
     try {
       // Create service using the new API
-      const response = await integrationApi.createService({
-        provider_id: parseInt(serverId),
-        service_name: serviceName,
-        service_type: "MANUAL",
-        service_ip: servicePort ? `localhost:${servicePort}` : undefined,
-        service_status: "running"
-      });
+      const response = await integrationApi.createService(serviceData);
+
+      console.log('Create service response:', response);
 
       if (response.success && response.data) {
         // Create UI service object from API response
         const newService: ServiceConfig = {
           id: response.data.id.toString(),
-          name: serviceName,
+          name: response.data.name,
           type: "MANUAL", // Match the API service_type
-          status: "running",
-          service_ip: servicePort ? `localhost:${servicePort}` : undefined
+          status: response.data.serviceStatus as "running" | "stopped" | "error" | "unknown",
+          service_ip: response.data.serviceIp,
+          containerDetails: response.data.container_details
         };
 
         onServiceAdded(newService);
@@ -171,19 +181,19 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
       // Create each service individually using the new API
       for (const container of selectedContainers) {
         // Ensure status is one of the allowed values
-        const status = container.service_status === "running" ? "running" : 
-                      container.service_status === "stopped" ? "stopped" : 
-                      container.service_status === "error" ? "error" : "unknown";
+        const status = container.service_status === "running" ? "running" as const : 
+                      container.service_status === "stopped" ? "stopped" as const : 
+                      container.service_status === "error" ? "error" as const : "unknown" as const;
         
         try {
           // Create service using the new API
           const response = await integrationApi.createService({
-            provider_id: parseInt(serverId),
-            service_name: container.name,
-            service_type: "DOCKER",
-            service_status: status,
-            service_ip: container.service_ip,
-            container_details: {
+            providerId: parseInt(serverId),
+            name: container.name,
+            serviceType: "DOCKER",
+            serviceStatus: status,
+            serviceIp: container.service_ip,
+            containerDetails: {
               id: container.id,
               image: container.image,
               created: container.created
@@ -194,10 +204,10 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
             // Create UI service object from API response
             const newService: ServiceConfig = {
               id: response.data.id.toString(),
-              name: response.data.service_name,
+              name: response.data.name,
               type: "DOCKER", // Match the API service_type
-              status: response.data.service_status as "running" | "stopped" | "error" | "unknown",
-              service_ip: response.data.service_ip,
+              status: response.data.serviceStatus as "running" | "stopped" | "error" | "unknown",
+              service_ip: response.data.serviceIp,
               containerDetails: response.data.container_details
             };
             
