@@ -9,7 +9,7 @@ export async function createProvider(data: Omit<Provider, 'id'>): Promise<{ last
     return new Promise<{ lastID: number }>((resolve, reject) => {
         db.run(
             'INSERT INTO providers (provider_name, provider_ip, username, private_key_filename, ssh_port, provider_type) VALUES (?, ?, ?, ?, ?, ?)',
-            [data.createdAt, data.providerIp, data.username, data.privateKeyFilename, data.SSHPort, data.providerType],
+            [data.name, data.providerIp, data.username, data.privateKeyFilename, data.SSHPort, data.providerType],
             function (err) {
                 if (err) reject(err);
                 else resolve({lastID: this.lastID});
