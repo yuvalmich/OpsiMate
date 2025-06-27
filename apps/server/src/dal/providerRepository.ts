@@ -5,7 +5,7 @@ import path from "path";
 const db = new sqlite3.Database(path.join(__dirname, '../../service_peek.db'));
 
 // Data access for providers
-export async function createProvider(data: Omit<Provider, 'id'>) {
+export async function createProvider(data: Omit<Provider, 'id'>): Promise<number> {
     return new Promise<{ lastID: number }>((resolve, reject) => {
         db.run(
             'INSERT INTO providers (provider_name, provider_ip, username, private_key_filename, ssh_port, provider_type) VALUES (?, ?, ?, ?, ?, ?)',
@@ -18,7 +18,6 @@ export async function createProvider(data: Omit<Provider, 'id'>) {
     });
 }
 
-// todo: fix types, this query sucks.
 export async function getProviderById(id: number): Promise<Provider> {
     return new Promise<any>((resolve, reject) => {
         db.get(`
@@ -41,8 +40,21 @@ export async function getProviderById(id: number): Promise<Provider> {
 }
 
 export async function getAllProviders(): Promise<Provider[]> {
-    return new Promise<any[]>((resolve, reject) => {
-        db.all('SELECT * FROM providers ORDER BY created_at DESC', (err, rows) => {
+    const query = `
+        SELECT id,
+               provider_name        AS name,
+               provider_ip          AS providerIp,
+               username,
+               private_key_filename AS privateKeyFilename,
+               ssh_port             AS SSHPort,
+               created_at           AS createdAt,
+               provider_type        AS providerType
+        FROM providers
+        ORDER BY created_at DESC
+    `
+
+    return new Promise<Provider[]>((resolve, reject) => {
+        db.all(query, (err, rows) => {
             if (err) reject(err);
             else resolve(rows as Provider[]);
         });
