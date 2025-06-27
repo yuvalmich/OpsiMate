@@ -1,9 +1,9 @@
-import {viewService} from "../../../bl/viewService";
 import {Request, Response} from "express";
+import {customViewService} from "../../../bl/custom-views/custom-view.bl";
 
 export async function getViewsHandler(req: Request, res: Response) {
     try {
-        const views = await viewService.getAllViews();
+        const views = await customViewService.getAllViews();
 
         res.json({
             success: true,
@@ -22,7 +22,7 @@ export async function getViewsByIdHandler(req: Request, res: Response) {
     try {
         const viewId = req.params.viewId;
 
-        const view = await viewService.getViewById(viewId);
+        const view = await customViewService.getViewById(viewId);
 
         if (!view) {
             return res.status(404).json({
@@ -54,7 +54,7 @@ export async function createViewHandler(req: Request, res: Response) {
                 error: 'Invalid view data'
             });
         }
-        const savedView = await viewService.saveView(view);
+        const savedView = await customViewService.saveView(view);
 
         if (!savedView) {
             return res.status(500).json({
@@ -80,7 +80,7 @@ export async function deleteViewHandler(req: Request, res: Response) {
     try {
         const viewId = req.params.viewId;
 
-        const success = await viewService.deleteView(viewId);
+        const success = await customViewService.deleteView(viewId);
 
         if (!success) {
             return res.status(404).json({
@@ -106,7 +106,7 @@ export async function setActiveViewHandler(req: Request, res: Response) {
     try {
         const viewId = req.params.viewId;
 
-        const success = await viewService.setActiveViewId(viewId);
+        const success = await customViewService.setActiveViewId(viewId);
 
         if (!success) {
             return res.status(404).json({
@@ -130,11 +130,11 @@ export async function setActiveViewHandler(req: Request, res: Response) {
 
 export async function getActiveViewHandler(req: Request, res: Response) {
     try {
-        const activeViewId = await viewService.getActiveViewId();
+        const activeViewId = await customViewService.getActiveViewId();
 
         res.json({
             success: true,
-            data: { activeViewId }
+            data: {activeViewId}
         });
     } catch (error: any) {
         console.error('Error getting active view ID:', error);

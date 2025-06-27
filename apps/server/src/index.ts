@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import healthRouter from './api/health';
 import v1Router from './api/v1/v1';
-import { viewService } from './bl/viewService';
+import { customViewService } from './bl/custom-views/custom-view.bl';
 import { initProvidersTable } from './dal/providerRepository';
 import { initServicesTable } from './dal/serviceRepository';
 
@@ -40,7 +40,7 @@ initServicesTable()
     console.error('Failed to initialize services table:', err);
   });
 
-viewService.initViewsTables()
+customViewService.initViewsTables()
   .then(() => {
     console.log('Views tables initialized');
   })
