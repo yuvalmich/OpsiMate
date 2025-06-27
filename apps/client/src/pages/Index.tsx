@@ -10,77 +10,23 @@ import { SavedViewsManager } from "@/components/SavedViewsManager"
 import { DashboardLayout } from "../components/DashboardLayout"
 import { SavedView } from "@/types/SavedView"
 import { getSavedViews, saveView, deleteView, getActiveViewId, setActiveViewId } from "@/lib/savedViews"
+import { integrationApi } from "@/lib/api"
 import type { ImperativePanelHandle as PanelRef } from "react-resizable-panels"
-
-// Mock data
-const mockServices: Service[] = [
-  {
-    id: '1',
-    os: 'Ubuntu 22.04',
-    serverId: 'srv-web-01',
-    ipAddress: '192.168.1.100',
-    serviceName: 'Nginx Web Server',
-    status: 'running',
-    port: 80,
-    uptime: '15d 4h 32m',
-    memory: '256MB',
-    cpu: '12%'
-  },
-  {
-    id: '2', 
-    os: 'CentOS 7',
-    serverId: 'srv-db-01',
-    ipAddress: '192.168.1.101',
-    serviceName: 'PostgreSQL Database',
-    status: 'running',
-    port: 5432,
-    uptime: '32d 12h 15m',
-    memory: '1.2GB',
-    cpu: '5%'
-  },
-  {
-    id: '3',
-    os: 'Ubuntu 22.04',
-    serverId: 'srv-api-01',
-    ipAddress: '192.168.1.102',
-    serviceName: 'Node.js API',
-    status: 'error',
-    port: 3000,
-    uptime: '0m',
-    memory: '0MB',
-    cpu: '0%'
-  },
-  {
-    id: '4',
-    os: 'RHEL 8',
-    serverId: 'srv-cache-01',
-    ipAddress: '192.168.1.103',
-    serviceName: 'Redis Cache',
-    status: 'stopped',
-    port: 6379,
-    uptime: '0m',
-    memory: '0MB',
-    cpu: '0%'
-  }
-]
 
 const Index = () => {
   const { toast } = useToast()
-  const [services, setServices] = useState<Service[]>(mockServices)
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedServices, setSelectedServices] = useState<Service[]>([])
   const [showTableSettings, setShowTableSettings] = useState(false)
   const [showAddService, setShowAddService] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState({
-    os: true,
-    serverId: true,
-    serviceName: true,
-    status: true,
-    ipAddress: true,
-    port: true,
-    uptime: false,
-    memory: false,
-    cpu: false
+    name: true,
+    serviceIp: true,
+    serviceStatus: true,
+    provider: true,
+    container_details: false
   })
   const [filters, setFilters] = useState<Filters>({})
   const [filterPanelCollapsed, setFilterPanelCollapsed] = useState(false)
@@ -88,6 +34,58 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [savedViews, setSavedViews] = useState<SavedView[]>([])
   const [activeViewId, setActiveViewId] = useState<string | undefined>()
+
+  // Fetch services from API
+  const fetchServices = async () => {
+    try {
+      setLoading(true)
+      const response = await integrationApi.getAllServices()
+      
+      if (response.success && response.data) {
+        const transformedServices: Service[] = response.data.map((service: any) => ({
+          id: service.id.toString(),
+          name: service.service_name,
+          serviceIp: service.service_ip,
+          serviceStatus: service.service_status,
+          serviceType: service.service_type,
+          createdAt: service.created_at,
+          provider: {
+            id: service.provider.id,
+            name: service.provider.provider_name,
+            providerIp: service.provider.provider_ip,
+            username: service.provider.username,
+            privateKeyFilename: service.provider.private_key_filename,
+            SSHPort: service.provider.ssh_port,
+            createdAt: service.provider.created_at,
+            providerType: service.provider.provider_type
+          },
+          container_details: service.container_details
+        }))
+        
+        setServices(transformedServices)
+      } else {
+        toast({
+          title: "Error loading services",
+          description: response.error || "Failed to load services",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching services:", error)
+      toast({
+        title: "Error loading services", 
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Load services on component mount
+  useEffect(() => {
+    fetchServices()
+  }, [])
 
   // Load saved views and active view on component mount
   useEffect(() => {
@@ -214,7 +212,7 @@ const Index = () => {
     setServices(prev => [...prev, serviceData])
     toast({
       title: "Service Added",
-      description: `${serviceData.serviceName} has been added successfully.`
+      description: `${serviceData.name} has been added successfully.`
     })
   }
 
@@ -268,7 +266,7 @@ const Index = () => {
     if (selectedServices.length === 1) {
       toast({
         title: "Opening SSH Terminal",
-        description: `Connecting to ${selectedServices[0].serverId}...`
+        description: `Connecting to ${selectedServices[0].serviceIp}...`
       })
       // Here you would call your API to open SSH connection
     } else if (selectedServices.length > 1) {
@@ -315,6 +313,7 @@ const Index = () => {
                   visibleColumns={visibleColumns}
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
+                  loading={loading}
                 />
               </div>
               <div className="flex-shrink-0 p-4 border-t border-border">

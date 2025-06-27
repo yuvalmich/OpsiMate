@@ -10,15 +10,11 @@ interface TableSettingsModalProps {
 }
 
 const columnLabels = {
-  os: 'Operating System',
-  serverId: 'Server ID',
-  serviceName: 'Service Name',
-  status: 'Status',
-  ipAddress: 'IP Address',
-  port: 'Port',
-  uptime: 'Uptime',
-  memory: 'Memory Usage',
-  cpu: 'CPU Usage'
+  name: 'Service Name',
+  serviceIp: 'Service IP',
+  serviceStatus: 'Status',
+  provider: 'Provider',
+  container_details: 'Container Details'
 }
 
 export function TableSettingsModal({ 
