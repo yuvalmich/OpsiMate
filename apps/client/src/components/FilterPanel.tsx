@@ -20,7 +20,12 @@ interface FilterPanelProps {
   collapsed: boolean
 }
 
-const FACET_FIELDS: (keyof Service)[] = ['status', 'os', 'serverId'];
+const FACET_FIELDS: (keyof Service)[] = ['serviceStatus', 'serviceType'];
+
+const FIELD_LABELS: Record<string, string> = {
+  serviceStatus: 'Status',
+  serviceType: 'Service Type'
+};
 
 export function FilterPanel({ services, filters, onFilterChange, collapsed }: FilterPanelProps) {
   const facets = useMemo(() => {
@@ -68,7 +73,7 @@ export function FilterPanel({ services, filters, onFilterChange, collapsed }: Fi
         <Accordion type="multiple" className="w-full" defaultValue={FACET_FIELDS.map(f => String(f))}>
           {FACET_FIELDS.map(field => (
             <AccordionItem value={String(field)} key={field} className="border-b border-border">
-              <AccordionTrigger className="text-sm font-medium capitalize py-3 px-2 hover:bg-muted/50 rounded-md">{field}</AccordionTrigger>
+              <AccordionTrigger className="text-sm font-medium capitalize py-3 px-2 hover:bg-muted/50 rounded-md">{FIELD_LABELS[field]}</AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-2 pl-2 py-1">
                   {Object.entries(facets[field] || {}).sort(([a], [b]) => a.localeCompare(b)).map(([value, count]) => (

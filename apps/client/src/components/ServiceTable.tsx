@@ -9,15 +9,26 @@ import { useState, useMemo } from "react"
 
 export interface Service {
   id: string
-  os: string
-  serverId: string
-  ipAddress: string  
-  serviceName: string
-  status: 'running' | 'stopped' | 'error'
-  port?: number
-  uptime?: string
-  memory?: string
-  cpu?: string
+  name: string
+  serviceIp?: string
+  serviceStatus: 'running' | 'stopped' | 'error' | 'unknown'
+  serviceType: 'MANUAL' | 'DOCKER' | 'SYSTEMD'
+  createdAt: string
+  provider: {
+    id: number
+    name: string
+    providerIp: string
+    username: string
+    privateKeyFilename: string
+    SSHPort: number
+    createdAt: number
+    providerType: string
+  }
+  container_details?: {
+    id?: string
+    image?: string
+    created?: string
+  }
 }
 
 interface ServiceTableProps {
@@ -28,6 +39,7 @@ interface ServiceTableProps {
   visibleColumns: Record<string, boolean>
   searchTerm?: string
   onSearchChange?: (searchTerm: string) => void
+  loading?: boolean
 }
 
 export function ServiceTable({ 
@@ -37,16 +49,18 @@ export function ServiceTable({
   onSettingsClick,
   visibleColumns,
   searchTerm: externalSearchTerm,
-  onSearchChange
+  onSearchChange,
+  loading
 }: ServiceTableProps) {
   const [internalSearchTerm, setInternalSearchTerm] = useState("")
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm
 
-  const getStatusColor = (status: Service['status']) => {
+  const getStatusColor = (status: Service['serviceStatus']) => {
     switch (status) {
       case 'running': return 'bg-green-100 text-green-800 border-green-200'
       case 'stopped': return 'bg-gray-100 text-gray-800 border-gray-200'
       case 'error': return 'bg-red-100 text-red-800 border-red-200'
+      case 'unknown': return 'bg-gray-100 text-gray-800 border-gray-200'
       default: return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
@@ -58,15 +72,12 @@ export function ServiceTable({
     const searchLower = searchTerm.toLowerCase()
     return services.filter(service => {
       return (
-        service.os.toLowerCase().includes(searchLower) ||
-        service.serverId.toLowerCase().includes(searchLower) ||
-        service.serviceName.toLowerCase().includes(searchLower) ||
-        service.status.toLowerCase().includes(searchLower) ||
-        service.ipAddress.toLowerCase().includes(searchLower) ||
-        (service.port && service.port.toString().includes(searchLower)) ||
-        (service.uptime && service.uptime.toLowerCase().includes(searchLower)) ||
-        (service.memory && service.memory.toLowerCase().includes(searchLower)) ||
-        (service.cpu && service.cpu.toLowerCase().includes(searchLower))
+        service.name.toLowerCase().includes(searchLower) ||
+        service.serviceIp?.toLowerCase().includes(searchLower) ||
+        service.serviceStatus.toLowerCase().includes(searchLower) ||
+        service.provider.name.toLowerCase().includes(searchLower) ||
+        service.provider.providerIp.toLowerCase().includes(searchLower) ||
+        (service.container_details?.image && service.container_details.image.toLowerCase().includes(searchLower))
       )
     })
   }, [services, searchTerm])
@@ -82,6 +93,59 @@ export function ServiceTable({
   const handleRowClick = (service: Service) => {
     onServicesSelect([service]);
   };
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex flex-col bg-card border border-border rounded-lg overflow-hidden">
+        <div className="p-4 border-b border-border space-y-4 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Services</h3>
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={onSettingsClick}
+              className="h-9 w-9 rounded-md"
+            >
+              <Settings className="h-4 w-4" />
+              <span className="sr-only">Table Settings</span>
+            </Button>
+          </div>
+        </div>
+        <div className="overflow-auto flex-grow relative">
+          <Table className="relative">
+            <TableHeader className="sticky top-0 bg-card z-10">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-10">
+                  <Checkbox 
+                    checked={false}
+                    onCheckedChange={() => {}}
+                    aria-label="Select all services"
+                  />
+                </TableHead>
+                {visibleColumns.name && <TableHead className="font-medium">Name</TableHead>}
+                {visibleColumns.serviceIp && <TableHead className="font-medium">Service IP</TableHead>}
+                {visibleColumns.serviceStatus && <TableHead className="font-medium">Status</TableHead>}
+                {visibleColumns.provider && <TableHead className="font-medium">Provider</TableHead>}
+                {visibleColumns.container_details && <TableHead className="font-medium">Container Details</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="text-center py-12 h-[200px]">
+                  <div className="text-muted-foreground">
+                    Loading...
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 flex flex-col bg-card border border-border rounded-lg overflow-hidden">
@@ -152,15 +216,11 @@ export function ServiceTable({
                   aria-label="Select all services"
                 />
               </TableHead>
-              {visibleColumns.os && <TableHead className="font-medium">OS</TableHead>}
-              {visibleColumns.serverId && <TableHead className="font-medium">Server ID</TableHead>}
-              {visibleColumns.serviceName && <TableHead className="font-medium">Service Name</TableHead>}
-              {visibleColumns.status && <TableHead className="font-medium">Status</TableHead>}
-              {visibleColumns.ipAddress && <TableHead className="font-medium">IP Address</TableHead>}
-              {visibleColumns.port && <TableHead className="font-medium">Port</TableHead>}
-              {visibleColumns.uptime && <TableHead className="font-medium">Uptime</TableHead>}
-              {visibleColumns.memory && <TableHead className="font-medium">Memory</TableHead>}
-              {visibleColumns.cpu && <TableHead className="font-medium">CPU</TableHead>}
+              {visibleColumns.name && <TableHead className="font-medium">Name</TableHead>}
+              {visibleColumns.serviceIp && <TableHead className="font-medium">Service IP</TableHead>}
+              {visibleColumns.serviceStatus && <TableHead className="font-medium">Status</TableHead>}
+              {visibleColumns.provider && <TableHead className="font-medium">Provider</TableHead>}
+              {visibleColumns.container_details && <TableHead className="font-medium">Container Details</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -192,24 +252,20 @@ export function ServiceTable({
                           onServicesSelect(selectedServices.filter(s => s.id !== service.id));
                         }
                       }}
-                      aria-label={`Select ${service.serviceName}`}
+                      aria-label={`Select ${service.name}`}
                     />
                   </TableCell>
-                  {visibleColumns.os && <TableCell className="font-medium">{service.os}</TableCell>}
-                  {visibleColumns.serverId && <TableCell>{service.serverId}</TableCell>}
-                  {visibleColumns.serviceName && <TableCell>{service.serviceName}</TableCell>}
-                  {visibleColumns.status && (
+                  {visibleColumns.name && <TableCell className="font-medium">{service.name}</TableCell>}
+                  {visibleColumns.serviceIp && <TableCell>{service.serviceIp || '-'}</TableCell>}
+                  {visibleColumns.serviceStatus && (
                     <TableCell className="text-center">
-                      <Badge className={cn(getStatusColor(service.status), "font-medium")}>
-                        {service.status}
+                      <Badge className={cn(getStatusColor(service.serviceStatus), "font-medium")}>
+                        {service.serviceStatus}
                       </Badge>
                     </TableCell>
                   )}
-                  {visibleColumns.ipAddress && <TableCell className="font-mono text-xs">{service.ipAddress}</TableCell>}
-                  {visibleColumns.port && <TableCell>{service.port || '-'}</TableCell>}
-                  {visibleColumns.uptime && <TableCell>{service.uptime || '-'}</TableCell>}
-                  {visibleColumns.memory && <TableCell>{service.memory || '-'}</TableCell>}
-                  {visibleColumns.cpu && <TableCell>{service.cpu || '-'}</TableCell>}
+                  {visibleColumns.provider && <TableCell>{service.provider.name}</TableCell>}
+                  {visibleColumns.container_details && <TableCell>{service.container_details?.image || '-'}</TableCell>}
                 </TableRow>
               ))
             )}
