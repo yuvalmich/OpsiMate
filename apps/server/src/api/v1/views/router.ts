@@ -1,5 +1,4 @@
 import express from 'express';
-import { viewService } from '../../../bl/viewService';
 import {
     createViewHandler,
     deleteViewHandler, getActiveViewHandler,
