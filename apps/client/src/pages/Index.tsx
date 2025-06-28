@@ -98,10 +98,32 @@ const Index = () => {
         // Get active view ID from API
         const activeId = await getActiveViewId();
         if (activeId) {
-          setActiveViewId(activeId);
           const activeView = views.find(view => view.id === activeId);
           if (activeView) {
+            setActiveViewId(activeId);
             applyView(activeView);
+          } else if (activeId === 'default-view') {
+            // If the active view is 'default-view' but it doesn't exist, create a default state
+            setActiveViewId('default-view');
+            // Apply default filters and settings
+            setFilters({});
+            setSearchTerm('');
+            setVisibleColumns({
+              name: true,
+              serviceIp: true,
+              serviceStatus: true,
+              provider: true,
+              container_details: true
+            });
+          } else {
+            // If the active view ID doesn't exist, fall back to the first available view or default
+            const firstView = views[0];
+            if (firstView) {
+              setActiveViewId(firstView.id);
+              applyView(firstView);
+            } else {
+              setActiveViewId('default-view');
+            }
           }
         }
       } catch (error) {

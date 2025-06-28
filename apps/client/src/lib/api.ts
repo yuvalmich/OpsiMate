@@ -174,16 +174,8 @@ export const integrationApi = {
     SSHPort?: number;
     providerType: string;
   }) => {
-    // Convert camelCase to snake_case for the API
-    const convertedData = {
-      provider_name: providerData.name,
-      provider_ip: providerData.providerIp,
-      username: providerData.username,
-      private_key_filename: providerData.privateKeyFilename,
-      ssh_port: providerData.SSHPort,
-      provider_type: providerData.providerType
-    };
-    return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', convertedData);
+    // Send data in camelCase format as expected by the server schema
+    return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', providerData);
   },
   
   // Service APIs
