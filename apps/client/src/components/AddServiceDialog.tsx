@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { integrationApi } from "../lib/api";
+import { providerApi } from "../lib/api";
 import { DiscoveredService } from "@service-peek/shared";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +59,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     setSelectedContainer(null); // Reset selected container when fetching new ones
     
     try {
-      const response = await integrationApi.getProviderInstances(parseInt(serverId));
+      const response = await providerApi.getProviderInstances(parseInt(serverId));
       
       if (response.success && response.data) {
         // Transform API discovered service data to match our UI format
@@ -129,7 +129,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
 
     try {
       // Create service using the new API
-      const response = await integrationApi.createService(serviceData);
+      const response = await providerApi.createService(serviceData);
 
       console.log('Create service response:', response);
 
@@ -200,7 +200,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
         
         try {
           // Create service using the new API
-          const response = await integrationApi.createService({
+          const response = await providerApi.createService({
             providerId: parseInt(serverId),
             name: container.name,
             serviceType: "DOCKER",

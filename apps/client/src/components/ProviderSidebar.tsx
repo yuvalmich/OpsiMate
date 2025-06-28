@@ -11,7 +11,7 @@ import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
-import { integrationApi } from "@/lib/api";
+import { providerApi } from "@/lib/api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -263,8 +263,8 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
 
   const handleFormSubmit: SubmitHandler<AnyFormData> = async (data) => {
     if (provider.type !== 'server') {
-      // For non-server integrations, use the old localStorage approach
-      const newIntegration = {
+      // For non-server providers, use the old localStorage approach
+      const newProvider = {
         id: `${provider.type}-${Date.now()}`,
         name: data.name,
         type: provider.type,
@@ -275,30 +275,30 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
       };
 
       try {
-        const existingIntegrationsJson = localStorage.getItem('integrations');
-        const existingIntegrations = existingIntegrationsJson ? JSON.parse(existingIntegrationsJson) : [];
-        const updatedIntegrations = [...existingIntegrations, newIntegration];
-        localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
+        const existingProvidersJson = localStorage.getItem('providers');
+        const existingProviders = existingProvidersJson ? JSON.parse(existingProvidersJson) : [];
+        const updatedProviders = [...existingProviders, newProvider];
+        localStorage.setItem('providers', JSON.stringify(updatedProviders));
         
         toast({
-          title: "Integration added",
-          description: `Successfully added ${provider.name} integration`
+          title: "Provider added",
+          description: `Successfully added ${provider.name} provider`
         });
         onClose();
-        // Redirect to My Integrations page
-        navigate('/my-integrations');
+        // Redirect to My Providers page
+        navigate('/my-providers');
       } catch (error) {
-        console.error("Error saving integration:", error);
+        console.error("Error saving provider:", error);
         toast({
-          title: "Error adding integration",
-          description: "There was a problem saving your integration",
+          title: "Error adding provider",
+          description: "There was a problem saving your provider",
           variant: "destructive"
         });
       }
       return;
     }
     
-    // For server integration, use the API
+    // For server provider, use the API
     setIsSubmitting(true);
     try {
       // Map form data to API request format
@@ -322,24 +322,24 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
       };
       
       // Call the API to create a new provider
-      const response = await integrationApi.createProvider(providerData);
+      const response = await providerApi.createProvider(providerData);
       
       if (response.success && response.data) {
         toast({
-          title: "Integration added",
-          description: `Successfully added ${serverData.name} server integration`
+          title: "Provider added",
+          description: `Successfully added ${serverData.name} server provider`
         });
         onClose();
-        // Redirect to My Integrations page
-        navigate('/my-integrations');
+        // Redirect to My Providers page
+        navigate('/my-providers');
       } else {
-        throw new Error(response.error || 'Failed to create integration');
+        throw new Error(response.error || 'Failed to create provider');
       }
     } catch (error) {
-      console.error("Error creating server integration:", error);
+      console.error("Error creating server provider:", error);
       toast({
-        title: "Error adding integration",
-        description: error instanceof Error ? error.message : "There was a problem creating your integration",
+        title: "Error adding provider",
+        description: error instanceof Error ? error.message : "There was a problem creating your provider",
         variant: "destructive"
       });
     } finally {

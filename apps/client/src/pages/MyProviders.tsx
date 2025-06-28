@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "../components/DashboardLayout";
-import { integrationApi } from "../lib/api";
+import { providerApi } from "../lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,17 +12,17 @@ import { Server, Cloud, Database, Globe, MoreVertical, Search, Plus, Trash, Refr
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { IntegrationType } from "./Integrations";
+import { ProviderType } from "./Providers";
 import { AddServiceDialog, ServiceConfig } from "@/components/AddServiceDialog";
 
 
-import { EditIntegrationDialog } from "@/components/EditIntegrationDialog";
+import { EditProviderDialog } from "@/components/EditProviderDialog";
 
-// Define the structure of an integration instance
-export interface IntegrationInstance {
+// Define the structure of a provider instance
+export interface ProviderInstance {
   id: string;
   name: string;
-  type: IntegrationType;
+  type: ProviderType;
   status: "online" | "offline" | "warning" | "unknown";
   details: Record<string, string>;
   lastConnected?: string;
@@ -30,8 +30,8 @@ export interface IntegrationInstance {
   services?: ServiceConfig[];
 }
 
-// Mock data for integration instances
-const mockIntegrationInstances: IntegrationInstance[] = [
+// Mock data for provider instances
+const mockProviderInstances: ProviderInstance[] = [
   {
     id: "server-1",
     name: "Production API Server",
@@ -100,8 +100,8 @@ const mockIntegrationInstances: IntegrationInstance[] = [
   }
 ];
 
-// Helper function to get the appropriate icon for an integration type
-const getIntegrationIcon = (type: IntegrationType) => {
+// Helper function to get the appropriate icon for a provider type
+const getProviderIcon = (type: ProviderType) => {
   switch (type) {
     case "server":
       return <Server className="h-5 w-5" />;
@@ -117,8 +117,8 @@ const getIntegrationIcon = (type: IntegrationType) => {
   }
 };
 
-// Helper function to get a readable name for an integration type
-export const getIntegrationTypeName = (type: IntegrationType): string => {
+// Helper function to get a readable name for a provider type
+export const getProviderTypeName = (type: ProviderType): string => {
   switch (type) {
     case "server": return "Server";
     case "kubernetes": return "Kubernetes";
@@ -130,8 +130,8 @@ export const getIntegrationTypeName = (type: IntegrationType): string => {
   }
 };
 
-// Helper function to get the category of an integration type
-const getIntegrationCategory = (type: IntegrationType): string => {
+// Helper function to get the category of a provider type
+const getProviderCategory = (type: ProviderType): string => {
   switch (type) {
     case "server": return "server";
     case "kubernetes": return "kubernetes";
@@ -146,7 +146,7 @@ const getIntegrationCategory = (type: IntegrationType): string => {
 };
 
 // Helper function to get status badge color
-export const getStatusBadgeColor = (status: IntegrationInstance["status"]) => {
+export const getStatusBadgeColor = (status: ProviderInstance["status"]) => {
   switch (status) {
     case "online": return "bg-green-500/20 text-green-700 hover:bg-green-500/30";
     case "offline": return "bg-red-500/20 text-red-700 hover:bg-red-500/30";
@@ -166,34 +166,34 @@ const getServiceStatusBadgeColor = (status: ServiceConfig["status"]) => {
   }
 };
 
-export function MyIntegrations() {
+export function MyProviders() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const [integrationInstances, setIntegrationInstances] = useState<IntegrationInstance[]>([]);
+  const [providerInstances, setProviderInstances] = useState<ProviderInstance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedIntegration, setSelectedIntegration] = useState<IntegrationInstance | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<ProviderInstance | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
-  const [selectedServerForService, setSelectedServerForService] = useState<IntegrationInstance | null>(null);
+  const [selectedServerForService, setSelectedServerForService] = useState<ProviderInstance | null>(null);
   const [selectedService, setSelectedService] = useState<ServiceConfig | null>(null);
   const [expandedServices, setExpandedServices] = useState<Set<string>>(new Set());
   const [loadingServices, setLoadingServices] = useState<Set<string>>(new Set());
   
-  // Function to load integrations from API
-  const fetchIntegrations = async () => {
+  // Function to load providers from API
+  const fetchProviders = async () => {
     setIsLoading(true);
     try {
-      const response = await integrationApi.getProviders();
+      const response = await providerApi.getProviders();
       
       if (response.success && response.data && response.data.providers) {
-        // Convert API data to IntegrationInstance format
-        const apiIntegrations: IntegrationInstance[] = response.data.providers.map(provider => {
-          const mappedIntegration = {
+        // Convert API data to ProviderInstance format
+        const apiProviders: ProviderInstance[] = response.data.providers.map(provider => {
+          const mappedProvider = {
             id: provider.id ? provider.id.toString() : `temp-${Date.now()}`,
             name: provider.name || '',
-            type: "server" as IntegrationType,
+            type: "server" as ProviderType,
             status: "online" as const, // Default to online since we don't have status info from API yet
             details: {
               Hostname: provider.providerIp || '',
@@ -207,66 +207,66 @@ export function MyIntegrations() {
             services: []
           };
           
-          return mappedIntegration;
+          return mappedProvider;
         });
         
-        setIntegrationInstances(apiIntegrations);
+        setProviderInstances(apiProviders);
       } else if (import.meta.env.DEV && (!response.data || !response.data.providers || response.data.providers.length === 0)) {
-        // In development, use mock data if no saved integrations exist
-        setIntegrationInstances(mockIntegrationInstances);
+        // In development, use mock data if no saved providers exist
+        setProviderInstances(mockProviderInstances);
       }
     } catch (error) {
-      console.error("Error loading integrations:", error);
+      console.error("Error loading providers:", error);
       toast({
-        title: "Error loading integrations",
-        description: "There was a problem loading your integrations",
+        title: "Error loading providers",
+        description: "There was a problem loading your providers",
         variant: "destructive"
       });
       
       // Fall back to mock data in development
       if (import.meta.env.DEV) {
-        setIntegrationInstances(mockIntegrationInstances);
+        setProviderInstances(mockProviderInstances);
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Load integrations from API
+  // Load providers from API
   useEffect(() => {
-    fetchIntegrations();
+    fetchProviders();
   }, [toast]);
 
-  // Filter integrations based on search query and active tab
-  const filteredIntegrations = integrationInstances.filter(integration => {
+  // Filter providers based on search query and active tab
+  const filteredProviders = providerInstances.filter(provider => {
     // Add null checks to prevent toLowerCase() on undefined
-    const name = integration?.name || '';
-    const type = integration?.type || 'server';
+    const name = provider?.name || '';
+    const type = provider?.type || 'server';
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       type.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesTab = activeTab === "all" || 
-      getIntegrationCategory(type) === activeTab;
+      getProviderCategory(type) === activeTab;
     
     return matchesSearch && matchesTab;
   });
 
-  const handleRefreshIntegration = async (id: string) => {
+  const handleRefreshProvider = async (id: string) => {
     toast({
-      title: "Refreshing integration",
+      title: "Refreshing provider",
       description: "Checking connection status..."
     });
     
     try {
       // Get the latest data from the API
-      const response = await integrationApi.getProvider(parseInt(id));
+      const response = await providerApi.getProvider(parseInt(id));
       
       if (response.success && response.data) {
-        // Update just this integration with fresh data
-        const updatedIntegrations = integrationInstances.map(integration => 
-          integration.id === id 
+        // Update just this provider with fresh data
+        const updatedProviders = providerInstances.map(provider => 
+          provider.id === id 
             ? { 
-                ...integration, 
+                ...provider, 
                 name: response.data.name,
                 details: {
                   Hostname: response.data.providerIp,
@@ -278,38 +278,38 @@ export function MyIntegrations() {
                 lastConnected: new Date().toISOString(),
                 status: Math.random() > 0.3 ? "online" as const : "warning" as const // Simulate status check
               } 
-            : integration
+            : provider
         );
         
-        setIntegrationInstances(updatedIntegrations);
+        setProviderInstances(updatedProviders);
         
         toast({
-          title: "Integration refreshed",
+          title: "Provider refreshed",
           description: "Connection status updated"
         });
       } else {
-        throw new Error("Failed to refresh integration");
+        throw new Error("Failed to refresh provider");
       }
     } catch (error) {
-      console.error("Error refreshing integration:", error);
+      console.error("Error refreshing provider:", error);
       toast({
         title: "Error refreshing",
-        description: "There was a problem updating the integration status",
+        description: "There was a problem updating the provider status",
         variant: "destructive"
       });
     }
   };
 
-  // Helper function to refresh services for a specific integration
-  const refreshIntegrationServices = async (integration: IntegrationInstance) => {
-    const integrationId = integration.id;
+  // Helper function to refresh services for a specific provider
+  const refreshProviderServices = async (provider: ProviderInstance) => {
+    const providerId = provider.id;
     const newLoading = new Set(loadingServices);
-    newLoading.add(integrationId);
+    newLoading.add(providerId);
     setLoadingServices(newLoading);
 
     try {
-      // Fetch services for this integration from the API
-      const response = await integrationApi.getAllServices();
+      // Fetch services for this provider from the API
+      const response = await providerApi.getAllServices();
       
       if (response.success && response.data) {
         // Check if data is an array or if it's nested in another property
@@ -318,7 +318,7 @@ export function MyIntegrations() {
         
         // Filter services that belong to this provider
         const providerServices = servicesArray.filter(service => 
-          service.provider_id && service.provider_id.toString() === integration.id
+          service.provider_id && service.provider_id.toString() === provider.id
         );
         
         // Map API services to ServiceConfig format
@@ -331,57 +331,57 @@ export function MyIntegrations() {
           containerDetails: service.container_details || undefined
         }));
         
-        // Update the integration with its services
-        const updatedIntegration = {
-          ...integration,
+        // Update the provider with its services
+        const updatedProvider = {
+          ...provider,
           services: serviceConfigs
         };
         
-        // Update the integrations list with the updated integration
-        const updatedIntegrations = integrationInstances.map(item => 
-          item.id === integration.id ? updatedIntegration : item
+        // Update the providers list with the updated provider
+        const updatedProviders = providerInstances.map(item => 
+          item.id === provider.id ? updatedProvider : item
         );
         
-        setIntegrationInstances(updatedIntegrations);
+        setProviderInstances(updatedProviders);
       }
     } catch (error) {
-      console.error("Error fetching services for integration:", error);
+      console.error("Error fetching services for provider:", error);
       toast({
         title: "Error loading services",
-        description: "There was a problem loading services for this integration",
+        description: "There was a problem loading services for this provider",
         variant: "destructive"
       });
     } finally {
       const newLoading = new Set(loadingServices);
-      newLoading.delete(integrationId);
+      newLoading.delete(providerId);
       setLoadingServices(newLoading);
     }
   };
 
-  const handleRowClick = async (integration: IntegrationInstance, e?: React.MouseEvent) => {
+  const handleRowClick = async (provider: ProviderInstance, e?: React.MouseEvent) => {
     // Prevent triggering when clicking on dropdown menu
     if (e && (e.target as HTMLElement).closest('[data-radix-popper-content-wrapper]')) {
       return;
     }
 
-    const integrationId = integration.id;
+    const providerId = provider.id;
     
     // If services are already loaded and card is expanded, collapse it
-    if (expandedServices.has(integrationId) && integration.services && integration.services.length > 0) {
+    if (expandedServices.has(providerId) && provider.services && provider.services.length > 0) {
       const newExpanded = new Set(expandedServices);
-      newExpanded.delete(integrationId);
+      newExpanded.delete(providerId);
       setExpandedServices(newExpanded);
       return;
     }
 
     // If services are not loaded yet, fetch them
-    if (!integration.services || integration.services.length === 0) {
-      await refreshIntegrationServices(integration);
+    if (!provider.services || provider.services.length === 0) {
+      await refreshProviderServices(provider);
     }
 
     // Expand the services
     const newExpanded = new Set(expandedServices);
-    newExpanded.add(integrationId);
+    newExpanded.add(providerId);
     setExpandedServices(newExpanded);
   };
 
@@ -389,21 +389,21 @@ export function MyIntegrations() {
     setSelectedService(service);
   };
 
-  const handleServiceAction = async (integrationId: string, serviceId: string, action: "start" | "stop" | "restart") => {
+  const handleServiceAction = async (providerId: string, serviceId: string, action: "start" | "stop" | "restart") => {
     try {
       const serviceIdNum = parseInt(serviceId);
       
       if (action === "start") {
-        const response = await integrationApi.startService(serviceIdNum);
+        const response = await providerApi.startService(serviceIdNum);
         if (!response.success) throw new Error(response.error || "Failed to start service");
       } else if (action === "stop") {
-        const response = await integrationApi.stopService(serviceIdNum);
+        const response = await providerApi.stopService(serviceIdNum);
         if (!response.success) throw new Error(response.error || "Failed to stop service");
       } else if (action === "restart") {
         // Stop then start
-        await integrationApi.stopService(serviceIdNum);
+        await providerApi.stopService(serviceIdNum);
         setTimeout(async () => {
-          await integrationApi.startService(serviceIdNum);
+          await providerApi.startService(serviceIdNum);
         }, 1000);
       }
       
@@ -412,8 +412,8 @@ export function MyIntegrations() {
         description: `Service has been ${action}ed successfully`
       });
       
-      // Refresh the integration to get updated service status
-      setTimeout(() => handleRowClick(integrationInstances.find(i => i.id === integrationId)!), 2000);
+      // Refresh the provider to get updated service status
+      setTimeout(() => handleRowClick(providerInstances.find(i => i.id === providerId)!), 2000);
       
     } catch (error) {
       console.error(`Error ${action}ing service:`, error);
@@ -425,14 +425,14 @@ export function MyIntegrations() {
     }
   };
 
-  const handleAddService = async (integrationId: string, service: ServiceConfig) => {
+  const handleAddService = async (providerId: string, service: ServiceConfig) => {
     try {
       // Close the dialog first
       setIsAddServiceDialogOpen(false);
       
       // Automatically expand the services section to show the new service
       const newExpanded = new Set(expandedServices);
-      newExpanded.add(integrationId);
+      newExpanded.add(providerId);
       setExpandedServices(newExpanded);
       
       toast({
@@ -440,12 +440,12 @@ export function MyIntegrations() {
         description: `${service.name} has been successfully added`,
       });
       
-      // Refresh only the specific integration's services after a short delay
+      // Refresh only the specific provider's services after a short delay
       setTimeout(async () => {
-        const integration = integrationInstances.find(i => i.id === integrationId);
-        if (integration) {
-          // Refresh just this integration's services without changing expansion state
-          await refreshIntegrationServices(integration);
+        const provider = providerInstances.find(i => i.id === providerId);
+        if (provider) {
+          // Refresh just this provider's services without changing expansion state
+          await refreshProviderServices(provider);
         }
       }, 500);
       
@@ -459,48 +459,48 @@ export function MyIntegrations() {
     }
   };
 
-  const handleServiceStatusChange = async (integrationId: string, serviceId: string, newStatus: "running" | "stopped" | "error" | "unknown") => {
+  const handleServiceStatusChange = async (providerId: string, serviceId: string, newStatus: "running" | "stopped" | "error" | "unknown") => {
     try {
       // Convert serviceId to number for API calls
       const serviceIdNum = parseInt(serviceId);
       
       // Call the appropriate API based on the requested status
       if (newStatus === "running") {
-        const response = await integrationApi.startService(serviceIdNum);
+        const response = await providerApi.startService(serviceIdNum);
         if (!response.success) {
           throw new Error(response.error || "Failed to start service");
         }
       } else if (newStatus === "stopped") {
-        const response = await integrationApi.stopService(serviceIdNum);
+        const response = await providerApi.stopService(serviceIdNum);
         if (!response.success) {
           throw new Error(response.error || "Failed to stop service");
         }
       }
       
       // Update the UI with the new status
-      const updatedIntegrations = integrationInstances.map(integration => {
-        if (integration.id === integrationId && integration.services) {
+      const updatedProviders = providerInstances.map(provider => {
+        if (provider.id === providerId && provider.services) {
           return {
-            ...integration,
-            services: integration.services.map(service => 
+            ...provider,
+            services: provider.services.map(service => 
               service.id === serviceId ? { ...service, status: newStatus } : service
             )
           };
         }
-        return integration;
+        return provider;
       });
 
-      setIntegrationInstances(updatedIntegrations);
+      setProviderInstances(updatedProviders);
       
-      // Update selected integration if it's the one containing this service
-      if (selectedIntegration && selectedIntegration.id === integrationId && selectedIntegration.services) {
-        const updatedSelectedIntegration = {
-          ...selectedIntegration,
-          services: selectedIntegration.services.map(service => 
+      // Update selected provider if it's the one containing this service
+      if (selectedProvider && selectedProvider.id === providerId && selectedProvider.services) {
+        const updatedSelectedProvider = {
+          ...selectedProvider,
+          services: selectedProvider.services.map(service => 
             service.id === serviceId ? { ...service, status: newStatus } : service
           )
         };
-        setSelectedIntegration(updatedSelectedIntegration);
+        setSelectedProvider(updatedSelectedProvider);
       }
     } catch (error) {
       console.error("Error updating service status:", error);
@@ -515,21 +515,21 @@ export function MyIntegrations() {
   
   // Helper function to update UI after service deletion
   const updateUIAfterServiceDeletion = (serviceId: string) => {
-    // Find which integration contains this service and remove it
-    const updatedIntegrations = integrationInstances.map(integration => {
-      if (integration.services) {
-        const serviceExists = integration.services.some(service => service.id === serviceId);
+    // Find which provider contains this service and remove it
+    const updatedProviders = providerInstances.map(provider => {
+      if (provider.services) {
+        const serviceExists = provider.services.some(service => service.id === serviceId);
         if (serviceExists) {
           return {
-            ...integration,
-            services: integration.services.filter(service => service.id !== serviceId)
+            ...provider,
+            services: provider.services.filter(service => service.id !== serviceId)
           };
         }
       }
-      return integration;
+      return provider;
     });
     
-    setIntegrationInstances(updatedIntegrations);
+    setProviderInstances(updatedProviders);
   };
 
   const handleDeleteService = async (serviceId: string) => {
@@ -537,12 +537,12 @@ export function MyIntegrations() {
       // Convert serviceId to number
       const serviceIdNum = parseInt(serviceId);
       
-      // Find which integration contains this service
-      const containingIntegration = integrationInstances.find(integration => 
-        integration.services?.some(service => service.id === serviceId)
+      // Find which provider contains this service
+      const containingProvider = providerInstances.find(provider => 
+        provider.services?.some(service => service.id === serviceId)
       );
       
-      if (!containingIntegration) {
+      if (!containingProvider) {
         toast({
           title: "Service not found",
           description: "Could not find the service to delete",
@@ -552,7 +552,7 @@ export function MyIntegrations() {
       }
       
       // Call the API to delete the service
-      const response = await integrationApi.deleteService(serviceIdNum);
+      const response = await providerApi.deleteService(serviceIdNum);
       
       if (response.success) {
         // Update the UI after successful deletion
@@ -575,39 +575,39 @@ export function MyIntegrations() {
     }
   };
 
-  const handleDeleteIntegration = async () => {
-    if (!selectedIntegration) return;
+  const handleDeleteProvider = async () => {
+    if (!selectedProvider) return;
     try {
       // Call the API to delete the provider
-      const response = await integrationApi.deleteProvider(parseInt(selectedIntegration.id));
+      const response = await providerApi.deleteProvider(parseInt(selectedProvider.id));
       
       if (response.success) {
-        // Update the UI by removing the deleted integration
-        const updatedIntegrations = integrationInstances.filter(
-          (integration) => integration.id !== selectedIntegration.id
+        // Update the UI by removing the deleted provider
+        const updatedProviders = providerInstances.filter(
+          (provider) => provider.id !== selectedProvider.id
         );
-        setIntegrationInstances(updatedIntegrations);
+        setProviderInstances(updatedProviders);
 
         toast({
-          title: "Integration deleted",
-          description: `${selectedIntegration.name} has been successfully deleted.`,
+          title: "Provider deleted",
+          description: `${selectedProvider.name} has been successfully deleted.`,
         });
-        setSelectedIntegration(null);
+        setSelectedProvider(null);
         setIsDeleteDialogOpen(false);
       } else {
-        throw new Error(response.error || 'Failed to delete integration');
+        throw new Error(response.error || 'Failed to delete provider');
       }
     } catch (error) {
-      console.error("Error deleting integration:", error);
+      console.error("Error deleting provider:", error);
       toast({
-        title: "Error deleting integration",
-        description: "There was a problem deleting your integration.",
+        title: "Error deleting provider",
+        description: "There was a problem deleting your provider.",
         variant: "destructive",
       });
     }
   };
   
-  const handleUpdateIntegration = async (integrationId: string, updatedData: {
+  const handleUpdateProvider = async (providerId: string, updatedData: {
     name: string;
     providerIp: string;
     username: string;
@@ -617,17 +617,17 @@ export function MyIntegrations() {
   }) => {
     try {
       // Call the API to update the provider
-      const response = await integrationApi.updateProvider(parseInt(integrationId), updatedData);
+      const response = await providerApi.updateProvider(parseInt(providerId), updatedData);
       
       if (response.success && response.data) {
-        // Update the UI with the updated integration
-        const updatedIntegrations = integrationInstances.map(integration => {
-          if (integration.id === integrationId) {
+        // Update the UI with the updated provider
+        const updatedProviders = providerInstances.map(provider => {
+          if (provider.id === providerId) {
             return {
-              ...integration,
+              ...provider,
               name: updatedData.name,
               details: {
-                ...integration.details,
+                ...provider.details,
                 Hostname: updatedData.providerIp,
                 Port: updatedData.SSHPort.toString(),
                 Username: updatedData.username,
@@ -637,34 +637,34 @@ export function MyIntegrations() {
               lastConnected: new Date().toISOString()
             };
           }
-          return integration;
+          return provider;
         });
         
-        setIntegrationInstances(updatedIntegrations);
+        setProviderInstances(updatedProviders);
         
-        // If this is the currently selected integration, update it
-        if (selectedIntegration && selectedIntegration.id === integrationId) {
-          const updatedIntegration = updatedIntegrations.find(i => i.id === integrationId);
-          if (updatedIntegration) {
-            setSelectedIntegration(updatedIntegration);
+        // If this is the currently selected provider, update it
+        if (selectedProvider && selectedProvider.id === providerId) {
+          const updatedProvider = updatedProviders.find(i => i.id === providerId);
+          if (updatedProvider) {
+            setSelectedProvider(updatedProvider);
           }
         }
         
         toast({
-          title: "Integration updated",
+          title: "Provider updated",
           description: `${updatedData.name} has been successfully updated.`,
         });
       } else {
-        throw new Error(response.error || 'Failed to update integration');
+        throw new Error(response.error || 'Failed to update provider');
       }
     } catch (error) {
-      console.error("Error updating integration:", error);
+      console.error("Error updating provider:", error);
       toast({
-        title: "Error updating integration",
-        description: "There was a problem updating your integration.",
+        title: "Error updating provider",
+        description: "There was a problem updating your provider.",
         variant: "destructive",
       });
-      throw error; // Re-throw to be caught by the EditIntegrationDialog
+      throw error; // Re-throw to be caught by the EditProviderDialog
     }
   };
 
@@ -674,11 +674,11 @@ export function MyIntegrations() {
         {/* Header */}
         <header className="bg-background border-b border-border p-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">My Integrations</h1>
-            <Link to="/integrations">
+            <h1 className="text-2xl font-bold">My Providers</h1>
+            <Link to="/providers">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Integration
+                Add Provider
               </Button>
             </Link>
           </div>
@@ -686,7 +686,7 @@ export function MyIntegrations() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Search integrations..."
+                placeholder="Search providers..."
                 className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -705,25 +705,25 @@ export function MyIntegrations() {
           </TabsList>
         </Tabs>
 
-        {/* Integrations Grid */}
+        {/* Providers Grid */}
         <div className="flex-1 overflow-auto p-4">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
-          ) : filteredIntegrations.length > 0 ? (
+          ) : filteredProviders.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredIntegrations.map((integration) => {
-                const isExpanded = expandedServices.has(integration.id);
-                const isLoading = loadingServices.has(integration.id);
-                const hasServices = integration.services && integration.services.length > 0;
+              {filteredProviders.map((provider) => {
+                const isExpanded = expandedServices.has(provider.id);
+                const isLoading = loadingServices.has(provider.id);
+                const hasServices = provider.services && provider.services.length > 0;
                 const servicesToShow = hasServices && isExpanded ? 
-                  (expandedServices.has(`${integration.id}-full`) ? integration.services : integration.services.slice(0, 3)) : [];
-                const hasMoreServices = hasServices && integration.services!.length > 3;
+                  (expandedServices.has(`${provider.id}-full`) ? provider.services : provider.services.slice(0, 3)) : [];
+                const hasMoreServices = hasServices && provider.services!.length > 3;
 
                 return (
                   <Card 
-                    key={integration.id} 
+                    key={provider.id} 
                     className={`flex flex-col transition-all duration-300 hover:shadow-md ${
                       isExpanded ? 'shadow-lg ring-2 ring-primary/20' : ''
                     }`}
@@ -731,11 +731,11 @@ export function MyIntegrations() {
                     <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                       <div className="flex items-start gap-3">
                         <div className="bg-primary/10 dark:bg-primary/20 text-primary p-2 rounded-lg flex-shrink-0">
-                          {getIntegrationIcon(integration.type)}
+                          {getProviderIcon(provider.type)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg font-semibold leading-snug truncate">{integration.name}</CardTitle>
-                          <p className="text-sm text-muted-foreground">{getIntegrationTypeName(integration.type)}</p>
+                          <CardTitle className="text-lg font-semibold leading-snug truncate">{provider.name}</CardTitle>
+                          <p className="text-sm text-muted-foreground">{getProviderTypeName(provider.type)}</p>
                         </div>
                       </div>
                       <DropdownMenu>
@@ -746,20 +746,20 @@ export function MyIntegrations() {
                         </DropdownMenuTrigger>
                         <DropdownMenuPortal>
                           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuItem onClick={() => handleRefreshIntegration(integration.id)}>
+                            <DropdownMenuItem onClick={() => handleRefreshProvider(provider.id)}>
                               <RefreshCw className="mr-2 h-4 w-4" />
                               Refresh
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
-                              setSelectedIntegration(integration);
+                              setSelectedProvider(provider);
                               setIsEditDialogOpen(true);
                             }}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
-                            {integration.type === 'server' && (
+                            {provider.type === 'server' && (
                               <DropdownMenuItem onClick={() => {
-                                setSelectedServerForService(integration);
+                                setSelectedServerForService(provider);
                                 setIsAddServiceDialogOpen(true);
                               }}>
                                 <ListPlus className="mr-2 h-4 w-4" />
@@ -768,7 +768,7 @@ export function MyIntegrations() {
                             )}
                             <DropdownMenuItem
                               onClick={() => {
-                                setSelectedIntegration(integration);
+                                setSelectedProvider(provider);
                                 setIsDeleteDialogOpen(true);
                               }}
                               className="text-red-500 focus:text-red-500"
@@ -785,19 +785,19 @@ export function MyIntegrations() {
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
                         <div>
                           <p className="text-xs text-muted-foreground">Hostname</p>
-                          <p className="font-medium">{integration.details.Hostname}</p>
+                          <p className="font-medium">{provider.details.Hostname}</p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground">Port</p>
-                          <p className="font-medium">{integration.details.Port}</p>
+                          <p className="font-medium">{provider.details.Port}</p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground">Username</p>
-                          <p className="font-medium">{integration.details.Username}</p>
+                          <p className="font-medium">{provider.details.Username}</p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground">SSH Key</p>
-                          <p className="font-medium">{integration.details.Private_key_filename}</p>
+                          <p className="font-medium">{provider.details.Private_key_filename}</p>
                         </div>
                       </div>
 
@@ -807,7 +807,7 @@ export function MyIntegrations() {
                           className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer shadow-sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleRowClick(integration, e);
+                            handleRowClick(provider, e);
                           }}
                         >
                           <div className="flex items-center justify-between">
@@ -816,7 +816,7 @@ export function MyIntegrations() {
                                 <Server className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm font-medium">
                                   {hasServices 
-                                    ? `${integration.services!.length} Service${integration.services!.length !== 1 ? 's' : ''}`
+                                    ? `${provider.services!.length} Service${provider.services!.length !== 1 ? 's' : ''}`
                                     : 'Services'
                                   }
                                 </span>
@@ -828,7 +828,7 @@ export function MyIntegrations() {
                             <div className="flex items-center gap-2">
                               {hasServices && (
                                 <div className="flex -space-x-1">
-                                  {integration.services!.slice(0, 3).map((service, index) => (
+                                  {provider.services!.slice(0, 3).map((service, index) => (
                                     <div
                                       key={service.id}
                                       className={`inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-background text-xs ${
@@ -843,9 +843,9 @@ export function MyIntegrations() {
                                       )}
                                     </div>
                                   ))}
-                                  {integration.services!.length > 3 && (
+                                  {provider.services!.length > 3 && (
                                     <div className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-background bg-muted text-xs font-medium">
-                                      +{integration.services!.length - 3}
+                                      +{provider.services!.length - 3}
                                     </div>
                                   )}
                                 </div>
@@ -855,8 +855,8 @@ export function MyIntegrations() {
                           </div>
                           {hasServices && (
                             <div className="mt-2 text-xs text-muted-foreground">
-                              {integration.services!.slice(0, 2).map(service => service.name).join(', ')}
-                              {integration.services!.length > 2 && ` and ${integration.services!.length - 2} more`}
+                              {provider.services!.slice(0, 2).map(service => service.name).join(', ')}
+                              {provider.services!.length > 2 && ` and ${provider.services!.length - 2} more`}
                             </div>
                           )}
                         </div>
@@ -870,124 +870,153 @@ export function MyIntegrations() {
                         </div>
                       )}
 
-                      {/* Services List */}
-                      {isExpanded && hasServices && !isLoading && (
+                      {/* Expanded View for Services */}
+                      {isExpanded && !isLoading && (
                         <div className="space-y-3 animate-in slide-in-from-top-5 duration-300">
+                          {/* Header to collapse */}
                           <div 
                             className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 -m-2"
                             onClick={(e) => {
                               e.stopPropagation();
                               const newExpanded = new Set(expandedServices);
-                              newExpanded.delete(integration.id);
+                              newExpanded.delete(provider.id);
                               setExpandedServices(newExpanded);
                             }}
                           >
                             <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
                               <Server className="h-4 w-4" />
-                              Services ({integration.services!.length})
+                              Services ({provider.services ? provider.services.length : 0})
                             </h4>
                             <ChevronUp className="h-4 w-4 text-muted-foreground" />
                           </div>
-                          <div className="space-y-3">
-                            {servicesToShow.map((service) => (
-                              <div 
-                                key={service.id} 
-                                className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0">
-                                    {service.type === "DOCKER" ? (
-                                      <Container className="h-4 w-4 text-blue-500" />
-                                    ) : (
-                                      <Server className="h-4 w-4 text-purple-500" />
-                                    )}
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="font-medium text-sm truncate">{service.name}</p>
-                                    <p className="text-xs text-muted-foreground truncate">
-                                      {service.type === "DOCKER" 
-                                        ? `Container: ${service.containerDetails?.image || service.name}` 
-                                        : service.service_ip 
-                                          ? `IP: ${service.service_ip}` 
-                                          : "Manual service"
-                                      }
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge className={`text-xs ${getServiceStatusBadgeColor(service.status)}`}>
-                                    {service.status}
-                                  </Badge>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
-                                        <MoreVertical className="h-3 w-3" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuPortal>
-                                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                        <DropdownMenuItem onClick={() => handleServiceClick(service)}>
-                                          <Terminal className="mr-2 h-3 w-3" /> Details
-                                        </DropdownMenuItem>
-                                        {service.status !== 'running' && (
-                                          <DropdownMenuItem onClick={() => handleServiceAction(integration.id, service.id, 'start')}>
-                                            <Play className="mr-2 h-3 w-3" /> Start
-                                          </DropdownMenuItem>
+
+                          {/* Actual content (list or empty state) */}
+                          {hasServices ? (
+                            <>
+                              <div className="space-y-3">
+                                {servicesToShow.map((service) => (
+                                  <div 
+                                    key={service.id} 
+                                    className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className="flex-shrink-0">
+                                        {service.type === "DOCKER" ? (
+                                          <Container className="h-4 w-4 text-blue-500" />
+                                        ) : (
+                                          <Server className="h-4 w-4 text-purple-500" />
                                         )}
-                                        {service.status === 'running' && (
-                                          <DropdownMenuItem onClick={() => handleServiceAction(integration.id, service.id, 'stop')}>
-                                            <Square className="mr-2 h-3 w-3" /> Stop
-                                          </DropdownMenuItem>
-                                        )}
-                                        <DropdownMenuItem onClick={() => handleServiceAction(integration.id, service.id, 'restart')}>
-                                          <RefreshCw className="mr-2 h-3 w-3" /> Restart
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem 
-                                          onClick={() => handleDeleteService(service.id)}
-                                          className="text-red-500 focus:text-red-500"
-                                        >
-                                          <Trash className="mr-2 h-3 w-3" /> Delete
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenuPortal>
-                                  </DropdownMenu>
-                                </div>
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="font-medium text-sm truncate">{service.name}</p>
+                                        <p className="text-xs text-muted-foreground truncate">
+                                          {service.type === "DOCKER" 
+                                            ? `Container: ${service.containerDetails?.image || service.name}` 
+                                            : service.service_ip 
+                                              ? `IP: ${service.service_ip}` 
+                                              : "Manual service"
+                                          }
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Badge className={`text-xs ${getServiceStatusBadgeColor(service.status)}`}>
+                                        {service.status}
+                                      </Badge>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
+                                            <MoreVertical className="h-3 w-3" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuPortal>
+                                          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                            <DropdownMenuItem onClick={() => handleServiceClick(service)}>
+                                              <Terminal className="mr-2 h-3 w-3" /> Details
+                                            </DropdownMenuItem>
+                                            {service.status !== 'running' && (
+                                              <DropdownMenuItem onClick={() => handleServiceAction(provider.id, service.id, 'start')}>
+                                                <Play className="mr-2 h-3 w-3" /> Start
+                                              </DropdownMenuItem>
+                                            )}
+                                            {service.status === 'running' && (
+                                              <DropdownMenuItem onClick={() => handleServiceAction(provider.id, service.id, 'stop')}>
+                                                <Square className="mr-2 h-3 w-3" /> Stop
+                                              </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuItem onClick={() => handleServiceAction(provider.id, service.id, 'restart')}>
+                                              <RefreshCw className="mr-2 h-3 w-3" /> Restart
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                              onClick={() => handleDeleteService(service.id)}
+                                              className="text-red-500 focus:text-red-500"
+                                            >
+                                              <Trash className="mr-2 h-3 w-3" /> Delete
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenuPortal>
+                                      </DropdownMenu>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                          
-                          {/* See More / See Less Button */}
-                          {hasMoreServices && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="w-full text-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const key = `${integration.id}-full`;
-                                const newExpanded = new Set(expandedServices);
-                                if (expandedServices.has(key)) {
-                                  newExpanded.delete(key);
-                                } else {
-                                  newExpanded.add(key);
-                                }
-                                setExpandedServices(newExpanded);
-                              }}
-                            >
-                              {expandedServices.has(`${integration.id}-full`) 
-                                ? `Show less (${integration.services!.length - 3} hidden)` 
-                                : `See ${integration.services!.length - 3} more services`
-                              }
-                            </Button>
+                              
+                              {/* See More / See Less Button */}
+                              {hasMoreServices && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="w-full text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const key = `${provider.id}-full`;
+                                    const newExpanded = new Set(expandedServices);
+                                    if (expandedServices.has(key)) {
+                                      newExpanded.delete(key);
+                                    } else {
+                                      newExpanded.add(key);
+                                    }
+                                    setExpandedServices(newExpanded);
+                                  }}
+                                >
+                                  {expandedServices.has(`${provider.id}-full`) 
+                                    ? `Show less (${provider.services!.length - 3} hidden)` 
+                                    : `See ${provider.services!.length - 3} more services`
+                                  }
+                                </Button>
+                              )}
+                            </>
+                          ) : (
+                            <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-800/50 flex flex-col items-center">
+                              <Server className="h-8 w-8 text-muted-foreground mb-2" />
+                              <h4 className="font-semibold text-sm text-foreground">No Services Configured</h4>
+                              <p className="text-xs text-muted-foreground mt-1 mb-4">
+                                Get started by adding a new service to this provider.
+                              </p>
+                              {provider.type === 'server' && (
+                                 <Button
+                                   variant="outline"
+                                   size="sm"
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     setSelectedServerForService(provider);
+                                     setIsAddServiceDialogOpen(true);
+                                   }}
+                                 >
+                                   <ListPlus className="mr-2 h-4 w-4" />
+                                   Add New Service
+                                 </Button>
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
                     </CardContent>
                     
                     <CardFooter className="flex items-center justify-between text-xs text-muted-foreground">
-                      <Badge className={getStatusBadgeColor(integration.status)}>{integration.status}</Badge>
-                      {integration.lastConnected && (
-                        <p>Last connected: {new Date(integration.lastConnected).toLocaleDateString()}</p>
+                      <Badge className={getStatusBadgeColor(provider.status)}>{provider.status}</Badge>
+                      {provider.lastConnected && (
+                        <p>Last connected: {new Date(provider.lastConnected).toLocaleDateString()}</p>
                       )}
                     </CardFooter>
                   </Card>
@@ -999,14 +1028,14 @@ export function MyIntegrations() {
               <div className="bg-muted/30 p-4 rounded-full mb-4">
                 <Database className="h-10 w-10 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">No integrations found</h3>
+              <h3 className="text-xl font-semibold mb-2">No providers found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchQuery ? "No integrations match your search query." : "You haven't added any integrations yet."}
+                {searchQuery ? "No providers match your search query." : "You haven't added any providers yet."}
               </p>
-              <Link to="/integrations">
+              <Link to="/providers">
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Integration
+                  Add Provider
                 </Button>
               </Link>
             </div>
@@ -1031,29 +1060,29 @@ export function MyIntegrations() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Are you sure you want to delete this integration?</DialogTitle>
+            <DialogTitle>Are you sure you want to delete this provider?</DialogTitle>
             <DialogDescription>
               This action cannot be undone. This will permanently delete the
-              <span className="font-semibold"> {selectedIntegration?.name} </span>
-              integration.
+              <span className="font-semibold"> {selectedProvider?.name} </span>
+              provider.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteIntegration}>Delete</Button>
+            <Button variant="destructive" onClick={handleDeleteProvider}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       
-      {/* Edit Integration Dialog */}
-      <EditIntegrationDialog
-        integration={selectedIntegration}
+      {/* Edit Provider Dialog */}
+      <EditProviderDialog
+        provider={selectedProvider}
         open={isEditDialogOpen}
         onClose={() => setIsEditDialogOpen(false)}
-        onSave={handleUpdateIntegration}
+        onSave={handleUpdateProvider}
       />
     </DashboardLayout>
   );
 }
 
-export default MyIntegrations;
+export default MyProviders;
