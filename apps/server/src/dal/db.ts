@@ -17,7 +17,7 @@ let dbInstance: DbInterface | null = null;
 const initializeDb = async (): Promise<DbInterface> => {
   if (dbInstance) return dbInstance;
 
-  const dbPath = path.resolve(__dirname, '../../../database.sqlite');
+  const dbPath = path.resolve(__dirname, '../../service_peek.db');
   
   try {
     const db = await open({
