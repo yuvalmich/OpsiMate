@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { RefreshCw } from "lucide-react";
-import { integrationApi } from "@/lib/api";
+import { providerApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface ServiceLogsProps {
@@ -21,7 +21,7 @@ export function ServiceLogs({ serviceId, serviceName }: ServiceLogsProps) {
     setLoading(true);
     setError(null);
     try {
-      const response = await integrationApi.getServiceLogs(parseInt(serviceId));
+      const response = await providerApi.getServiceLogs(parseInt(serviceId));
       
       if (response.success && response.data) {
         setLogs(response.data);

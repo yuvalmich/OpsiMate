@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink, X, RefreshCw } from "lucide-react";
-import { IntegrationInstance } from "@/pages/MyIntegrations";
-import { getIntegrationTypeName, getStatusBadgeColor } from "@/pages/MyIntegrations";
+import { ProviderInstance } from "@/pages/MyProviders";
+import { getProviderTypeName, getStatusBadgeColor } from "@/pages/MyProviders";
 import { ServiceConfig } from "./AddServiceDialog";
 import { ServicesList } from "./ServicesList";
-import { integrationApi } from "@/lib/api";
+import { providerApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface ServiceDetailsSheetProps {
-  integration: IntegrationInstance | null;
+  integration: ProviderInstance | null;
   onClose: () => void;
   onDeleteService?: (serviceId: string) => void;
   onStatusChange?: (serviceId: string, newStatus: "running" | "stopped" | "error") => void;
@@ -41,7 +41,7 @@ export function ServiceDetailsSheetWithLogs({
     setLoading(true);
     setError(null);
     try {
-      const response = await integrationApi.getServiceLogs(parseInt(serviceId));
+      const response = await providerApi.getServiceLogs(parseInt(serviceId));
       
       if (response.success && response.data) {
         setLogs(response.data);
@@ -86,7 +86,7 @@ export function ServiceDetailsSheetWithLogs({
         <div className="space-y-6 py-2">
           <div>
             <h3 className="text-lg font-semibold">{integration.name}</h3>
-            <p className="text-sm text-muted-foreground">{getIntegrationTypeName(integration.type)}</p>
+            <p className="text-sm text-muted-foreground">{getProviderTypeName(integration.type)}</p>
             <Badge className={`mt-1 capitalize ${getStatusBadgeColor(integration.status ?? 'unknown')}`}>
               {integration.status}
             </Badge>

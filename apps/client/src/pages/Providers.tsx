@@ -3,23 +3,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Server, Cloud, Database, Globe } from "lucide-react";
-import { IntegrationSidebar } from "../components/IntegrationSidebar";
+import { ProviderSidebar } from "../components/ProviderSidebar";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { useToast } from "@/hooks/use-toast";
 
 // Integration types
-export type IntegrationType = "server" | "kubernetes" | "aws-ec2" | "aws-eks" | "gcp-compute" | "azure-vm";
+export type ProviderType = "server" | "kubernetes" | "aws-ec2" | "aws-eks" | "gcp-compute" | "azure-vm";
 
-interface Integration {
+interface Provider {
   id: string;
-  type: IntegrationType;
+  type: ProviderType;
   name: string;
   description: string;
   icon: React.ReactNode;
   category: "server" | "kubernetes" | "cloud";
 }
 
-const integrations: Integration[] = [
+const providers: Provider[] = [
   {
     id: "server",
     type: "server",
@@ -70,21 +70,21 @@ const integrations: Integration[] = [
   }
 ];
 
-export function Integrations() {
+export function Providers() {
   const { toast } = useToast();
-  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [activeTab, setActiveTab] = useState<string>("all");
 
-  const filteredIntegrations = activeTab === "all" 
-    ? integrations 
-    : integrations.filter(integration => integration.category === activeTab);
+  const filteredProviders = activeTab === "all" 
+    ? providers 
+    : providers.filter(provider => provider.category === activeTab);
     
   return (
     <DashboardLayout>
       <div className="container mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Providers</h1>
           <p className="text-muted-foreground">
             Connect your infrastructure and services to Service Peek Dashboard
           </p>
@@ -100,24 +100,24 @@ export function Integrations() {
         </TabsList>
         <TabsContent value={activeTab} className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredIntegrations.map((integration) => (
-              <Card key={integration.id} className="overflow-hidden">
+            {filteredProviders.map((provider) => (
+              <Card key={provider.id} className="overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                     <div className="bg-primary/10 p-2 rounded-md">
-                      {integration.icon}
+                      {provider.icon}
                     </div>
-                    <CardTitle>{integration.name}</CardTitle>
+                    <CardTitle>{provider.name}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>{integration.description}</CardDescription>
+                  <CardDescription>{provider.description}</CardDescription>
                 </CardContent>
                 <CardFooter className="pt-3">
                   <Button 
                     variant="default" 
                     className="w-full"
-                    onClick={() => setSelectedIntegration(integration)}
+                    onClick={() => setSelectedProvider(provider)}
                   >
                     Configure
                   </Button>
@@ -128,10 +128,10 @@ export function Integrations() {
         </TabsContent>
       </Tabs>
 
-      {selectedIntegration && (
-        <IntegrationSidebar
-          integration={selectedIntegration}
-          onClose={() => setSelectedIntegration(null)}
+      {selectedProvider && (
+        <ProviderSidebar
+          provider={selectedProvider}
+          onClose={() => setSelectedProvider(null)}
         />
       )}
     </div>
@@ -139,4 +139,4 @@ export function Integrations() {
   );
 }
 
-export default Integrations;
+export default Providers;

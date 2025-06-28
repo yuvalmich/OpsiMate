@@ -7,8 +7,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { integrationApi } from "../lib/api";
+import { providerApi } from "../lib/api";
 import { DiscoveredService } from "@service-peek/shared";
+import { cn } from "@/lib/utils";
 
 // Define service types
 export interface ServiceConfig {
@@ -49,14 +50,16 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
   const [containers, setContainers] = useState<Array<Container & { id: string; selected: boolean; name: string; created: string }>>([]);
   const [loadingContainers, setLoadingContainers] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedContainer, setSelectedContainer] = useState<(Container & { id: string; selected: boolean; name: string; created: string }) | null>(null);
 
   // Function to fetch containers from the API
   const fetchContainers = async () => {
     setLoadingContainers(true);
     setError(null);
+    setSelectedContainer(null); // Reset selected container when fetching new ones
     
     try {
-      const response = await integrationApi.getProviderInstances(parseInt(serverId));
+      const response = await providerApi.getProviderInstances(parseInt(serverId));
       
       if (response.success && response.data) {
         // Transform API discovered service data to match our UI format
@@ -93,6 +96,16 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     }
   }, [open, activeTab, serverId]);
 
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setServiceName("");
+      setServicePort("");
+      setSelectedContainer(null);
+      setContainers(containers.map(container => ({ ...container, selected: false })));
+    }
+  }, [open]);
+
   const handleAddManualService = async () => {
     if (!serviceName) {
       toast({
@@ -116,7 +129,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
 
     try {
       // Create service using the new API
-      const response = await integrationApi.createService(serviceData);
+      const response = await providerApi.createService(serviceData);
 
       console.log('Create service response:', response);
 
@@ -187,7 +200,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
         
         try {
           // Create service using the new API
-          const response = await integrationApi.createService({
+          const response = await providerApi.createService({
             providerId: parseInt(serverId),
             name: container.name,
             serviceType: "DOCKER",
@@ -233,6 +246,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
         
         // Reset and close if at least one service was created
         setContainers(containers.map(container => ({ ...container, selected: false })));
+        setSelectedContainer(null);
         onClose();
       } else {
         toast({
@@ -254,11 +268,30 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
   };
 
   const toggleContainerSelection = (containerId: string) => {
-    setContainers(containers.map(container => 
-      container.id === containerId 
-        ? { ...container, selected: !container.selected } 
-        : container
-    ));
+    const updatedContainers = containers.map(container => {
+      if (container.id === containerId) {
+        const newSelected = !container.selected;
+        // If this container is being selected, update the selectedContainer state
+        if (newSelected) {
+          setSelectedContainer(container);
+          setServiceName(container.name);
+          setServicePort(container.service_ip?.split(':')[1] || '');
+        } else if (selectedContainer?.id === containerId) {
+          // If this container is being deselected and it was the selected one, clear the selection
+          setSelectedContainer(null);
+          setServiceName('');
+          setServicePort('');
+        }
+        return { ...container, selected: newSelected };
+      } else {
+        // Deselect other containers since we only want one selected at a time
+        if (container.selected) {
+          return { ...container, selected: false };
+        }
+        return container;
+      }
+    });
+    setContainers(updatedContainers);
   };
 
   return (
@@ -323,32 +356,62 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
               <div className="text-center py-8 text-muted-foreground">
                 <p>No containers found on this server.</p>
               </div>
-            ) : (
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                {containers.map(container => (
-                  <div
-                    key={container.id}
-                    className="flex items-center space-x-3 border rounded-md p-3 hover:bg-accent cursor-pointer"
-                    onClick={() => toggleContainerSelection(container.id)}
-                  >
-                    <Checkbox
-                      id={`container-${container.id}`}
-                      checked={container.selected}
-                      onCheckedChange={() => toggleContainerSelection(container.id)}
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">{container.name}</div>
-                      <div className="text-sm text-muted-foreground">{container.image}</div>
-                      <div className="text-xs mt-1">
-                        <span className={`inline-block px-2 py-1 rounded-full ${container.service_status === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                          {container.service_status}
-                        </span>
+            ) :
+              <div className="space-y-4">
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {containers.map(container => (
+                    <div
+                      key={container.id}
+                      className={cn(
+                        "flex items-center space-x-3 border rounded-md p-3 hover:bg-accent cursor-pointer",
+                        container.selected && "border-primary bg-primary/5"
+                      )}
+                      onClick={() => toggleContainerSelection(container.id)}
+                    >
+                      <Checkbox
+                        id={`container-${container.id}`}
+                        checked={container.selected}
+                        onCheckedChange={() => toggleContainerSelection(container.id)}
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium">{container.name}</div>
+                        <div className="text-sm text-muted-foreground">{container.image}</div>
+                        <div className="text-xs mt-1">
+                          <span className={`inline-block px-2 py-1 rounded-full ${container.service_status === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                            {container.service_status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {selectedContainer && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="col-span-2 space-y-2">
+                        <Label htmlFor="container-name">Container Name</Label>
+                        <Input 
+                          id="container-name" 
+                          value={serviceName}
+                          onChange={(e) => setServiceName(e.target.value)}
+                          placeholder="Container name"
+                        />
+                      </div>
+                      <div className="col-span-1 space-y-2">
+                        <Label htmlFor="container-port">Port</Label>
+                        <Input 
+                          id="container-port" 
+                          value={servicePort}
+                          onChange={(e) => setServicePort(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="Port"
+                        />
                       </div>
                     </div>
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            }
           </TabsContent>
         </Tabs>
         
@@ -362,7 +425,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
               Add Service
             </Button>
           ) : (
-            <Button onClick={handleAddContainers} disabled={loading || loadingContainers || containers.filter(c => c.selected).length === 0}>
+            <Button onClick={handleAddContainers} disabled={loading || loadingContainers || !selectedContainer}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Add Selected
             </Button>

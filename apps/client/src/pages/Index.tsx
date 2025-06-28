@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { ServiceTable, Service } from "@/components/ServiceTable"
 import { RightSidebarWithLogs as RightSidebar } from "@/components/RightSidebarWithLogs"
@@ -10,8 +10,12 @@ import { SavedViewsManager } from "@/components/SavedViewsManager"
 import { DashboardLayout } from "../components/DashboardLayout"
 import { SavedView } from "@/types/SavedView"
 import { getSavedViews, saveView, deleteView, getActiveViewId, setActiveViewId } from "@/lib/savedViews"
-import { integrationApi } from "@/lib/api"
+import { providerApi } from "@/lib/api"
 import type { ImperativePanelHandle as PanelRef } from "react-resizable-panels"
+import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Play, MoreHorizontal, Square, RefreshCcw, Trash, Terminal } from "lucide-react"
+import { Link } from "react-router-dom"
 
 const Index = () => {
   const { toast } = useToast()
@@ -36,10 +40,10 @@ const Index = () => {
   const [activeViewId, setActiveViewId] = useState<string | undefined>()
 
   // Fetch services from API
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await integrationApi.getAllServices()
+      const response = await providerApi.getAllServices()
       
       if (response.success && response.data) {
         const transformedServices: Service[] = response.data.map((service: any) => ({
@@ -80,12 +84,12 @@ const Index = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   // Load services on component mount
   useEffect(() => {
     fetchServices()
-  }, [])
+  }, [fetchServices])
 
   // Load saved views and active view on component mount
   useEffect(() => {
@@ -269,7 +273,7 @@ const Index = () => {
       for (const service of selectedServices) {
         try {
           const serviceId = parseInt(service.id);
-          const response = await integrationApi.startService(serviceId);
+          const response = await providerApi.startService(serviceId);
           
           if (response.success) {
             successCount++;
@@ -327,7 +331,7 @@ const Index = () => {
       for (const service of selectedServices) {
         try {
           const serviceId = parseInt(service.id);
-          const response = await integrationApi.stopService(serviceId);
+          const response = await providerApi.stopService(serviceId);
           
           if (response.success) {
             successCount++;
@@ -387,7 +391,7 @@ const Index = () => {
           const serviceId = parseInt(service.id);
           
           // First stop the service
-          const stopResponse = await integrationApi.stopService(serviceId);
+          const stopResponse = await providerApi.stopService(serviceId);
           if (!stopResponse.success) {
             failureCount++;
             console.error(`Failed to stop service ${service.name} during restart:`, stopResponse.error);
@@ -395,7 +399,7 @@ const Index = () => {
           }
           
           // Then start the service
-          const startResponse = await integrationApi.startService(serviceId);
+          const startResponse = await providerApi.startService(serviceId);
           if (startResponse.success) {
             successCount++;
             // Update the service status in the local state

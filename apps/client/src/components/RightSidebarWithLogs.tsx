@@ -7,7 +7,7 @@ import { Service } from "./ServiceTable";
 import { cn } from "@/lib/utils";
 import { GrafanaIcon } from "./icons/GrafanaIcon";
 import { CoralogixIcon } from "./icons/CoralogixIcon";
-import { integrationApi } from "@/lib/api";
+import { providerApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface RightSidebarProps {
@@ -28,7 +28,7 @@ export function RightSidebarWithLogs({ service, onClose, collapsed }: RightSideb
     setLoading(true);
     setError(null);
     try {
-      const response = await integrationApi.getServiceLogs(parseInt(service.id));
+      const response = await providerApi.getServiceLogs(parseInt(service.id));
       
       if (response.success && response.data) {
         setLogs(response.data);
