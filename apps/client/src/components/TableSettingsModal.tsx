@@ -11,17 +11,17 @@ interface TableSettingsModalProps {
 
 const columnLabels = {
   name: 'Service Name',
-  serviceIp: 'Service IP',
+  serviceIP: 'Service IP',
   serviceStatus: 'Status',
   provider: 'Provider',
-  container_details: 'Container Details'
+  containerDetails: 'Container Details'
 }
 
-export function TableSettingsModal({ 
-  open, 
-  onOpenChange, 
-  visibleColumns, 
-  onColumnToggle 
+export function TableSettingsModal({
+  open,
+  onOpenChange,
+  visibleColumns,
+  onColumnToggle
 }: TableSettingsModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -29,12 +29,12 @@ export function TableSettingsModal({
         <DialogHeader>
           <DialogTitle>Table Settings</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
             Select which columns to display in the services table.
           </p>
-          
+
           <div className="space-y-3">
             {Object.entries(columnLabels).map(([key, label]) => (
               <div key={key} className="flex items-center space-x-2">
@@ -52,7 +52,7 @@ export function TableSettingsModal({
               </div>
             ))}
           </div>
-          
+
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Close

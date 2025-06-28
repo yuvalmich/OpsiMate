@@ -37,7 +37,7 @@ async function testIntegration() {
     // Test 4: Store services in bulk
     console.log('\n4. Storing services in bulk...');
     const servicesData = {
-      service_names: ['nginx', 'postgresql', 'redis']
+      serviceNames: ['nginx', 'postgresql', 'redis']
     };
 
     const bulkResponse = await axios.post(`${BASE_URL}/providers/${providerId}/instance/bulk`, servicesData);
@@ -56,4 +56,4 @@ async function testIntegration() {
 }
 
 // Run the test
-testIntegration(); 
+testIntegration();

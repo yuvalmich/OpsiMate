@@ -13,7 +13,7 @@ interface AddServiceModalProps {
 
 export function AddServiceModal({ open, onOpenChange, onAddService }: AddServiceModalProps) {
   const [formData, setFormData] = useState({
-    serviceName: '',
+    name: '',
     serverId: '',
     ipAddress: '',
     os: '',
@@ -31,7 +31,7 @@ export function AddServiceModal({ open, onOpenChange, onAddService }: AddService
       port: formData.port ? parseInt(formData.port) : undefined
     })
     setFormData({
-      serviceName: '',
+      name: '',
       serverId: '',
       ipAddress: '',
       os: '',
@@ -48,19 +48,19 @@ export function AddServiceModal({ open, onOpenChange, onAddService }: AddService
         <DialogHeader>
           <DialogTitle>Add New Service</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="serviceName">Service Name</Label>
+            <Label htmlFor="name">Service Name</Label>
             <Input
-              id="serviceName"
-              value={formData.serviceName}
-              onChange={(e) => setFormData(prev => ({ ...prev, serviceName: e.target.value }))}
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="e.g., Web Server, Database"
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="serverId">Server ID</Label>
             <Input
@@ -71,7 +71,7 @@ export function AddServiceModal({ open, onOpenChange, onAddService }: AddService
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="ipAddress">IP Address</Label>
             <Input
@@ -82,7 +82,7 @@ export function AddServiceModal({ open, onOpenChange, onAddService }: AddService
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="os">Operating System</Label>
             <Select value={formData.os} onValueChange={(value) => setFormData(prev => ({ ...prev, os: value }))}>
@@ -98,7 +98,7 @@ export function AddServiceModal({ open, onOpenChange, onAddService }: AddService
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="port">Port (Optional)</Label>
             <Input
@@ -109,7 +109,7 @@ export function AddServiceModal({ open, onOpenChange, onAddService }: AddService
               placeholder="e.g., 8080"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="sshUser">SSH Username</Label>
             <Input
@@ -120,7 +120,7 @@ export function AddServiceModal({ open, onOpenChange, onAddService }: AddService
               required
             />
           </div>
-          
+
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel

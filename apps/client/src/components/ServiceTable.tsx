@@ -10,21 +10,21 @@ import { useState, useMemo } from "react"
 export interface Service {
   id: string
   name: string
-  serviceIp?: string
+  serviceIP?: string
   serviceStatus: 'running' | 'stopped' | 'error' | 'unknown'
   serviceType: 'MANUAL' | 'DOCKER' | 'SYSTEMD'
   createdAt: string
   provider: {
     id: number
     name: string
-    providerIp: string
+    providerIP: string
     username: string
     privateKeyFilename: string
     SSHPort: number
     createdAt: number
     providerType: string
   }
-  container_details?: {
+  containerDetails?: {
     id?: string
     image?: string
     created?: string
@@ -42,8 +42,8 @@ interface ServiceTableProps {
   loading?: boolean
 }
 
-export function ServiceTable({ 
-  services, 
+export function ServiceTable({
+  services,
   selectedServices,
   onServicesSelect,
   onSettingsClick,
@@ -68,16 +68,16 @@ export function ServiceTable({
   // Filter services based on search term
   const filteredServices = useMemo(() => {
     if (!searchTerm.trim()) return services
-    
+
     const searchLower = searchTerm.toLowerCase()
     return services.filter(service => {
       return (
         service.name.toLowerCase().includes(searchLower) ||
-        service.serviceIp?.toLowerCase().includes(searchLower) ||
+        service.serviceIP?.toLowerCase().includes(searchLower) ||
         service.serviceStatus.toLowerCase().includes(searchLower) ||
         service.provider.name.toLowerCase().includes(searchLower) ||
-        service.provider.providerIp.toLowerCase().includes(searchLower) ||
-        (service.container_details?.image && service.container_details.image.toLowerCase().includes(searchLower))
+        service.provider.providerIP.toLowerCase().includes(searchLower) ||
+        (service.containerDetails?.image && service.containerDetails.image.toLowerCase().includes(searchLower))
       )
     })
   }, [services, searchTerm])
@@ -103,9 +103,9 @@ export function ServiceTable({
               <h3 className="text-lg font-semibold text-foreground">Services</h3>
               <p className="text-sm text-muted-foreground">Loading...</p>
             </div>
-            <Button 
-              variant="outline" 
-              size="icon" 
+            <Button
+              variant="outline"
+              size="icon"
               onClick={onSettingsClick}
               className="h-9 w-9 rounded-md"
             >
@@ -119,17 +119,18 @@ export function ServiceTable({
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-10">
-                  <Checkbox 
+                  <Checkbox
                     checked={false}
                     onCheckedChange={() => {}}
                     aria-label="Select all services"
                   />
                 </TableHead>
+                11
                 {visibleColumns.name && <TableHead className="font-medium">Name</TableHead>}
-                {visibleColumns.serviceIp && <TableHead className="font-medium">Service IP</TableHead>}
+                {visibleColumns.serviceIP && <TableHead className="font-medium">Service IP</TableHead>}
                 {visibleColumns.serviceStatus && <TableHead className="font-medium">Status</TableHead>}
                 {visibleColumns.provider && <TableHead className="font-medium">Provider</TableHead>}
-                {visibleColumns.container_details && <TableHead className="font-medium">Container Details</TableHead>}
+                {visibleColumns.containerDetails && <TableHead className="font-medium">Container Details</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -159,9 +160,9 @@ export function ServiceTable({
               {searchTerm && ` matching "${searchTerm}"`}
             </p>
           </div>
-          <Button 
-            variant="outline" 
-            size="icon" 
+          <Button
+            variant="outline"
+            size="icon"
             onClick={onSettingsClick}
             className="h-9 w-9 rounded-md"
           >
@@ -198,13 +199,13 @@ export function ServiceTable({
           )}
         </div>
       </div>
-      
+
       <div className="overflow-auto flex-grow relative">
         <Table className="relative">
           <TableHeader className="sticky top-0 bg-card z-10">
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-10">
-                <Checkbox 
+                <Checkbox
                   checked={filteredServices.length > 0 && selectedServices.length === filteredServices.length}
                   onCheckedChange={(checked) => {
                     if (checked) {
@@ -217,10 +218,10 @@ export function ServiceTable({
                 />
               </TableHead>
               {visibleColumns.name && <TableHead className="font-medium">Name</TableHead>}
-              {visibleColumns.serviceIp && <TableHead className="font-medium">Service IP</TableHead>}
+              {visibleColumns.serviceIP && <TableHead className="font-medium">Service IP</TableHead>}
               {visibleColumns.serviceStatus && <TableHead className="font-medium">Status</TableHead>}
               {visibleColumns.provider && <TableHead className="font-medium">Provider</TableHead>}
-              {visibleColumns.container_details && <TableHead className="font-medium">Container Details</TableHead>}
+              {visibleColumns.containerDetails && <TableHead className="font-medium">Container Details</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -234,7 +235,7 @@ export function ServiceTable({
               </TableRow>
             ) : (
               filteredServices.map((service) => (
-                <TableRow 
+                <TableRow
                   key={service.id}
                   className={cn(
                     "hover:bg-muted/50 transition-colors cursor-pointer",
@@ -243,7 +244,7 @@ export function ServiceTable({
                   onClick={() => handleRowClick(service)}
                 >
                   <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox 
+                    <Checkbox
                       checked={selectedServices.some(s => s.id === service.id)}
                       onCheckedChange={(checked) => {
                         if (checked) {
@@ -256,7 +257,7 @@ export function ServiceTable({
                     />
                   </TableCell>
                   {visibleColumns.name && <TableCell className="font-medium">{service.name}</TableCell>}
-                  {visibleColumns.serviceIp && <TableCell>{service.serviceIp || '-'}</TableCell>}
+                  {visibleColumns.serviceIP && <TableCell>{service.serviceIP || '-'}</TableCell>}
                   {visibleColumns.serviceStatus && (
                     <TableCell className="text-center">
                       <Badge className={cn(getStatusColor(service.serviceStatus), "font-medium")}>
@@ -265,7 +266,7 @@ export function ServiceTable({
                     </TableCell>
                   )}
                   {visibleColumns.provider && <TableCell>{service.provider.name}</TableCell>}
-                  {visibleColumns.container_details && <TableCell>{service.container_details?.image || '-'}</TableCell>}
+                  {visibleColumns.containerDetails && <TableCell>{service.containerDetails?.image || '-'}</TableCell>}
                 </TableRow>
               ))
             )}

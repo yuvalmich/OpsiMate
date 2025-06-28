@@ -24,12 +24,12 @@ export function RightSidebarWithLogs({ service, onClose, collapsed }: RightSideb
 
   const fetchLogs = async () => {
     if (!service) return;
-    
+
     setLoading(true);
     setError(null);
     try {
       const response = await providerApi.getServiceLogs(parseInt(service.id));
-      
+
       if (response.success && response.data) {
         setLogs(response.data);
       } else {
@@ -112,7 +112,7 @@ export function RightSidebarWithLogs({ service, onClose, collapsed }: RightSideb
             </div>
             <div>
               <div className="text-muted-foreground">IP Address</div>
-              <div className="font-medium text-foreground font-mono text-sm">{service.serviceIp || '-'}</div>
+              <div className="font-medium text-foreground font-mono text-sm">{service.serviceIP || '-'}</div>
             </div>
             <div>
               <div className="text-muted-foreground">Provider</div>
@@ -120,7 +120,7 @@ export function RightSidebarWithLogs({ service, onClose, collapsed }: RightSideb
             </div>
             <div>
               <div className="text-muted-foreground">Provider IP</div>
-              <div className="font-medium text-foreground text-sm">{service.provider.providerIp}</div>
+              <div className="font-medium text-foreground text-sm">{service.provider.providerIP}</div>
             </div>
             <div>
               <div className="text-muted-foreground">Created</div>
@@ -128,7 +128,7 @@ export function RightSidebarWithLogs({ service, onClose, collapsed }: RightSideb
             </div>
             <div>
               <div className="text-muted-foreground">Container ID</div>
-              <div className="font-medium text-foreground text-sm">{service.container_details?.id || '-'}</div>
+              <div className="font-medium text-foreground text-sm">{service.containerDetails?.id || '-'}</div>
             </div>
           </div>
         </div>
@@ -139,17 +139,17 @@ export function RightSidebarWithLogs({ service, onClose, collapsed }: RightSideb
         <div>
           <div className="flex items-center justify-between mb-2">
             <h4 className="font-medium text-foreground text-xs">Service Logs</h4>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={fetchLogs} 
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchLogs}
               disabled={loading}
               className="h-6 w-6 p-0"
             >
               <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
-          
+
           {loading ? (
             <div className="flex justify-center py-4">
               <div className="animate-pulse text-muted-foreground text-xs">Loading logs...</div>

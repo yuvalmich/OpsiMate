@@ -1,8 +1,6 @@
 import {Request, Response} from "express";
-import * as providerRepo from "../../../dal/providerRepository";
 import {AddBulkServiceSchema, CreateProviderSchema} from "@service-peek/shared";
 import {z} from "zod";
-import {providerConnectorFactory} from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import {
     getAllProviders,
     createProvider,

@@ -1,79 +1,80 @@
 import {Request, Response} from "express";
-import * as providerRepo from "../../../dal/providerRepository";
 import {z} from "zod";
 import * as serviceRepo from "../../../dal/serviceRepository";
 import {CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema} from "@service-peek/shared";
 import {providerConnectorFactory} from "../../../bl/providers/provider-connector/providerConnectorFactory";
+import {createService} from "../../../bl/services/services.bl";
+import {ProviderNotFound} from "../../../bl/providers/ProviderNotFound";
+import {ServiceNotFound} from "../../../bl/services/ServiceNotFound";
+import {getServiceById} from "../../../dal/serviceRepository";
+import {getProviderById} from "../../../dal/providerRepository";
 
 
 // Create a new service
-export async function createService(req: Request, res: Response) {
+export async function createServiceHandler(req: Request, res: Response) {
     try {
         // Validate the request data
         const validatedData = CreateServiceSchema.parse(req.body);
-        // Check if provider exists
-        const provider = await providerRepo.getProviderById(validatedData.providerId);
-        if (!provider) {
-            return res.status(404).json({ success: false, error: 'Provider not found' });
-        }
 
-        // Create the service
-        const result = await serviceRepo.createService(validatedData);
+        const service = await createService(validatedData.providerId, validatedData);
 
-        // Get the created service with provider details
-        const service = await serviceRepo.getServiceWithProvider(result.lastID);
-
-        res.status(201).json({ success: true, data: service, message: 'Service created successfully' });
+        res.status(201).json({success: true, data: service, message: 'Service created successfully'});
     } catch (error) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+            res.status(400).json({success: false, error: 'Validation error', details: error.errors});
+        } else if (error instanceof ProviderNotFound) {
+            res.status(404).json({success: false, error: `Provider with ID ${error.provider} not found`});
+
+        } else if (error instanceof ServiceNotFound) {
+            res.status(404).json({success: false, error: `Provider with ID ${error.serviceId} not found`});
+
         } else {
             console.error('Error creating service:', error);
-            res.status(500).json({ success: false, error: 'Internal server error' });
+            res.status(500).json({success: false, error: 'Internal server error'});
         }
     }
 }
 
 // Get all services with provider details
-export async function getAllServices(req: Request, res: Response) {
+export async function getAllServicesHandler(req: Request, res: Response) {
     try {
         const services = await serviceRepo.getServicesWithProvider();
-        res.json({ success: true, data: services });
+        res.json({success: true, data: services});
     } catch (error) {
         console.error('Error getting services:', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+        res.status(500).json({success: false, error: 'Internal server error'});
     }
 }
 
 // Get a specific service with provider details
-export async function getServiceById(req: Request, res: Response) {
+export async function getServiceByIdHandler(req: Request, res: Response) {
     try {
         // Validate and parse the service ID
-        const { serviceId } = ServiceIdSchema.parse({ serviceId: req.params.serviceId });
+        const {serviceId} = ServiceIdSchema.parse({serviceId: req.params.serviceId});
 
         // Get the service with provider details
         const service = await serviceRepo.getServiceWithProvider(serviceId);
 
         if (!service) {
-            return res.status(404).json({ success: false, error: 'Service not found' });
+            return res.status(404).json({success: false, error: 'Service not found'});
         }
 
-        res.json({ success: true, data: service });
+        res.json({success: true, data: service});
     } catch (error) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+            res.status(400).json({success: false, error: 'Validation error', details: error.errors});
         } else {
             console.error('Error getting service:', error);
-            res.status(500).json({ success: false, error: 'Internal server error' });
+            res.status(500).json({success: false, error: 'Internal server error'});
         }
     }
 }
 
 // Update a service
-export async function updateService(req: Request, res: Response) {
+export async function updateServiceHandler(req: Request, res: Response) {
     try {
         // Validate and parse the service ID
-        const { serviceId } = ServiceIdSchema.parse({ serviceId: req.params.serviceId });
+        const {serviceId} = ServiceIdSchema.parse({serviceId: req.params.serviceId});
 
         // Validate the request data
         const validatedData = UpdateServiceSchema.partial().parse(req.body);
@@ -81,7 +82,7 @@ export async function updateService(req: Request, res: Response) {
         // Check if service exists
         const service = await serviceRepo.getServiceById(serviceId);
         if (!service) {
-            return res.status(404).json({ success: false, error: 'Service not found' });
+            return res.status(404).json({success: false, error: 'Service not found'});
         }
 
         // Update the service
@@ -90,132 +91,132 @@ export async function updateService(req: Request, res: Response) {
         // Get the updated service with provider details
         const updatedService = await serviceRepo.getServiceWithProvider(serviceId);
 
-        res.json({ success: true, data: updatedService, message: 'Service updated successfully' });
+        res.json({success: true, data: updatedService, message: 'Service updated successfully'});
     } catch (error) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+            res.status(400).json({success: false, error: 'Validation error', details: error.errors});
         } else {
             console.error('Error updating service:', error);
-            res.status(500).json({ success: false, error: 'Internal server error' });
+            res.status(500).json({success: false, error: 'Internal server error'});
         }
     }
 }
 
 // Delete a service
-export async function deleteService(req: Request, res: Response) {
+export async function deleteServiceHandler(req: Request, res: Response) {
     try {
         // Validate and parse the service ID
-        const { serviceId } = ServiceIdSchema.parse({ serviceId: req.params.serviceId });
+        const {serviceId} = ServiceIdSchema.parse({serviceId: req.params.serviceId});
 
         // Check if service exists
         const service = await serviceRepo.getServiceById(serviceId);
         if (!service) {
-            return res.status(404).json({ success: false, error: 'Service not found' });
+            return res.status(404).json({success: false, error: 'Service not found'});
         }
 
         // Delete the service
         await serviceRepo.deleteService(serviceId);
 
-        res.json({ success: true, message: 'Service deleted successfully' });
+        res.json({success: true, message: 'Service deleted successfully'});
     } catch (error) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+            res.status(400).json({success: false, error: 'Validation error', details: error.errors});
         } else {
             console.error('Error deleting service:', error);
-            res.status(500).json({ success: false, error: 'Internal server error' });
+            res.status(500).json({success: false, error: 'Internal server error'});
         }
     }
 }
 
 // Start a service
-export async function startService(req: Request, res: Response) {
+export async function startServiceHandler(req: Request, res: Response) {
     try {
         // Validate and parse the service ID
-        const { serviceId } = ServiceIdSchema.parse({ serviceId: req.params.serviceId });
+        const {serviceId} = ServiceIdSchema.parse({serviceId: req.params.serviceId});
 
         // Get the service with provider details
         const service = await serviceRepo.getServiceWithProvider(serviceId);
         if (!service) {
-            return res.status(404).json({ success: false, error: 'Service not found' });
+            return res.status(404).json({success: false, error: 'Service not found'});
         }
-        const provider = service.provider;
+        const provider = await getProviderById(service.providerId);
         if (!provider) {
-            return res.status(404).json({ success: false, error: 'Provider not found for this service' });
+            return res.status(404).json({success: false, error: 'Provider not found for this service'});
         }
 
         const providerConnector = providerConnectorFactory(provider.providerType)
-        await providerConnector.startService(provider, service.service_name);
+        await providerConnector.startService(provider, service.name);
         // Update service status in DB
 
         // todo: fix types, serviceStatus is broken
         // await serviceRepo.updateService(serviceId, { serviceStatus: 'running' });
         const updatedService = await serviceRepo.getServiceWithProvider(serviceId);
-        res.json({ success: true, data: updatedService, message: 'Service started successfully' });
+        res.json({success: true, data: updatedService, message: 'Service started successfully'});
     } catch (error) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+            res.status(400).json({success: false, error: 'Validation error', details: error.errors});
         } else {
             console.error('Error starting service:', error);
-            res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+            res.status(500).json({success: false, error: 'Internal server error', details: (error as any).message});
         }
     }
 }
 
 // Stop a service
-export async function stopService(req: Request, res: Response) {
+export async function stopServiceHandler(req: Request, res: Response) {
     try {
         // Validate and parse the service ID
-        const { serviceId } = ServiceIdSchema.parse({ serviceId: req.params.serviceId });
+        const {serviceId} = ServiceIdSchema.parse({serviceId: req.params.serviceId});
 
         // Get the service with provider details
-        const service = await serviceRepo.getServiceWithProvider(serviceId);
+        const service = await getServiceById(serviceId);
         if (!service) {
-            return res.status(404).json({ success: false, error: 'Service not found' });
+            return res.status(404).json({success: false, error: 'Service not found'});
         }
-        const provider = service.provider;
+        const provider = await getProviderById(service.providerId);
         if (!provider) {
-            return res.status(404).json({ success: false, error: 'Provider not found for this service' });
+            return res.status(404).json({success: false, error: 'Provider not found for this service'});
         }
         const providerConnector = providerConnectorFactory(provider.providerType);
-        await providerConnector.stopService(provider, service.service_name);
+        await providerConnector.stopService(provider, service.name);
         // Update service status in DB
         // todo: fix types, serviceStatus is broken
         // await serviceRepo.updateService(serviceId, { serviceStatus: 'stopped' });
         const updatedService = await serviceRepo.getServiceWithProvider(serviceId);
-        res.json({ success: true, data: updatedService, message: 'Service stopped successfully' });
+        res.json({success: true, data: updatedService, message: 'Service stopped successfully'});
     } catch (error) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+            res.status(400).json({success: false, error: 'Validation error', details: error.errors});
         } else {
             console.error('Error stopping service:', error);
-            res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+            res.status(500).json({success: false, error: 'Internal server error', details: (error as any).message});
         }
     }
 }
 
-export async function getServiceLogs(req: Request, res: Response) {
+export async function getServiceLogsHandler(req: Request, res: Response) {
     try {
         // Validate and parse the service ID
-        const { serviceId } = ServiceIdSchema.parse({ serviceId: req.params.serviceId });
+        const {serviceId} = ServiceIdSchema.parse({serviceId: req.params.serviceId});
 
         // Get the service with provider details
-        const service = await serviceRepo.getServiceWithProvider(serviceId);
+        const service = await serviceRepo.getServiceById(serviceId);
         if (!service) {
-            return res.status(404).json({ success: false, error: 'Service not found' });
+            return res.status(404).json({success: false, error: 'Service not found'});
         }
-        const provider = service.provider;
+        const provider = await getProviderById(service.providerId);
         if (!provider) {
-            return res.status(404).json({ success: false, error: 'Provider not found for this service' });
+            return res.status(404).json({success: false, error: 'Provider not found for this service'});
         }
         const providerConnector = providerConnectorFactory(provider.providerType);
-        const logs = await providerConnector.getServiceLogs(provider, service.service_name);
-        res.json({ success: true, data: logs, message: 'Service stopped successfully' });
+        const logs = await providerConnector.getServiceLogs(provider, service.name);
+        res.json({success: true, data: logs, message: 'Service stopped successfully'});
     } catch (error) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+            res.status(400).json({success: false, error: 'Validation error', details: error.errors});
         } else {
             console.error('Error stopping service:', error);
-            res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+            res.status(500).json({success: false, error: 'Internal server error', details: (error as any).message});
         }
     }
 }

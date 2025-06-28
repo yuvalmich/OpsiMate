@@ -2,21 +2,14 @@ import {db} from './providerRepository';
 import {Service, ServiceType, ContainerDetails, Provider} from "@service-peek/shared";
 
 // Data access for services
-export async function createService(data: {
-    providerId: number;
-    name: string;
-    serviceIp?: string;
-    serviceStatus?: string;
-    serviceType: ServiceType;
-    containerDetails?: ContainerDetails;
-}) {
+export async function createService(data: Omit<Service, 'id' | 'createdAt'>) {
     return new Promise<{ lastID: number }>((resolve, reject) => {
         // Convert container_details to JSON string if it exists
         const containerDetailsJson = data.containerDetails ? JSON.stringify(data.containerDetails) : null;
 
         db.run(
             'INSERT INTO services (provider_id, service_name, service_ip, service_status, service_type, container_details) VALUES (?, ?, ?, ?, ?, ?)',
-            [data.providerId, data.name, data.serviceIp, data.serviceStatus || 'unknown', data.serviceType, containerDetailsJson],
+            [data.providerId, data.name, data.serviceIP, data.serviceStatus || 'unknown', data.serviceType, containerDetailsJson],
             function (err) {
                 if (err) reject(err);
                 else resolve({lastID: this.lastID});
@@ -40,7 +33,7 @@ export async function bulkCreateServices(providerId: number, services: Omit<Serv
                 providerId: providerId,
                 serviceType: serviceToCreate.serviceType,
                 name: serviceToCreate.name,
-                serviceIp: serviceToCreate.serviceIp,
+                serviceIP: serviceToCreate.serviceIP,
                 serviceStatus: serviceToCreate.serviceStatus,
             });
 
@@ -79,7 +72,18 @@ export async function getServiceById(id: number) {
                     }
                 }
 
-                resolve(row as Service);
+                const service = {
+                    id: row.service_id,
+                    providerId: row.provider_id,
+                    name: row.service_name,
+                    serviceIP: row.service_ip,
+                    serviceStatus: row.service_status,
+                    serviceType: row.service_type,
+                    createdAt: row.service_created_at,
+                    containerDetails: row.container_details,
+                };
+
+                resolve(service);
             }
         });
     });
@@ -95,10 +99,10 @@ export async function updateService(id: number, data: Partial<Service>) {
     // Prepare data for update
     const updateData = {
         ...data,
-        container_details: data.container_details ?
-            JSON.stringify(data.container_details) :
-            existingService.container_details ?
-                JSON.stringify(existingService.container_details) :
+        container_details: data.containerDetails ?
+            JSON.stringify(data.containerDetails) :
+            existingService.containerDetails ?
+                JSON.stringify(existingService.containerDetails) :
                 null
     };
 
@@ -135,7 +139,10 @@ export async function deleteService(id: number): Promise<void> {
     });
 }
 
-export async function getServicesWithProvider(): Promise<any[]> {
+// Temp solution...
+type ServiceWithProvider = Service & { provider: Provider }
+
+export async function getServicesWithProvider(): Promise<ServiceWithProvider[]> {
     return new Promise<any[]>((resolve, reject) => {
         const query = `
             SELECT s.id         as service_id,
@@ -177,22 +184,22 @@ export async function getServicesWithProvider(): Promise<any[]> {
                     // Create the service object with provider nested
                     return {
                         id: row.service_id,
-                        provider_id: row.provider_id,
-                        service_name: row.service_name,
-                        service_ip: row.service_ip,
-                        service_status: row.service_status,
-                        service_type: row.service_type,
-                        created_at: row.service_created_at,
-                        container_details: containerDetails,
+                        providerId: row.provider_id,
+                        name: row.service_name,
+                        serviceIP: row.service_ip,
+                        serviceStatus: row.service_status,
+                        serviceType: row.service_type,
+                        createdAt: row.service_created_at,
+                        containerDetails: containerDetails,
                         provider: {
                             id: row.provider_id,
-                            provider_name: row.provider_name,
-                            provider_ip: row.provider_ip,
+                            name: row.provider_name,
+                            providerIP: row.provider_ip,
                             username: row.username,
-                            private_key_filename: row.private_key_filename,
-                            ssh_port: row.ssh_port,
-                            created_at: row.provider_created_at,
-                            provider_type: row.provider_type
+                            privateKeyFilename: row.private_key_filename,
+                            SSHPort: row.ssh_port,
+                            createdAt: row.provider_created_at,
+                            providerType: row.provider_type
                         }
                     };
                 });
@@ -203,7 +210,7 @@ export async function getServicesWithProvider(): Promise<any[]> {
     });
 }
 
-export async function getServiceWithProvider(id: number): Promise<any | null> {
+export async function getServiceWithProvider(id: number): Promise<Service | null> {
     return new Promise<any | null>((resolve, reject) => {
         const query = `
             SELECT s.id         as service_id,
@@ -244,25 +251,15 @@ export async function getServiceWithProvider(id: number): Promise<any | null> {
                 }
 
                 // Create the service object with provider nested
-                const service = {
+                const service: Service = {
                     id: row.service_id,
-                    provider_id: row.provider_id,
-                    service_name: row.service_name,
-                    service_ip: row.service_ip,
-                    service_status: row.service_status,
-                    service_type: row.service_type,
-                    created_at: row.service_created_at,
-                    container_details: containerDetails,
-                    provider: {
-                        id: row.provider_id,
-                        name: row.provider_name,
-                        providerIp: row.provider_ip,
-                        username: row.username,
-                        privateKeyFilename: row.private_key_filename,
-                        SSHPort: row.ssh_port,
-                        createdAt: row.provider_created_at,
-                        providerType: row.provider_type
-                    } as Provider
+                    providerId: row.provider_id,
+                    name: row.service_name,
+                    serviceIP: row.service_ip,
+                    serviceStatus: row.service_status,
+                    serviceType: row.service_type,
+                    createdAt: row.service_created_at,
+                    containerDetails: containerDetails,
                 };
 
                 resolve(service);
