@@ -18,7 +18,9 @@ export async function createServiceHandler(req: Request, res: Response) {
 
         const service = await createService(validatedData.providerId, validatedData);
 
-        res.status(201).json({success: true, data: service, message: 'Service created successfully'});
+        const provider = await getProviderById(validatedData.providerId)
+
+        res.status(201).json({success: true, data: {...service, provider}, message: 'Service created successfully'});
     } catch (error) {
         if (error instanceof z.ZodError) {
             res.status(400).json({success: false, error: 'Validation error', details: error.errors});

@@ -73,7 +73,7 @@ export async function getServiceById(id: number) {
                 }
 
                 const service = {
-                    id: row.service_id,
+                    id: row.id,
                     providerId: row.provider_id,
                     name: row.service_name,
                     serviceIP: row.service_ip,
