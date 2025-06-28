@@ -13,6 +13,7 @@ import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { integrationApi } from "@/lib/api";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // --- FORM SCHEMAS ---
 
@@ -257,6 +258,7 @@ interface IntegrationSidebarProps {
 
 export function IntegrationSidebar({ integration, onClose }: IntegrationSidebarProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFormSubmit: SubmitHandler<AnyFormData> = async (data) => {
@@ -283,6 +285,8 @@ export function IntegrationSidebar({ integration, onClose }: IntegrationSidebarP
           description: `Successfully added ${integration.name} integration`
         });
         onClose();
+        // Redirect to My Integrations page
+        navigate('/my-integrations');
       } catch (error) {
         console.error("Error saving integration:", error);
         toast({
@@ -326,6 +330,8 @@ export function IntegrationSidebar({ integration, onClose }: IntegrationSidebarP
           description: `Successfully added ${serverData.name} server integration`
         });
         onClose();
+        // Redirect to My Integrations page
+        navigate('/my-integrations');
       } else {
         throw new Error(response.error || 'Failed to create integration');
       }
