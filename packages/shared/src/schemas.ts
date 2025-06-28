@@ -3,7 +3,7 @@ import {ProviderType, ServiceType} from './types';
 
 export const CreateProviderSchema = z.object({
     name: z.string().min(1, 'Provider name is required'),
-    providerIp: z.string().ip('Invalid IP address'),
+    providerIP: z.string().ip('Invalid IP address'),
     username: z.string().min(1, 'Username is required'),
     privateKeyFilename: z.string().min(1, 'Private key filename is required'),
     SSHPort: z.number().int().min(1).max(65535).optional().default(22),
@@ -13,7 +13,7 @@ export const CreateProviderSchema = z.object({
 export const AddBulkServiceSchema = z.array(
     z.object({
         name: z.string().min(1, 'Name is required'),
-        serviceIp: z.string().ip('Invalid IP address').optional(),
+        serviceIP: z.string().ip('Invalid IP address').optional(),
         serviceStatus: z.string().min(1),
         serviceType: z.nativeEnum(ServiceType),
     })
@@ -32,8 +32,8 @@ export const ProviderIdSchema = z.object({
 export const ServiceSchema = z.object({
     providerId: z.number(),
     name: z.string().min(1, 'Service name is required'),
-    serviceIp: z.string().optional(),
-    serviceStatus: z.string().optional(),
+    serviceIP: z.string().optional(),
+    serviceStatus: z.string(),
     serviceType: z.nativeEnum(ServiceType),
     containerDetails: z.object({
         id: z.string().optional(),

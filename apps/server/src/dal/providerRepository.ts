@@ -9,7 +9,7 @@ export async function createProvider(data: Omit<Provider, 'id'>): Promise<{ last
     return new Promise<{ lastID: number }>((resolve, reject) => {
         db.run(
             'INSERT INTO providers (provider_name, provider_ip, username, private_key_filename, ssh_port, provider_type) VALUES (?, ?, ?, ?, ?, ?)',
-            [data.name, data.providerIp, data.username, data.privateKeyFilename, data.SSHPort, data.providerType],
+            [data.name, data.providerIP, data.username, data.privateKeyFilename, data.SSHPort, data.providerType],
             function (err) {
                 if (err) reject(err);
                 else resolve({lastID: this.lastID});
@@ -23,7 +23,7 @@ export async function getProviderById(id: number): Promise<Provider> {
         db.get(`
             SELECT id,
                    provider_name        AS name,
-                   provider_ip          AS providerIp,
+                   provider_ip          AS providerIP,
                    username,
                    private_key_filename AS privateKeyFilename,
                    ssh_port             AS SSHPort,
@@ -42,7 +42,7 @@ export async function getAllProviders(): Promise<Provider[]> {
     const query = `
         SELECT id,
                provider_name        AS name,
-               provider_ip          AS providerIp,
+               provider_ip          AS providerIP,
                username,
                private_key_filename AS privateKeyFilename,
                ssh_port             AS SSHPort,
@@ -82,7 +82,7 @@ export async function updateProvider(id: number, data: Omit<Provider, 'id' | 'cr
     return new Promise<void>((resolve, reject) => {
         db.run(
             'UPDATE providers SET provider_name = ?, provider_ip = ?, username = ?, private_key_filename = ?, ssh_port = ?, provider_type = ? WHERE id = ?',
-            [data.name, data.providerIp, data.username, data.privateKeyFilename, data.SSHPort, data.providerType, id],
+            [data.name, data.providerIP, data.username, data.privateKeyFilename, data.SSHPort, data.providerType, id],
             function (err) {
                 if (err) reject(err);
                 else resolve();

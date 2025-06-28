@@ -18,7 +18,7 @@ export async function connectAndListContainers(provider: Provider) {
   const privateKeyPath = getKeyPath(provider.privateKeyFilename);
 
   await ssh.connect({
-    host: provider.providerIp,
+    host: provider.providerIP,
     username: provider.username,
     privateKeyPath: privateKeyPath,
     port: provider.SSHPort,
@@ -40,9 +40,9 @@ export async function connectAndListContainers(provider: Provider) {
     .map(line => {
       const [name, status, image] = line.split('\t');
       return {
-        service_name: name,
-        service_status: status.toLowerCase().includes('up') ? 'running' : 'stopped',
-        service_ip: provider.providerIp,
+        name: name,
+        serviceStatus: status.toLowerCase().includes('up') ? 'running' : 'stopped',
+        serviceIP: provider.providerIP,
         image: image
       };
     });
@@ -55,7 +55,7 @@ export async function startService(
   const ssh = new NodeSSH();
   try {
     await ssh.connect({
-      host: provider.providerIp,
+      host: provider.providerIP,
       username: provider.username,
       privateKeyPath: getKeyPath(provider.privateKeyFilename),
       port: provider.SSHPort,
@@ -77,7 +77,7 @@ export async function stopService(
   const ssh = new NodeSSH();
   try {
     await ssh.connect({
-      host: provider.providerIp,
+      host: provider.providerIP,
       username: provider.username,
       privateKeyPath: getKeyPath(provider.privateKeyFilename),
       port: provider.SSHPort,
@@ -97,7 +97,7 @@ export async function getServiceLogs(provider: Provider, serviceName: string): P
 
   try {
     await ssh.connect({
-      host: provider.providerIp,
+      host: provider.providerIP,
       username: provider.username,
       privateKeyPath: getKeyPath(provider.privateKeyFilename),
       port: provider.SSHPort,

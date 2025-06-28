@@ -180,13 +180,13 @@ export function MyProviders() {
   const [selectedService, setSelectedService] = useState<ServiceConfig | null>(null);
   const [expandedServices, setExpandedServices] = useState<Set<string>>(new Set());
   const [loadingServices, setLoadingServices] = useState<Set<string>>(new Set());
-  
+
   // Function to load providers from API
   const fetchProviders = async () => {
     setIsLoading(true);
     try {
       const response = await providerApi.getProviders();
-      
+
       if (response.success && response.data && response.data.providers) {
         // Convert API data to ProviderInstance format
         const apiProviders: ProviderInstance[] = response.data.providers.map(provider => {
@@ -196,7 +196,7 @@ export function MyProviders() {
             type: "server" as ProviderType,
             status: "online" as const, // Default to online since we don't have status info from API yet
             details: {
-              Hostname: provider.providerIp || '',
+              Hostname: provider.providerIP || '',
               Port: provider.SSHPort ? provider.SSHPort.toString() : '22',
               Username: provider.username || '',
               Private_key_filename: provider.privateKeyFilename || '',
@@ -206,10 +206,10 @@ export function MyProviders() {
             createdAt: provider.createdAt ? new Date(provider.createdAt).toISOString() : new Date().toISOString(),
             services: []
           };
-          
+
           return mappedProvider;
         });
-        
+
         setProviderInstances(apiProviders);
       } else if (import.meta.env.DEV && (!response.data || !response.data.providers || response.data.providers.length === 0)) {
         // In development, use mock data if no saved providers exist
@@ -222,7 +222,7 @@ export function MyProviders() {
         description: "There was a problem loading your providers",
         variant: "destructive"
       });
-      
+
       // Fall back to mock data in development
       if (import.meta.env.DEV) {
         setProviderInstances(mockProviderInstances);
@@ -244,10 +244,10 @@ export function MyProviders() {
     const type = provider?.type || 'server';
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       type.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesTab = activeTab === "all" || 
+
+    const matchesTab = activeTab === "all" ||
       getProviderCategory(type) === activeTab;
-    
+
     return matchesSearch && matchesTab;
   });
 
@@ -256,20 +256,20 @@ export function MyProviders() {
       title: "Refreshing provider",
       description: "Checking connection status..."
     });
-    
+
     try {
       // Get the latest data from the API
       const response = await providerApi.getProvider(parseInt(id));
-      
+
       if (response.success && response.data) {
         // Update just this provider with fresh data
-        const updatedProviders = providerInstances.map(provider => 
-          provider.id === id 
-            ? { 
-                ...provider, 
+        const updatedProviders = providerInstances.map(provider =>
+          provider.id === id
+            ? {
+                ...provider,
                 name: response.data.name,
                 details: {
-                  Hostname: response.data.providerIp,
+                  Hostname: response.data.providerIP,
                   Port: response.data.SSHPort.toString(),
                   Username: response.data.username,
                   Private_key_filename: response.data.privateKeyFilename,
@@ -277,12 +277,12 @@ export function MyProviders() {
                 },
                 lastConnected: new Date().toISOString(),
                 status: Math.random() > 0.3 ? "online" as const : "warning" as const // Simulate status check
-              } 
+              }
             : provider
         );
-        
+
         setProviderInstances(updatedProviders);
-        
+
         toast({
           title: "Provider refreshed",
           description: "Connection status updated"
@@ -310,38 +310,38 @@ export function MyProviders() {
     try {
       // Fetch services for this provider from the API
       const response = await providerApi.getAllServices();
-      
+
       if (response.success && response.data) {
         // Check if data is an array or if it's nested in another property
-        const servicesArray = Array.isArray(response.data) ? response.data : 
+        const servicesArray = Array.isArray(response.data) ? response.data :
           (response.data as any).services ? (response.data as any).services : [];
-        
+
         // Filter services that belong to this provider
-        const providerServices = servicesArray.filter(service => 
+        const providerServices = servicesArray.filter(service =>
           service.provider_id && service.provider_id.toString() === provider.id
         );
-        
+
         // Map API services to ServiceConfig format
         const serviceConfigs: ServiceConfig[] = providerServices.map(service => ({
           id: service.id.toString(),
-          name: service.service_name,
-          status: service.service_status as "running" | "stopped" | "error" | "unknown",
-          type: service.service_type,
-          service_ip: service.service_ip,
-          containerDetails: service.container_details || undefined
+          name: service.name,
+          status: service.serviceStatus as "running" | "stopped" | "error" | "unknown",
+          type: service.serviceType,
+          serviceIP: service.serviceIP,
+          containerDetails: service.containerDetails || undefined
         }));
-        
+
         // Update the provider with its services
         const updatedProvider = {
           ...provider,
           services: serviceConfigs
         };
-        
+
         // Update the providers list with the updated provider
-        const updatedProviders = providerInstances.map(item => 
+        const updatedProviders = providerInstances.map(item =>
           item.id === provider.id ? updatedProvider : item
         );
-        
+
         setProviderInstances(updatedProviders);
       }
     } catch (error) {
@@ -365,7 +365,7 @@ export function MyProviders() {
     }
 
     const providerId = provider.id;
-    
+
     // If services are already loaded and card is expanded, collapse it
     if (expandedServices.has(providerId) && provider.services && provider.services.length > 0) {
       const newExpanded = new Set(expandedServices);
@@ -392,7 +392,7 @@ export function MyProviders() {
   const handleServiceAction = async (providerId: string, serviceId: string, action: "start" | "stop" | "restart") => {
     try {
       const serviceIdNum = parseInt(serviceId);
-      
+
       if (action === "start") {
         const response = await providerApi.startService(serviceIdNum);
         if (!response.success) throw new Error(response.error || "Failed to start service");
@@ -406,15 +406,15 @@ export function MyProviders() {
           await providerApi.startService(serviceIdNum);
         }, 1000);
       }
-      
+
       toast({
         title: `Service ${action}ed`,
         description: `Service has been ${action}ed successfully`
       });
-      
+
       // Refresh the provider to get updated service status
       setTimeout(() => handleRowClick(providerInstances.find(i => i.id === providerId)!), 2000);
-      
+
     } catch (error) {
       console.error(`Error ${action}ing service:`, error);
       toast({
@@ -429,17 +429,17 @@ export function MyProviders() {
     try {
       // Close the dialog first
       setIsAddServiceDialogOpen(false);
-      
+
       // Automatically expand the services section to show the new service
       const newExpanded = new Set(expandedServices);
       newExpanded.add(providerId);
       setExpandedServices(newExpanded);
-      
+
       toast({
         title: "Service added",
         description: `${service.name} has been successfully added`,
       });
-      
+
       // Refresh only the specific provider's services after a short delay
       setTimeout(async () => {
         const provider = providerInstances.find(i => i.id === providerId);
@@ -448,7 +448,7 @@ export function MyProviders() {
           await refreshProviderServices(provider);
         }
       }, 500);
-      
+
     } catch (error) {
       console.error("Error adding service:", error);
       toast({
@@ -463,7 +463,7 @@ export function MyProviders() {
     try {
       // Convert serviceId to number for API calls
       const serviceIdNum = parseInt(serviceId);
-      
+
       // Call the appropriate API based on the requested status
       if (newStatus === "running") {
         const response = await providerApi.startService(serviceIdNum);
@@ -476,13 +476,13 @@ export function MyProviders() {
           throw new Error(response.error || "Failed to stop service");
         }
       }
-      
+
       // Update the UI with the new status
       const updatedProviders = providerInstances.map(provider => {
         if (provider.id === providerId && provider.services) {
           return {
             ...provider,
-            services: provider.services.map(service => 
+            services: provider.services.map(service =>
               service.id === serviceId ? { ...service, status: newStatus } : service
             )
           };
@@ -491,12 +491,12 @@ export function MyProviders() {
       });
 
       setProviderInstances(updatedProviders);
-      
+
       // Update selected provider if it's the one containing this service
       if (selectedProvider && selectedProvider.id === providerId && selectedProvider.services) {
         const updatedSelectedProvider = {
           ...selectedProvider,
-          services: selectedProvider.services.map(service => 
+          services: selectedProvider.services.map(service =>
             service.id === serviceId ? { ...service, status: newStatus } : service
           )
         };
@@ -506,13 +506,13 @@ export function MyProviders() {
       console.error("Error updating service status:", error);
       toast({
         title: "Error updating service",
-        description: typeof error === 'object' && error !== null && 'message' in error ? 
+        description: typeof error === 'object' && error !== null && 'message' in error ?
           (error as Error).message : "There was a problem updating the service status",
         variant: "destructive"
       });
     }
   };
-  
+
   // Helper function to update UI after service deletion
   const updateUIAfterServiceDeletion = (serviceId: string) => {
     // Find which provider contains this service and remove it
@@ -528,7 +528,7 @@ export function MyProviders() {
       }
       return provider;
     });
-    
+
     setProviderInstances(updatedProviders);
   };
 
@@ -536,12 +536,12 @@ export function MyProviders() {
     try {
       // Convert serviceId to number
       const serviceIdNum = parseInt(serviceId);
-      
+
       // Find which provider contains this service
-      const containingProvider = providerInstances.find(provider => 
+      const containingProvider = providerInstances.find(provider =>
         provider.services?.some(service => service.id === serviceId)
       );
-      
+
       if (!containingProvider) {
         toast({
           title: "Service not found",
@@ -550,14 +550,14 @@ export function MyProviders() {
         });
         return;
       }
-      
+
       // Call the API to delete the service
       const response = await providerApi.deleteService(serviceIdNum);
-      
+
       if (response.success) {
         // Update the UI after successful deletion
         updateUIAfterServiceDeletion(serviceId);
-        
+
         toast({
           title: "Service deleted",
           description: "The service has been successfully deleted."
@@ -580,7 +580,7 @@ export function MyProviders() {
     try {
       // Call the API to delete the provider
       const response = await providerApi.deleteProvider(parseInt(selectedProvider.id));
-      
+
       if (response.success) {
         // Update the UI by removing the deleted provider
         const updatedProviders = providerInstances.filter(
@@ -606,10 +606,10 @@ export function MyProviders() {
       });
     }
   };
-  
+
   const handleUpdateProvider = async (providerId: string, updatedData: {
     name: string;
-    providerIp: string;
+    providerIP: string;
     username: string;
     privateKeyFilename: string;
     SSHPort: number;
@@ -618,7 +618,7 @@ export function MyProviders() {
     try {
       // Call the API to update the provider
       const response = await providerApi.updateProvider(parseInt(providerId), updatedData);
-      
+
       if (response.success && response.data) {
         // Update the UI with the updated provider
         const updatedProviders = providerInstances.map(provider => {
@@ -628,20 +628,20 @@ export function MyProviders() {
               name: updatedData.name,
               details: {
                 ...provider.details,
-                Hostname: updatedData.providerIp,
+                Hostname: updatedData.providerIP,
                 Port: updatedData.SSHPort.toString(),
                 Username: updatedData.username,
-                Private_key_filename: updatedData.privateKeyFilename,
-                Provider_type: updatedData.providerType
+                PrivateKeyFilename: updatedData.privateKeyFilename,
+                ProviderType: updatedData.providerType
               },
               lastConnected: new Date().toISOString()
             };
           }
           return provider;
         });
-        
+
         setProviderInstances(updatedProviders);
-        
+
         // If this is the currently selected provider, update it
         if (selectedProvider && selectedProvider.id === providerId) {
           const updatedProvider = updatedProviders.find(i => i.id === providerId);
@@ -649,7 +649,7 @@ export function MyProviders() {
             setSelectedProvider(updatedProvider);
           }
         }
-        
+
         toast({
           title: "Provider updated",
           description: `${updatedData.name} has been successfully updated.`,
@@ -717,13 +717,13 @@ export function MyProviders() {
                 const isExpanded = expandedServices.has(provider.id);
                 const isLoading = loadingServices.has(provider.id);
                 const hasServices = provider.services && provider.services.length > 0;
-                const servicesToShow = hasServices && isExpanded ? 
+                const servicesToShow = hasServices && isExpanded ?
                   (expandedServices.has(`${provider.id}-full`) ? provider.services : provider.services.slice(0, 3)) : [];
                 const hasMoreServices = hasServices && provider.services!.length > 3;
 
                 return (
-                  <Card 
-                    key={provider.id} 
+                  <Card
+                    key={provider.id}
                     className={`flex flex-col transition-all duration-300 hover:shadow-md ${
                       isExpanded ? 'shadow-lg ring-2 ring-primary/20' : ''
                     }`}
@@ -780,7 +780,7 @@ export function MyProviders() {
                         </DropdownMenuPortal>
                       </DropdownMenu>
                     </CardHeader>
-                    
+
                     <CardContent className="flex-grow pt-2 px-6 pb-4">
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
                         <div>
@@ -803,7 +803,7 @@ export function MyProviders() {
 
                       {/* Services Preview Section */}
                       {!isExpanded && !isLoading && (
-                        <div 
+                        <div
                           className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer shadow-sm"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -815,7 +815,7 @@ export function MyProviders() {
                               <div className="flex items-center gap-2">
                                 <Server className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm font-medium">
-                                  {hasServices 
+                                  {hasServices
                                     ? `${provider.services!.length} Service${provider.services!.length !== 1 ? 's' : ''}`
                                     : 'Services'
                                   }
@@ -874,7 +874,7 @@ export function MyProviders() {
                       {isExpanded && !isLoading && (
                         <div className="space-y-3 animate-in slide-in-from-top-5 duration-300">
                           {/* Header to collapse */}
-                          <div 
+                          <div
                             className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 -m-2"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -895,8 +895,8 @@ export function MyProviders() {
                             <>
                               <div className="space-y-3">
                                 {servicesToShow.map((service) => (
-                                  <div 
-                                    key={service.id} 
+                                  <div
+                                    key={service.id}
                                     className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
                                   >
                                     <div className="flex items-center gap-3">
@@ -910,10 +910,10 @@ export function MyProviders() {
                                       <div className="min-w-0 flex-1">
                                         <p className="font-medium text-sm truncate">{service.name}</p>
                                         <p className="text-xs text-muted-foreground truncate">
-                                          {service.type === "DOCKER" 
-                                            ? `Container: ${service.containerDetails?.image || service.name}` 
-                                            : service.service_ip 
-                                              ? `IP: ${service.service_ip}` 
+                                          {service.type === "DOCKER"
+                                            ? `Container: ${service.containerDetails?.image || service.name}`
+                                            : service.serviceIP
+                                              ? `IP: ${service.serviceIP}`
                                               : "Manual service"
                                           }
                                         </p>
@@ -947,7 +947,7 @@ export function MyProviders() {
                                             <DropdownMenuItem onClick={() => handleServiceAction(provider.id, service.id, 'restart')}>
                                               <RefreshCw className="mr-2 h-3 w-3" /> Restart
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem 
+                                            <DropdownMenuItem
                                               onClick={() => handleDeleteService(service.id)}
                                               className="text-red-500 focus:text-red-500"
                                             >
@@ -960,12 +960,12 @@ export function MyProviders() {
                                   </div>
                                 ))}
                               </div>
-                              
+
                               {/* See More / See Less Button */}
                               {hasMoreServices && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   className="w-full text-xs"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -979,8 +979,8 @@ export function MyProviders() {
                                     setExpandedServices(newExpanded);
                                   }}
                                 >
-                                  {expandedServices.has(`${provider.id}-full`) 
-                                    ? `Show less (${provider.services!.length - 3} hidden)` 
+                                  {expandedServices.has(`${provider.id}-full`)
+                                    ? `Show less (${provider.services!.length - 3} hidden)`
                                     : `See ${provider.services!.length - 3} more services`
                                   }
                                 </Button>
@@ -1012,7 +1012,7 @@ export function MyProviders() {
                         </div>
                       )}
                     </CardContent>
-                    
+
                     <CardFooter className="flex items-center justify-between text-xs text-muted-foreground">
                       <Badge className={getStatusBadgeColor(provider.status)}>{provider.status}</Badge>
                       {provider.lastConnected && (
@@ -1042,7 +1042,7 @@ export function MyProviders() {
           )}
         </div>
       </div>
-      
+
 
 
       {/* Add Service Dialog */}
@@ -1073,7 +1073,7 @@ export function MyProviders() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Edit Provider Dialog */}
       <EditProviderDialog
         provider={selectedProvider}

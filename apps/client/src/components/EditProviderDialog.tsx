@@ -18,7 +18,7 @@ interface EditProviderDialogProps {
   onClose: () => void;
   onSave: (providerId: string, updatedData: {
     name: string;
-    providerIp: string;
+    providerIP: string;
     username: string;
     privateKeyFilename: string;
     SSHPort: number;
@@ -34,7 +34,7 @@ export function EditProviderDialog({
 }: EditProviderDialogProps) {
   const [formData, setFormData] = useState({
     name: "",
-    providerIp: "",
+    providerIP: "",
     username: "",
     privateKeyFilename: "",
     SSHPort: 22,
@@ -47,18 +47,18 @@ export function EditProviderDialog({
     if (provider && open) {
       // Get the private key filename from the provider details
       console.log('Provider details:', provider.details);
-      
+
       // Determine provider_type based on provider.type
       let providerType = 'VM'; // Default to VM
-      
+
       // Map provider types to provider types
       if (provider.type.includes('kubernetes')) {
         providerType = 'K8S';
       }
-      
+
       setFormData({
         name: provider.name,
-        providerIp: provider.details?.Hostname || "",
+        providerIP: provider.details?.Hostname || "",
         username: provider.details?.Username || "",
         privateKeyFilename: provider.details?.Private_key_filename || "",
         SSHPort: parseInt(provider.details?.Port || "22"),
@@ -78,7 +78,7 @@ export function EditProviderDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!provider) return;
-    
+
     setIsLoading(true);
     try {
       await onSave(provider.id, formData);
@@ -115,13 +115,13 @@ export function EditProviderDialog({
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="providerIp" className="text-right">
+              <Label htmlFor="providerIP" className="text-right">
                 Hostname/IP
               </Label>
               <Input
-                id="providerIp"
-                name="providerIp"
-                value={formData.providerIp}
+                id="providerIP"
+                name="providerIP"
+                value={formData.providerIP}
                 onChange={handleInputChange}
                 className="col-span-3"
                 required

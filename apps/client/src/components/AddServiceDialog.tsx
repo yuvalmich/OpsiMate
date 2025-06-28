@@ -17,7 +17,7 @@ export interface ServiceConfig {
   name: string;
   type: string; // Updated to accept any string type from API ("MANUAL", "DOCKER", etc.)
   status: "running" | "stopped" | "error" | "unknown";
-  service_ip?: string;
+  serviceIP?: string;
   containerDetails?: {
     id?: string;
     image?: string;
@@ -27,9 +27,9 @@ export interface ServiceConfig {
 
 // Container interface
 interface Container {
-  service_name: string;
-  service_status: string;
-  service_ip: string;
+  name: string;
+  serviceStatus: string;
+  serviceIP: string;
   image: string;
 }
 
@@ -57,23 +57,22 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     setLoadingContainers(true);
     setError(null);
     setSelectedContainer(null); // Reset selected container when fetching new ones
-    
+
     try {
       const response = await providerApi.getProviderInstances(parseInt(serverId));
-      
+
       if (response.success && response.data) {
         // Transform API discovered service data to match our UI format
         const containerData = response.data.map((service: DiscoveredService, index) => ({
-          service_name: service.service_name,
-          service_status: service.service_status,
-          service_ip: service.service_ip,
+          serviceStatus: service.serviceStatus,
+          serviceIP: service.serviceIP,
           image: 'N/A', // DiscoveredService doesn't have image info
           id: `container-${index}`,
-          name: service.service_name,
+          name: service.name,
           selected: false,
           created: new Date().toISOString() // API doesn't provide creation date, so we use current time
         }));
-        
+
         setContainers(containerData);
       } else {
         setError('Failed to load containers');
@@ -88,7 +87,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
       setLoadingContainers(false);
     }
   };
-  
+
   // Load containers from the server using API when the dialog opens or tab changes
   useEffect(() => {
     if (open && activeTab === "container") {
@@ -121,10 +120,10 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
       providerId: parseInt(serverId),
       name: serviceName,
       serviceType: "MANUAL" as const,
-      serviceIp: servicePort ? `localhost:${servicePort}` : undefined,
+      serviceIP: servicePort ? `localhost:${servicePort}` : undefined,
       serviceStatus: "running" as const
     };
-    
+
     console.log('Creating service with data:', serviceData);
 
     try {
@@ -140,15 +139,15 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
           name: response.data.name,
           type: "MANUAL", // Match the API service_type
           status: response.data.serviceStatus as "running" | "stopped" | "error" | "unknown",
-          service_ip: response.data.serviceIp,
-          containerDetails: response.data.container_details
+          serviceIP: response.data.serviceIP,
+          containerDetails: response.data.containerDetails
         };
 
         onServiceAdded(newService);
         setServiceName("");
         setServicePort("");
         onClose();
-        
+
         toast({
           title: "Service added",
           description: `${serviceName} has been added to ${serverName}`
@@ -174,7 +173,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
 
   const handleAddContainers = async () => {
     const selectedContainers = containers.filter(container => container.selected);
-    
+
     if (selectedContainers.length === 0) {
       toast({
         title: "No containers selected",
@@ -190,14 +189,14 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
       // Create an array to store successful service creations
       const createdServices: ServiceConfig[] = [];
       const failedContainers: string[] = [];
-      
+
       // Create each service individually using the new API
       for (const container of selectedContainers) {
         // Ensure status is one of the allowed values
-        const status = container.service_status === "running" ? "running" as const : 
-                      container.service_status === "stopped" ? "stopped" as const : 
-                      container.service_status === "error" ? "error" as const : "unknown" as const;
-        
+        const status = container.serviceStatus === "running" ? "running" as const :
+                      container.serviceStatus === "stopped" ? "stopped" as const :
+                      container.serviceStatus === "error" ? "error" as const : "unknown" as const;
+
         try {
           // Create service using the new API
           const response = await providerApi.createService({
@@ -205,14 +204,14 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
             name: container.name,
             serviceType: "DOCKER",
             serviceStatus: status,
-            serviceIp: container.service_ip,
+            serviceIP: container.serviceIP,
             containerDetails: {
               id: container.id,
               image: container.image,
               created: container.created
             }
           });
-          
+
           if (response.success && response.data) {
             // Create UI service object from API response
             const newService: ServiceConfig = {
@@ -220,10 +219,10 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
               name: response.data.name,
               type: "DOCKER", // Match the API service_type
               status: response.data.serviceStatus as "running" | "stopped" | "error" | "unknown",
-              service_ip: response.data.serviceIp,
-              containerDetails: response.data.container_details
+              serviceIP: response.data.serviceIP,
+              containerDetails: response.data.containerDetails
             };
-            
+
             createdServices.push(newService);
           } else {
             failedContainers.push(container.name);
@@ -233,17 +232,17 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
           failedContainers.push(container.name);
         }
       }
-      
+
       // Add successful services to UI
       createdServices.forEach(service => onServiceAdded(service));
-      
+
       // Show appropriate toast message
       if (createdServices.length > 0) {
         toast({
           title: `${createdServices.length} container${createdServices.length > 1 ? 's' : ''} added`,
           description: `Added to ${serverName}${failedContainers.length > 0 ? '. Some containers failed.' : ''}`
         });
-        
+
         // Reset and close if at least one service was created
         setContainers(containers.map(container => ({ ...container, selected: false })));
         setSelectedContainer(null);
@@ -275,7 +274,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
         if (newSelected) {
           setSelectedContainer(container);
           setServiceName(container.name);
-          setServicePort(container.service_ip?.split(':')[1] || '');
+          setServicePort(container.serviceIP?.split(':')[1] || '');
         } else if (selectedContainer?.id === containerId) {
           // If this container is being deselected and it was the selected one, clear the selection
           setSelectedContainer(null);
@@ -303,36 +302,36 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
             Add a service to monitor on this server
           </DialogDescription>
         </DialogHeader>
-        
+
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "manual" | "container")} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="manual">Manual Service</TabsTrigger>
             <TabsTrigger value="container">Containers</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="manual" className="space-y-4 py-4">
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="service-name">Service Name</Label>
-                <Input 
-                  id="service-name" 
-                  placeholder="e.g., nginx, postgres, redis" 
+                <Input
+                  id="service-name"
+                  placeholder="e.g., nginx, postgres, redis"
                   value={serviceName}
                   onChange={(e) => setServiceName(e.target.value)}
                 />
               </div>
               <div className="col-span-1 space-y-2">
                 <Label htmlFor="service-port">Port (optional)</Label>
-                <Input 
-                  id="service-port" 
-                  placeholder="e.g., 80" 
+                <Input
+                  id="service-port"
+                  placeholder="e.g., 80"
                   value={servicePort}
                   onChange={(e) => setServicePort(e.target.value.replace(/[^0-9]/g, ''))}
                 />
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="container" className="py-4">
             {/* Container list */}
             {loadingContainers ? (
@@ -342,9 +341,9 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
             ) : error ? (
               <div className="text-center py-8 text-destructive">
                 <p>{error}</p>
-                <Button 
-                  variant="outline" 
-                  className="mt-4" 
+                <Button
+                  variant="outline"
+                  className="mt-4"
                   onClick={() => {
                     fetchContainers();
                   }}
@@ -377,22 +376,22 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
                         <div className="font-medium">{container.name}</div>
                         <div className="text-sm text-muted-foreground">{container.image}</div>
                         <div className="text-xs mt-1">
-                          <span className={`inline-block px-2 py-1 rounded-full ${container.service_status === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {container.service_status}
+                          <span className={`inline-block px-2 py-1 rounded-full ${container.serviceStatus === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                            {container.serviceStatus}
                           </span>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                
+
                 {selectedContainer && (
                   <div className="space-y-4 pt-4 border-t">
                     <div className="grid grid-cols-3 gap-4">
                       <div className="col-span-2 space-y-2">
                         <Label htmlFor="container-name">Container Name</Label>
-                        <Input 
-                          id="container-name" 
+                        <Input
+                          id="container-name"
                           value={serviceName}
                           onChange={(e) => setServiceName(e.target.value)}
                           placeholder="Container name"
@@ -400,8 +399,8 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
                       </div>
                       <div className="col-span-1 space-y-2">
                         <Label htmlFor="container-port">Port</Label>
-                        <Input 
-                          id="container-port" 
+                        <Input
+                          id="container-port"
                           value={servicePort}
                           onChange={(e) => setServicePort(e.target.value.replace(/[^0-9]/g, ''))}
                           placeholder="Port"
@@ -414,7 +413,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
             }
           </TabsContent>
         </Tabs>
-        
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel

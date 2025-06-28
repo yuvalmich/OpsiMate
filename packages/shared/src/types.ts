@@ -12,7 +12,7 @@ export enum ServiceType {
 export interface Provider {
   id: number;
   name: string;
-  providerIp: string;
+  providerIP: string;
   username: string;
   privateKeyFilename: string;
   SSHPort: number;
@@ -30,12 +30,12 @@ export interface Service {
   id: number;
   providerId: number;
   name: string;
-  serviceIp?: string;
+  serviceIP?: string;
   serviceStatus: string;
   createdAt: string;
   serviceType: ServiceType;
   // todo - this be in different interface
-  container_details?: ContainerDetails;
+  containerDetails?: ContainerDetails;
 }
 
 export interface ServiceWithProvider extends Service {
@@ -43,9 +43,9 @@ export interface ServiceWithProvider extends Service {
 }
 
 export interface DiscoveredService {
-  service_name: string;
-  service_status: string;
-  service_ip: string;
+  name: string;
+  serviceStatus: string;
+  serviceIP: string;
 }
 
 export interface ApiResponse<T = any> {

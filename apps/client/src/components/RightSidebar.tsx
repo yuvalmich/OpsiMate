@@ -16,7 +16,7 @@ interface RightSidebarProps {
 export function RightSidebar({ service, onClose, collapsed }: RightSidebarProps) {
   if (!service) return null
 
-  const getStatusColor = (status: Service['status']) => {
+  const getStatusColor = (status: Service['serviceStatus']) => {
     switch (status) {
       case 'running': return 'bg-green-100 text-green-800 border-green-200'
       case 'stopped': return 'bg-gray-100 text-gray-800 border-gray-200'
@@ -46,10 +46,10 @@ export function RightSidebar({ service, onClose, collapsed }: RightSidebarProps)
         <div className="flex items-center justify-between">
           <div>
             <div className="text-muted-foreground text-xs">Name</div>
-            <h4 className="font-medium text-foreground text-base">{service.serviceName}</h4>
+            <h4 className="font-medium text-foreground text-base">{service.name}</h4>
           </div>
-          <Badge className={cn(getStatusColor(service.status), "text-xs py-0.5 px-2 flex-shrink-0")}>
-            {service.status}
+          <Badge className={cn(getStatusColor(service.serviceStatus), "text-xs py-0.5 px-2 flex-shrink-0")}>
+            {service.serviceStatus}
           </Badge>
         </div>
 
@@ -59,7 +59,7 @@ export function RightSidebar({ service, onClose, collapsed }: RightSidebarProps)
           <div className="grid grid-cols-2 gap-x-4 gap-y-4">
             <div>
               <div className="text-muted-foreground">Server ID</div>
-              <div className="font-medium text-foreground text-sm">{service.serverId}</div>
+              <div className="font-medium text-foreground text-sm">{service.serviceIP}</div>
             </div>
             <div>
               <div className="text-muted-foreground">OS</div>

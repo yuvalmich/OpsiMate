@@ -148,7 +148,7 @@ const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>)
                     <Controller name="sshKey" control={control} render={({ field }) => <Input id="sshKey" placeholder="id_rsa" {...field} />} />
                 </FieldWrapper>
             )}
-            
+
             <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
                 <Button type="submit" disabled={isSubmitting}>
@@ -279,7 +279,7 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
         const existingIntegrations = existingIntegrationsJson ? JSON.parse(existingIntegrationsJson) : [];
         const updatedIntegrations = [...existingIntegrations, newIntegration];
         localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
-        
+
         toast({
           title: "Integration added",
           description: `Successfully added ${provider.name} integration`
@@ -297,7 +297,7 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
       }
       return;
     }
-    
+
     // For server integration, use the API
     setIsSubmitting(true);
     try {
@@ -305,25 +305,25 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
       const serverData = data as ServerFormData;
       // Determine provider_type based on integration.type
       let providerType = 'VM'; // Default to VM
-      
+
       // Map integration types to provider types
       // Using type assertion to handle the comparison
       if (provider.type.includes('kubernetes')) {
         providerType = 'K8S';
       }
-      
+
       const providerData = {
         name: serverData.name,
-        providerIp: serverData.hostname,
+        providerIP: serverData.hostname,
         username: serverData.username,
         privateKeyFilename: serverData.authType === 'key' ? serverData.sshKey || 'id_rsa' : 'none',
         SSHPort: serverData.port,
         providerType: providerType
       };
-      
+
       // Call the API to create a new provider
       const response = await integrationApi.createProvider(providerData);
-      
+
       if (response.success && response.data) {
         toast({
           title: "Integration added",
