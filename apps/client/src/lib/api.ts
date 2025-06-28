@@ -174,16 +174,8 @@ export const integrationApi = {
     SSHPort?: number;
     providerType: string;
   }) => {
-    // Convert camelCase to snake_case for the API
-    const convertedData = {
-      provider_name: providerData.name,
-      provider_ip: providerData.providerIp,
-      username: providerData.username,
-      private_key_filename: providerData.privateKeyFilename,
-      ssh_port: providerData.SSHPort,
-      provider_type: providerData.providerType
-    };
-    return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', convertedData);
+    // Send data in camelCase format as expected by the server schema
+    return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', providerData);
   },
   
   // Service APIs
@@ -241,5 +233,17 @@ export const integrationApi = {
   deleteService: (serviceId: number) => {
     console.log('API deleteService called with ID:', serviceId);
     return apiRequest<void>(`/services/${serviceId}`, 'DELETE');
+  },
+
+  // Start a service
+  startService: (serviceId: number) => {
+    console.log('API startService called with ID:', serviceId);
+    return apiRequest<ServiceWithProvider>(`/services/${serviceId}/start`, 'POST');
+  },
+
+  // Stop a service
+  stopService: (serviceId: number) => {
+    console.log('API stopService called with ID:', serviceId);
+    return apiRequest<ServiceWithProvider>(`/services/${serviceId}/stop`, 'POST');
   },
 };

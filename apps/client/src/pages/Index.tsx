@@ -98,10 +98,32 @@ const Index = () => {
         // Get active view ID from API
         const activeId = await getActiveViewId();
         if (activeId) {
-          setActiveViewId(activeId);
           const activeView = views.find(view => view.id === activeId);
           if (activeView) {
+            setActiveViewId(activeId);
             applyView(activeView);
+          } else if (activeId === 'default-view') {
+            // If the active view is 'default-view' but it doesn't exist, create a default state
+            setActiveViewId('default-view');
+            // Apply default filters and settings
+            setFilters({});
+            setSearchTerm('');
+            setVisibleColumns({
+              name: true,
+              serviceIp: true,
+              serviceStatus: true,
+              provider: true,
+              container_details: true
+            });
+          } else {
+            // If the active view ID doesn't exist, fall back to the first available view or default
+            const firstView = views[0];
+            if (firstView) {
+              setActiveViewId(firstView.id);
+              applyView(firstView);
+            } else {
+              setActiveViewId('default-view');
+            }
           }
         }
       } catch (error) {
@@ -232,33 +254,186 @@ const Index = () => {
     }))
   }
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (selectedServices.length > 0) {
       toast({
         title: "Starting Services",
         description: `Starting ${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''}...`
       })
-      // Here you would call your API to start the selected services
+      
+      // Track success and failures
+      let successCount = 0;
+      let failureCount = 0;
+      
+      // Process each service
+      for (const service of selectedServices) {
+        try {
+          const serviceId = parseInt(service.id);
+          const response = await integrationApi.startService(serviceId);
+          
+          if (response.success) {
+            successCount++;
+            // Update the service status in the local state
+            setServices(prev => prev.map(s => 
+              s.id === service.id ? { ...s, serviceStatus: 'running' } : s
+            ));
+          } else {
+            failureCount++;
+            console.error(`Failed to start service ${service.name}:`, response.error);
+          }
+        } catch (error) {
+          failureCount++;
+          console.error(`Error starting service ${service.name}:`, error);
+        }
+      }
+      
+      // Show result toast
+      if (successCount > 0 && failureCount === 0) {
+        toast({
+          title: "Services Started",
+          description: `Successfully started ${successCount} service${successCount !== 1 ? 's' : ''}.`
+        });
+      } else if (successCount > 0 && failureCount > 0) {
+        toast({
+          title: "Partial Success",
+          description: `Started ${successCount} service${successCount !== 1 ? 's' : ''}, but ${failureCount} failed.`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Failed to Start Services",
+          description: `All ${failureCount} service${failureCount !== 1 ? 's' : ''} failed to start.`,
+          variant: "destructive"
+        });
+      }
+      
+      // Refresh the services list to get updated statuses
+      fetchServices();
     }
   }
 
-  const handleStop = () => {
+  const handleStop = async () => {
     if (selectedServices.length > 0) {
       toast({
         title: "Stopping Services",
         description: `Stopping ${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''}...`
       })
-      // Here you would call your API to stop the selected services
+      
+      // Track success and failures
+      let successCount = 0;
+      let failureCount = 0;
+      
+      // Process each service
+      for (const service of selectedServices) {
+        try {
+          const serviceId = parseInt(service.id);
+          const response = await integrationApi.stopService(serviceId);
+          
+          if (response.success) {
+            successCount++;
+            // Update the service status in the local state
+            setServices(prev => prev.map(s => 
+              s.id === service.id ? { ...s, serviceStatus: 'stopped' } : s
+            ));
+          } else {
+            failureCount++;
+            console.error(`Failed to stop service ${service.name}:`, response.error);
+          }
+        } catch (error) {
+          failureCount++;
+          console.error(`Error stopping service ${service.name}:`, error);
+        }
+      }
+      
+      // Show result toast
+      if (successCount > 0 && failureCount === 0) {
+        toast({
+          title: "Services Stopped",
+          description: `Successfully stopped ${successCount} service${successCount !== 1 ? 's' : ''}.`
+        });
+      } else if (successCount > 0 && failureCount > 0) {
+        toast({
+          title: "Partial Success",
+          description: `Stopped ${successCount} service${successCount !== 1 ? 's' : ''}, but ${failureCount} failed.`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Failed to Stop Services",
+          description: `All ${failureCount} service${failureCount !== 1 ? 's' : ''} failed to stop.`,
+          variant: "destructive"
+        });
+      }
+      
+      // Refresh the services list to get updated statuses
+      fetchServices();
     }
   }
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
     if (selectedServices.length > 0) {
       toast({
         title: "Restarting Services",
         description: `Restarting ${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''}...`
       })
-      // Here you would call your API to restart the selected services
+      
+      // Track success and failures
+      let successCount = 0;
+      let failureCount = 0;
+      
+      // Process each service - first stop, then start
+      for (const service of selectedServices) {
+        try {
+          const serviceId = parseInt(service.id);
+          
+          // First stop the service
+          const stopResponse = await integrationApi.stopService(serviceId);
+          if (!stopResponse.success) {
+            failureCount++;
+            console.error(`Failed to stop service ${service.name} during restart:`, stopResponse.error);
+            continue; // Skip to next service if stop fails
+          }
+          
+          // Then start the service
+          const startResponse = await integrationApi.startService(serviceId);
+          if (startResponse.success) {
+            successCount++;
+            // Update the service status in the local state
+            setServices(prev => prev.map(s => 
+              s.id === service.id ? { ...s, serviceStatus: 'running' } : s
+            ));
+          } else {
+            failureCount++;
+            console.error(`Failed to start service ${service.name} during restart:`, startResponse.error);
+          }
+        } catch (error) {
+          failureCount++;
+          console.error(`Error restarting service ${service.name}:`, error);
+        }
+      }
+      
+      // Show result toast
+      if (successCount > 0 && failureCount === 0) {
+        toast({
+          title: "Services Restarted",
+          description: `Successfully restarted ${successCount} service${successCount !== 1 ? 's' : ''}.`
+        });
+      } else if (successCount > 0 && failureCount > 0) {
+        toast({
+          title: "Partial Success",
+          description: `Restarted ${successCount} service${successCount !== 1 ? 's' : ''}, but ${failureCount} failed.`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Failed to Restart Services",
+          description: `All ${failureCount} service${failureCount !== 1 ? 's' : ''} failed to restart.`,
+          variant: "destructive"
+        });
+      }
+      
+      // Refresh the services list to get updated statuses
+      fetchServices();
     }
   }
 
