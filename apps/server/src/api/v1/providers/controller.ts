@@ -42,9 +42,9 @@ export async function testProviderConnectionHandler(req: Request, res: Response)
     try {
         const provider = CreateProviderSchema.parse(req.body) as Provider;
         const providerConnector = providerConnectorFactory(provider.providerType);
-        const is_valid_connection = providerConnector.testConnection(provider)
+        const isValidConnection = await providerConnector.testConnection(provider)
 
-        res.status(201).json({success: true, data: is_valid_connection});
+        res.status(201).json({success: true, data: {isValidConnection}});
     } catch (error) {
 
         if (error instanceof z.ZodError) {
