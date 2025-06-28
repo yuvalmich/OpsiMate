@@ -310,15 +310,12 @@ export function MyProviders() {
     try {
       // Fetch services for this provider from the API
       const response = await providerApi.getAllServices();
-
       if (response.success && response.data) {
         // Check if data is an array or if it's nested in another property
-        const servicesArray = Array.isArray(response.data) ? response.data :
-          (response.data as any).services ? (response.data as any).services : [];
 
         // Filter services that belong to this provider
-        const providerServices = servicesArray.filter(service =>
-          service.provider_id && service.provider_id.toString() === provider.id
+        const providerServices = response.data?.filter(service =>
+          service.providerId && service.providerId.toString() === provider.id
         );
 
         // Map API services to ServiceConfig format
