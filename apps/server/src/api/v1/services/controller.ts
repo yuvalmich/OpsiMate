@@ -193,3 +193,30 @@ export async function stopService(req: Request, res: Response) {
     }
 }
 
+export async function getServiceLogs(req: Request, res: Response) {
+    try {
+        // Validate and parse the service ID
+        const { serviceId } = ServiceIdSchema.parse({ serviceId: req.params.serviceId });
+
+        // Get the service with provider details
+        const service = await serviceRepo.getServiceWithProvider(serviceId);
+        if (!service) {
+            return res.status(404).json({ success: false, error: 'Service not found' });
+        }
+        const provider = service.provider;
+        if (!provider) {
+            return res.status(404).json({ success: false, error: 'Provider not found for this service' });
+        }
+        const providerConnector = providerConnectorFactory(provider.providerType);
+        const logs = await providerConnector.getServiceLogs(provider, service.service_name);
+        res.json({ success: true, data: logs, message: 'Service stopped successfully' });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+        } else {
+            console.error('Error stopping service:', error);
+            res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+        }
+    }
+}
+

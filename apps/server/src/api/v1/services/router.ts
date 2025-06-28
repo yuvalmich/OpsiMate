@@ -1,5 +1,14 @@
 import { Router } from 'express';
-import {createService, deleteService, getAllServices, getServiceById, updateService, startService, stopService} from "./controller";
+import {
+    createService,
+    deleteService,
+    getAllServices,
+    getServiceById,
+    updateService,
+    startService,
+    stopService,
+    getServiceLogs
+} from "./controller";
 
 const router = Router();
 
@@ -20,6 +29,9 @@ router.post('/:serviceId/start', startService);
 
 // POST /api/v1/integration/services/:serviceId/stop
 router.post('/:serviceId/stop', stopService);
+
+// POST /api/v1/integration/services/:serviceId/stop
+router.get('/:serviceId/logs', getServiceLogs);
 
 // DELETE /api/v1/integration/services/:serviceId
 router.delete('/:serviceId', deleteService);

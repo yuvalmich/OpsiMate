@@ -91,3 +91,37 @@ export async function stopService(
     ssh.dispose();
   }
 }
+
+export async function getServiceLogs(provider: Provider, serviceName: string): Promise<string[]> {
+  const ssh = new NodeSSH();
+
+  try {
+    await ssh.connect({
+      host: provider.providerIp,
+      username: provider.username,
+      privateKeyPath: getKeyPath(provider.privateKeyFilename),
+      port: provider.SSHPort,
+    });
+
+    const cmd = `sudo docker logs --since 1h ${serviceName} 2>&1 | grep -i err | tail -n 10`
+
+    const result = await ssh.execCommand(cmd);
+
+    if (result.code !== 0) {
+      throw new Error(result.stderr || 'Failed to retrieve service logs');
+    }
+
+    // Split logs into an array, filter out empty lines
+    const logs = result.stdout
+        .split('\n')
+        .filter(line => line.trim().length > 0);
+
+    return logs.length > 0 ? logs : ['No error logs found in the last 24 hours'];
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Failed to get logs for service ${serviceName}: ${errorMessage}`);
+  } finally {
+    ssh.dispose();
+  }
+}
