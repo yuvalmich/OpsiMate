@@ -380,9 +380,23 @@ export function MyIntegrations() {
 
   const handleServiceStatusChange = async (integrationId: string, serviceId: string, newStatus: "running" | "stopped" | "error" | "unknown") => {
     try {
-      // TODO: Add API endpoint for updating service status
-      // For now, we'll just update the UI
+      // Convert serviceId to number for API calls
+      const serviceIdNum = parseInt(serviceId);
       
+      // Call the appropriate API based on the requested status
+      if (newStatus === "running") {
+        const response = await integrationApi.startService(serviceIdNum);
+        if (!response.success) {
+          throw new Error(response.error || "Failed to start service");
+        }
+      } else if (newStatus === "stopped") {
+        const response = await integrationApi.stopService(serviceIdNum);
+        if (!response.success) {
+          throw new Error(response.error || "Failed to stop service");
+        }
+      }
+      
+      // Update the UI with the new status
       const updatedIntegrations = integrationInstances.map(integration => {
         if (integration.id === integrationId && integration.services) {
           return {
@@ -396,11 +410,23 @@ export function MyIntegrations() {
       });
 
       setIntegrationInstances(updatedIntegrations);
+      
+      // Update selected integration if it's the one containing this service
+      if (selectedIntegration && selectedIntegration.id === integrationId && selectedIntegration.services) {
+        const updatedSelectedIntegration = {
+          ...selectedIntegration,
+          services: selectedIntegration.services.map(service => 
+            service.id === serviceId ? { ...service, status: newStatus } : service
+          )
+        };
+        setSelectedIntegration(updatedSelectedIntegration);
+      }
     } catch (error) {
       console.error("Error updating service status:", error);
       toast({
         title: "Error updating service",
-        description: "There was a problem updating the service status",
+        description: typeof error === 'object' && error !== null && 'message' in error ? 
+          (error as Error).message : "There was a problem updating the service status",
         variant: "destructive"
       });
     }

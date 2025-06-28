@@ -234,4 +234,16 @@ export const integrationApi = {
     console.log('API deleteService called with ID:', serviceId);
     return apiRequest<void>(`/services/${serviceId}`, 'DELETE');
   },
+
+  // Start a service
+  startService: (serviceId: number) => {
+    console.log('API startService called with ID:', serviceId);
+    return apiRequest<ServiceWithProvider>(`/services/${serviceId}/start`, 'POST');
+  },
+
+  // Stop a service
+  stopService: (serviceId: number) => {
+    console.log('API stopService called with ID:', serviceId);
+    return apiRequest<ServiceWithProvider>(`/services/${serviceId}/stop`, 'POST');
+  },
 };
