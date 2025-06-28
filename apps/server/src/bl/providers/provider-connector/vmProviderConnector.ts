@@ -14,4 +14,7 @@ export class VMProviderConnector implements ProviderConnector {
     async stopService(provider: Provider, serviceName: string): Promise<void> {
         return sshClient.stopService(provider, serviceName);
     }
+    async getServiceLogs(provider: Provider, serviceName: string): Promise<string[]> {
+        return sshClient.getServiceLogs(provider, serviceName);
+    }
 }
