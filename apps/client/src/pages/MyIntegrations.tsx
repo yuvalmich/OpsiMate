@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Server, Cloud, Database, Globe, MoreVertical, Search, Plus, Trash, RefreshCw, Settings, ListPlus, Edit } from "lucide-react";
+import { Server, Cloud, Database, Globe, MoreVertical, Search, Plus, Trash, RefreshCw, Settings, ListPlus, Edit, Container, ChevronDown, ChevronUp, Play, Square, Terminal } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { IntegrationType } from "./Integrations";
 import { AddServiceDialog, ServiceConfig } from "@/components/AddServiceDialog";
-import { ServicesList } from "@/components/ServicesList";
-import { ServiceDetailsSheet } from "@/components/ServiceDetailsSheet";
+
+
 import { EditIntegrationDialog } from "@/components/EditIntegrationDialog";
 
 // Define the structure of an integration instance
@@ -155,6 +156,16 @@ export const getStatusBadgeColor = (status: IntegrationInstance["status"]) => {
   }
 };
 
+const getServiceStatusBadgeColor = (status: ServiceConfig["status"]) => {
+  switch (status) {
+    case "running": return "bg-green-500/20 text-green-700 hover:bg-green-500/30";
+    case "stopped": return "bg-gray-500/20 text-gray-700 hover:bg-gray-500/30";
+    case "error": return "bg-red-500/20 text-red-700 hover:bg-red-500/30";
+    case "unknown":
+    default: return "bg-gray-500/20 text-gray-700 hover:bg-gray-500/30";
+  }
+};
+
 export function MyIntegrations() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
@@ -167,59 +178,62 @@ export function MyIntegrations() {
   const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
   const [selectedServerForService, setSelectedServerForService] = useState<IntegrationInstance | null>(null);
   const [selectedService, setSelectedService] = useState<ServiceConfig | null>(null);
+  const [expandedServices, setExpandedServices] = useState<Set<string>>(new Set());
+  const [loadingServices, setLoadingServices] = useState<Set<string>>(new Set());
   
-  // Load integrations from API
-  useEffect(() => {
-    const fetchIntegrations = async () => {
-      setIsLoading(true);
-      try {
-        const response = await integrationApi.getProviders();
-        
-        if (response.success && response.data && response.data.providers) {
-          // Convert API data to IntegrationInstance format
-          const apiIntegrations: IntegrationInstance[] = response.data.providers.map(provider => {
-            const mappedIntegration = {
-              id: provider.id ? provider.id.toString() : `temp-${Date.now()}`,
-              name: provider.name || '',
-              type: "server" as IntegrationType,
-              status: "online" as const, // Default to online since we don't have status info from API yet
-              details: {
-                Hostname: provider.providerIp || '',
-                Port: provider.SSHPort ? provider.SSHPort.toString() : '22',
-                Username: provider.username || '',
-                Private_key_filename: provider.privateKeyFilename || '',
-                Provider_type: provider.providerType || 'VM'
-              },
-              lastConnected: new Date().toISOString(),
-              createdAt: provider.createdAt ? new Date(provider.createdAt).toISOString() : new Date().toISOString(),
-              services: []
-            };
-            
-            return mappedIntegration;
-          });
+  // Function to load integrations from API
+  const fetchIntegrations = async () => {
+    setIsLoading(true);
+    try {
+      const response = await integrationApi.getProviders();
+      
+      if (response.success && response.data && response.data.providers) {
+        // Convert API data to IntegrationInstance format
+        const apiIntegrations: IntegrationInstance[] = response.data.providers.map(provider => {
+          const mappedIntegration = {
+            id: provider.id ? provider.id.toString() : `temp-${Date.now()}`,
+            name: provider.name || '',
+            type: "server" as IntegrationType,
+            status: "online" as const, // Default to online since we don't have status info from API yet
+            details: {
+              Hostname: provider.providerIp || '',
+              Port: provider.SSHPort ? provider.SSHPort.toString() : '22',
+              Username: provider.username || '',
+              Private_key_filename: provider.privateKeyFilename || '',
+              Provider_type: provider.providerType || 'VM'
+            },
+            lastConnected: new Date().toISOString(),
+            createdAt: provider.createdAt ? new Date(provider.createdAt).toISOString() : new Date().toISOString(),
+            services: []
+          };
           
-          setIntegrationInstances(apiIntegrations);
-        } else if (import.meta.env.DEV && (!response.data || !response.data.providers || response.data.providers.length === 0)) {
-          // In development, use mock data if no saved integrations exist
-          setIntegrationInstances(mockIntegrationInstances);
-        }
-      } catch (error) {
-        console.error("Error loading integrations:", error);
-        toast({
-          title: "Error loading integrations",
-          description: "There was a problem loading your integrations",
-          variant: "destructive"
+          return mappedIntegration;
         });
         
-        // Fall back to mock data in development
-        if (import.meta.env.DEV) {
-          setIntegrationInstances(mockIntegrationInstances);
-        }
-      } finally {
-        setIsLoading(false);
+        setIntegrationInstances(apiIntegrations);
+      } else if (import.meta.env.DEV && (!response.data || !response.data.providers || response.data.providers.length === 0)) {
+        // In development, use mock data if no saved integrations exist
+        setIntegrationInstances(mockIntegrationInstances);
       }
-    };
-    
+    } catch (error) {
+      console.error("Error loading integrations:", error);
+      toast({
+        title: "Error loading integrations",
+        description: "There was a problem loading your integrations",
+        variant: "destructive"
+      });
+      
+      // Fall back to mock data in development
+      if (import.meta.env.DEV) {
+        setIntegrationInstances(mockIntegrationInstances);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load integrations from API
+  useEffect(() => {
     fetchIntegrations();
   }, [toast]);
 
@@ -286,7 +300,13 @@ export function MyIntegrations() {
     }
   };
 
-  const handleRowClick = async (integration: IntegrationInstance) => {
+  // Helper function to refresh services for a specific integration
+  const refreshIntegrationServices = async (integration: IntegrationInstance) => {
+    const integrationId = integration.id;
+    const newLoading = new Set(loadingServices);
+    newLoading.add(integrationId);
+    setLoadingServices(newLoading);
+
     try {
       // Fetch services for this integration from the API
       const response = await integrationApi.getAllServices();
@@ -323,10 +343,6 @@ export function MyIntegrations() {
         );
         
         setIntegrationInstances(updatedIntegrations);
-        setSelectedIntegration(updatedIntegration);
-      } else {
-        // If no services or API call failed, just select the integration without services
-        setSelectedIntegration(integration);
       }
     } catch (error) {
       console.error("Error fetching services for integration:", error);
@@ -335,39 +351,104 @@ export function MyIntegrations() {
         description: "There was a problem loading services for this integration",
         variant: "destructive"
       });
-      
-      // Select the integration anyway, even if service loading failed
-      setSelectedIntegration(integration);
+    } finally {
+      const newLoading = new Set(loadingServices);
+      newLoading.delete(integrationId);
+      setLoadingServices(newLoading);
     }
+  };
+
+  const handleRowClick = async (integration: IntegrationInstance, e?: React.MouseEvent) => {
+    // Prevent triggering when clicking on dropdown menu
+    if (e && (e.target as HTMLElement).closest('[data-radix-popper-content-wrapper]')) {
+      return;
+    }
+
+    const integrationId = integration.id;
+    
+    // If services are already loaded and card is expanded, collapse it
+    if (expandedServices.has(integrationId) && integration.services && integration.services.length > 0) {
+      const newExpanded = new Set(expandedServices);
+      newExpanded.delete(integrationId);
+      setExpandedServices(newExpanded);
+      return;
+    }
+
+    // If services are not loaded yet, fetch them
+    if (!integration.services || integration.services.length === 0) {
+      await refreshIntegrationServices(integration);
+    }
+
+    // Expand the services
+    const newExpanded = new Set(expandedServices);
+    newExpanded.add(integrationId);
+    setExpandedServices(newExpanded);
   };
 
   const handleServiceClick = (service: ServiceConfig) => {
     setSelectedService(service);
   };
 
+  const handleServiceAction = async (integrationId: string, serviceId: string, action: "start" | "stop" | "restart") => {
+    try {
+      const serviceIdNum = parseInt(serviceId);
+      
+      if (action === "start") {
+        const response = await integrationApi.startService(serviceIdNum);
+        if (!response.success) throw new Error(response.error || "Failed to start service");
+      } else if (action === "stop") {
+        const response = await integrationApi.stopService(serviceIdNum);
+        if (!response.success) throw new Error(response.error || "Failed to stop service");
+      } else if (action === "restart") {
+        // Stop then start
+        await integrationApi.stopService(serviceIdNum);
+        setTimeout(async () => {
+          await integrationApi.startService(serviceIdNum);
+        }, 1000);
+      }
+      
+      toast({
+        title: `Service ${action}ed`,
+        description: `Service has been ${action}ed successfully`
+      });
+      
+      // Refresh the integration to get updated service status
+      setTimeout(() => handleRowClick(integrationInstances.find(i => i.id === integrationId)!), 2000);
+      
+    } catch (error) {
+      console.error(`Error ${action}ing service:`, error);
+      toast({
+        title: `Error ${action}ing service`,
+        description: error instanceof Error ? error.message : `Failed to ${action} service`,
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleAddService = async (integrationId: string, service: ServiceConfig) => {
     try {
-      // TODO: Add API endpoint for adding services
-      // For now, we'll just update the UI
-      
-      let updatedSelectedIntegration: IntegrationInstance | null = null;
-      const updatedIntegrations = integrationInstances.map(integration => {
-        if (integration.id === integrationId) {
-          const updatedIntegration = {
-            ...integration,
-            services: [...(integration.services || []), service]
-          };
-          updatedSelectedIntegration = updatedIntegration;
-          return updatedIntegration;
-        }
-        return integration;
-      });
-
-      setIntegrationInstances(updatedIntegrations);
-      if (updatedSelectedIntegration) {
-        setSelectedIntegration(updatedSelectedIntegration);
-      }
+      // Close the dialog first
       setIsAddServiceDialogOpen(false);
+      
+      // Automatically expand the services section to show the new service
+      const newExpanded = new Set(expandedServices);
+      newExpanded.add(integrationId);
+      setExpandedServices(newExpanded);
+      
+      toast({
+        title: "Service added",
+        description: `${service.name} has been successfully added`,
+      });
+      
+      // Refresh only the specific integration's services after a short delay
+      setTimeout(async () => {
+        const integration = integrationInstances.find(i => i.id === integrationId);
+        if (integration) {
+          // Refresh just this integration's services without changing expansion state
+          await refreshIntegrationServices(integration);
+        }
+      }, 500);
+      
     } catch (error) {
       console.error("Error adding service:", error);
       toast({
@@ -434,47 +515,38 @@ export function MyIntegrations() {
   
   // Helper function to update UI after service deletion
   const updateUIAfterServiceDeletion = (serviceId: string) => {
-    // Update the UI by removing the deleted service
+    // Find which integration contains this service and remove it
     const updatedIntegrations = integrationInstances.map(integration => {
-      if (integration.id === selectedIntegration?.id && integration.services) {
-        return {
-          ...integration,
-          services: integration.services.filter(service => service.id !== serviceId)
-        };
+      if (integration.services) {
+        const serviceExists = integration.services.some(service => service.id === serviceId);
+        if (serviceExists) {
+          return {
+            ...integration,
+            services: integration.services.filter(service => service.id !== serviceId)
+          };
+        }
       }
       return integration;
     });
     
     setIntegrationInstances(updatedIntegrations);
-    
-    // Update the selected integration if it's the one with the deleted service
-    if (selectedIntegration && selectedIntegration.services) {
-      const updatedSelectedIntegration = {
-        ...selectedIntegration,
-        services: selectedIntegration.services.filter(service => service.id !== serviceId)
-      };
-      setSelectedIntegration(updatedSelectedIntegration);
-    }
   };
 
   const handleDeleteService = async (serviceId: string) => {
-    if (!selectedIntegration) {
-      return;
-    }
-    
     try {
       // Convert serviceId to number
       const serviceIdNum = parseInt(serviceId);
       
-      // First check if the service still exists in the database
-      const serviceCheck = await integrationApi.getServiceById(serviceIdNum);
+      // Find which integration contains this service
+      const containingIntegration = integrationInstances.find(integration => 
+        integration.services?.some(service => service.id === serviceId)
+      );
       
-      if (!serviceCheck.success || !serviceCheck.data) {
-        // Service doesn't exist in database, just update the UI
-        updateUIAfterServiceDeletion(serviceId);
+      if (!containingIntegration) {
         toast({
-          title: "Service removed",
-          description: "The service has been removed from the list."
+          title: "Service not found",
+          description: "Could not find the service to delete",
+          variant: "destructive"
         });
         return;
       }
@@ -497,7 +569,7 @@ export function MyIntegrations() {
       console.error("Error deleting service:", error);
       toast({
         title: "Error deleting service",
-        description: "There was a problem deleting the service",
+        description: error instanceof Error ? error.message : "There was a problem deleting the service",
         variant: "destructive"
       });
     }
@@ -641,92 +713,286 @@ export function MyIntegrations() {
             </div>
           ) : filteredIntegrations.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredIntegrations.map((integration) => (
-                <Card 
-                  key={integration.id} 
-                  className="flex flex-col cursor-pointer transition-all hover:shadow-md"
-                  onClick={() => handleRowClick(integration)}
-                >
-                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                    <div className="flex items-start gap-3">
-                      <div className="bg-primary/10 dark:bg-primary/20 text-primary p-2 rounded-lg flex-shrink-0">
-                        {getIntegrationIcon(integration.type)}
+              {filteredIntegrations.map((integration) => {
+                const isExpanded = expandedServices.has(integration.id);
+                const isLoading = loadingServices.has(integration.id);
+                const hasServices = integration.services && integration.services.length > 0;
+                const servicesToShow = hasServices && isExpanded ? 
+                  (expandedServices.has(`${integration.id}-full`) ? integration.services : integration.services.slice(0, 3)) : [];
+                const hasMoreServices = hasServices && integration.services!.length > 3;
+
+                return (
+                  <Card 
+                    key={integration.id} 
+                    className={`flex flex-col transition-all duration-300 hover:shadow-md ${
+                      isExpanded ? 'shadow-lg ring-2 ring-primary/20' : ''
+                    }`}
+                  >
+                    <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 dark:bg-primary/20 text-primary p-2 rounded-lg flex-shrink-0">
+                          {getIntegrationIcon(integration.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-lg font-semibold leading-snug truncate">{integration.name}</CardTitle>
+                          <p className="text-sm text-muted-foreground">{getIntegrationTypeName(integration.type)}</p>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-lg font-semibold leading-snug">{integration.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{getIntegrationTypeName(integration.type)}</p>
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenuItem onClick={() => handleRefreshIntegration(integration.id)}>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Refresh
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedIntegration(integration);
-                            setIsEditDialogOpen(true);
-                          }}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          {integration.type === 'server' && (
-                            <DropdownMenuItem onClick={() => {
-                              setSelectedServerForService(integration);
-                              setIsAddServiceDialogOpen(true);
-                            }}>
-                              <ListPlus className="mr-2 h-4 w-4" />
-                              Add Service
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem onClick={() => handleRefreshIntegration(integration.id)}>
+                              <RefreshCw className="mr-2 h-4 w-4" />
+                              Refresh
                             </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() => {
+                            <DropdownMenuItem onClick={() => {
                               setSelectedIntegration(integration);
-                              setIsDeleteDialogOpen(true);
+                              setIsEditDialogOpen(true);
+                            }}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            {integration.type === 'server' && (
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedServerForService(integration);
+                                setIsAddServiceDialogOpen(true);
+                              }}>
+                                <ListPlus className="mr-2 h-4 w-4" />
+                                Add Service
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedIntegration(integration);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                              className="text-red-500 focus:text-red-500"
+                            >
+                              <Trash className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenu>
+                    </CardHeader>
+                    
+                    <CardContent className="flex-grow pt-2 px-6 pb-4">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Hostname</p>
+                          <p className="font-medium">{integration.details.Hostname}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Port</p>
+                          <p className="font-medium">{integration.details.Port}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Username</p>
+                          <p className="font-medium">{integration.details.Username}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">SSH Key</p>
+                          <p className="font-medium">{integration.details.Private_key_filename}</p>
+                        </div>
+                      </div>
+
+                      {/* Services Preview Section */}
+                      {!isExpanded && !isLoading && (
+                        <div 
+                          className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer shadow-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(integration, e);
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <Server className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-medium">
+                                  {hasServices 
+                                    ? `${integration.services!.length} Service${integration.services!.length !== 1 ? 's' : ''}`
+                                    : 'Services'
+                                  }
+                                </span>
+                              </div>
+                              {!hasServices && !isLoading && (
+                                <span className="text-xs text-muted-foreground/70 ml-6">Click to load and view</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {hasServices && (
+                                <div className="flex -space-x-1">
+                                  {integration.services!.slice(0, 3).map((service, index) => (
+                                    <div
+                                      key={service.id}
+                                      className={`inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-background text-xs ${
+                                        getServiceStatusBadgeColor(service.status)
+                                      }`}
+                                      title={service.name}
+                                    >
+                                      {service.type === "DOCKER" ? (
+                                        <Container className="h-3 w-3" />
+                                      ) : (
+                                        <Server className="h-3 w-3" />
+                                      )}
+                                    </div>
+                                  ))}
+                                  {integration.services!.length > 3 && (
+                                    <div className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-background bg-muted text-xs font-medium">
+                                      +{integration.services!.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </div>
+                          {hasServices && (
+                            <div className="mt-2 text-xs text-muted-foreground">
+                              {integration.services!.slice(0, 2).map(service => service.name).join(', ')}
+                              {integration.services!.length > 2 && ` and ${integration.services!.length - 2} more`}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Loading State */}
+                      {isLoading && (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          <span className="ml-2 text-sm text-muted-foreground">Loading services...</span>
+                        </div>
+                      )}
+
+                      {/* Services List */}
+                      {isExpanded && hasServices && !isLoading && (
+                        <div className="space-y-3 animate-in slide-in-from-top-5 duration-300">
+                          <div 
+                            className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 -m-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newExpanded = new Set(expandedServices);
+                              newExpanded.delete(integration.id);
+                              setExpandedServices(newExpanded);
                             }}
-                            className="text-red-500 focus:text-red-500"
                           >
-                            <Trash className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenu>
-                  </CardHeader>
-                  <CardContent className="flex-grow pt-2">
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Hostname</p>
-                        <p className="font-medium">{integration.details.Hostname}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Port</p>
-                        <p className="font-medium">{integration.details.Port}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Username</p>
-                        <p className="font-medium">{integration.details.Username}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">SSH Key</p>
-                        <p className="font-medium">{integration.details.Private_key_filename}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex items-center justify-between text-xs text-muted-foreground">
-                    <Badge className={getStatusBadgeColor(integration.status)}>{integration.status}</Badge>
-                    {integration.lastConnected && (
-                      <p>Last connected: {new Date(integration.lastConnected).toLocaleDateString()}</p>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
+                            <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                              <Server className="h-4 w-4" />
+                              Services ({integration.services!.length})
+                            </h4>
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div className="space-y-3">
+                            {servicesToShow.map((service) => (
+                              <div 
+                                key={service.id} 
+                                className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-shrink-0">
+                                    {service.type === "DOCKER" ? (
+                                      <Container className="h-4 w-4 text-blue-500" />
+                                    ) : (
+                                      <Server className="h-4 w-4 text-purple-500" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-medium text-sm truncate">{service.name}</p>
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {service.type === "DOCKER" 
+                                        ? `Container: ${service.containerDetails?.image || service.name}` 
+                                        : service.service_ip 
+                                          ? `IP: ${service.service_ip}` 
+                                          : "Manual service"
+                                      }
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge className={`text-xs ${getServiceStatusBadgeColor(service.status)}`}>
+                                    {service.status}
+                                  </Badge>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
+                                        <MoreVertical className="h-3 w-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuPortal>
+                                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                        <DropdownMenuItem onClick={() => handleServiceClick(service)}>
+                                          <Terminal className="mr-2 h-3 w-3" /> Details
+                                        </DropdownMenuItem>
+                                        {service.status !== 'running' && (
+                                          <DropdownMenuItem onClick={() => handleServiceAction(integration.id, service.id, 'start')}>
+                                            <Play className="mr-2 h-3 w-3" /> Start
+                                          </DropdownMenuItem>
+                                        )}
+                                        {service.status === 'running' && (
+                                          <DropdownMenuItem onClick={() => handleServiceAction(integration.id, service.id, 'stop')}>
+                                            <Square className="mr-2 h-3 w-3" /> Stop
+                                          </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuItem onClick={() => handleServiceAction(integration.id, service.id, 'restart')}>
+                                          <RefreshCw className="mr-2 h-3 w-3" /> Restart
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem 
+                                          onClick={() => handleDeleteService(service.id)}
+                                          className="text-red-500 focus:text-red-500"
+                                        >
+                                          <Trash className="mr-2 h-3 w-3" /> Delete
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenuPortal>
+                                  </DropdownMenu>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* See More / See Less Button */}
+                          {hasMoreServices && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="w-full text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const key = `${integration.id}-full`;
+                                const newExpanded = new Set(expandedServices);
+                                if (expandedServices.has(key)) {
+                                  newExpanded.delete(key);
+                                } else {
+                                  newExpanded.add(key);
+                                }
+                                setExpandedServices(newExpanded);
+                              }}
+                            >
+                              {expandedServices.has(`${integration.id}-full`) 
+                                ? `Show less (${integration.services!.length - 3} hidden)` 
+                                : `See ${integration.services!.length - 3} more services`
+                              }
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                    
+                    <CardFooter className="flex items-center justify-between text-xs text-muted-foreground">
+                      <Badge className={getStatusBadgeColor(integration.status)}>{integration.status}</Badge>
+                      {integration.lastConnected && (
+                        <p>Last connected: {new Date(integration.lastConnected).toLocaleDateString()}</p>
+                      )}
+                    </CardFooter>
+                  </Card>
+                );
+              })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -748,17 +1014,7 @@ export function MyIntegrations() {
         </div>
       </div>
       
-      {/* Service Details Sheet */}
-      <ServiceDetailsSheet 
-        integration={selectedIntegration}
-        onClose={() => setSelectedIntegration(null)}
-        onDeleteService={handleDeleteService}
-        onStatusChange={(serviceId, newStatus) => {
-          if (selectedIntegration) {
-            handleServiceStatusChange(selectedIntegration.id, serviceId, newStatus);
-          }
-        }}
-      />
+
 
       {/* Add Service Dialog */}
       {selectedServerForService && (
