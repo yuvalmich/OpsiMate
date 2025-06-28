@@ -17,4 +17,7 @@ export class VMProviderConnector implements ProviderConnector {
     async getServiceLogs(provider: Provider, serviceName: string): Promise<string[]> {
         return sshClient.getServiceLogs(provider, serviceName);
     }
+    async testConnection(provider: Provider): Promise<boolean> {
+        return sshClient.testConnection(provider);
+    }
 }

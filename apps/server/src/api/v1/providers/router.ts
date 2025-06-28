@@ -5,7 +5,7 @@ import {
     updateProviderHandler,
     deleteProviderHandler,
     bulkAddServicesHandler,
-    discoverServicesInProviderHandler
+    discoverServicesInProviderHandler, testProviderConnectionHandler
 } from './controller'
 
 const router = Router();
@@ -31,6 +31,10 @@ router.post('/:providerId/services/bulk', bulkAddServicesHandler);
 
 // GET /api/v1/integration/providers/:providerId/services/search
 router.get('/:providerId/discover-services', discoverServicesInProviderHandler);
+
+// POST /api/v1/integration/providers/test-connection
+router.post('/test-connection', testProviderConnectionHandler);
+
 
 // router.get('/:providerId/services', getServicesByProviderHandler);
 

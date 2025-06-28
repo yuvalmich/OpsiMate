@@ -125,3 +125,44 @@ export async function getServiceLogs(provider: Provider, serviceName: string): P
     ssh.dispose();
   }
 }
+
+export async function testConnection(provider: Provider): Promise<boolean> {
+  const ssh = new NodeSSH();
+
+  try {
+    const sshConfig = {
+      host: provider.providerIp,
+      username: provider.username,
+      privateKeyPath: getKeyPath(provider.privateKeyFilename),
+      port: provider.SSHPort,
+    }
+
+    // Timeout for SSH connection (e.g., 10 seconds)
+    await timeoutPromise(ssh.connect(sshConfig), 10000, 'SSH connection timed out');
+
+    // Timeout for executing command (e.g., 5 seconds)
+    const result = await timeoutPromise(
+        ssh.execCommand('echo "Connection test"'),
+        5000,
+        'Command execution timed out'
+    );
+
+    return result.code === 0 && result.stdout.trim() === 'Connection test';
+  } catch (error) {
+    console.error(`Connection test failed for provider ${provider.providerIp}:`, error);
+    return false;
+  } finally {
+    ssh.dispose();
+  }
+}
+
+
+// todo: add timeouts in this section when necessary
+function timeoutPromise<T>(promise: Promise<T>, ms: number, errorMsg = 'Operation timed out'): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(errorMsg)), ms)
+    ),
+  ]);
+}
