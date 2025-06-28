@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 import { IntegrationType } from "./Integrations";
 import { AddServiceDialog, ServiceConfig } from "@/components/AddServiceDialog";
 import { ServicesList } from "@/components/ServicesList";
-import { ServiceDetailsSheet } from "@/components/ServiceDetailsSheet";
+import { ServiceDetailsSheetWithLogs } from "@/components/ServiceDetailsSheetWithLogs";
 import { EditIntegrationDialog } from "@/components/EditIntegrationDialog";
 
 // Define the structure of an integration instance
@@ -749,16 +749,18 @@ export function MyIntegrations() {
       </div>
       
       {/* Service Details Sheet */}
-      <ServiceDetailsSheet 
-        integration={selectedIntegration}
-        onClose={() => setSelectedIntegration(null)}
-        onDeleteService={handleDeleteService}
-        onStatusChange={(serviceId, newStatus) => {
-          if (selectedIntegration) {
-            handleServiceStatusChange(selectedIntegration.id, serviceId, newStatus);
-          }
-        }}
-      />
+      {selectedIntegration && (
+        <ServiceDetailsSheetWithLogs
+          integration={selectedIntegration}
+          onClose={() => setSelectedIntegration(null)}
+          onDeleteService={handleDeleteService}
+          onStatusChange={(serviceId, newStatus) => {
+            if (selectedIntegration) {
+              handleServiceStatusChange(selectedIntegration.id, serviceId, newStatus);
+            }
+          }}
+        />
+      )}
 
       {/* Add Service Dialog */}
       {selectedServerForService && (
