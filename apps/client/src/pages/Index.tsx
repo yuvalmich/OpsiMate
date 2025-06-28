@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { ServiceTable, Service } from "@/components/ServiceTable"
-import { RightSidebar } from "@/components/RightSidebar"
+import { RightSidebarWithLogs as RightSidebar } from "@/components/RightSidebarWithLogs"
 import { ActionButtons } from "@/components/ActionButtons"
 import { TableSettingsModal } from "@/components/TableSettingsModal"
 import { AddServiceModal } from "@/components/AddServiceModal"

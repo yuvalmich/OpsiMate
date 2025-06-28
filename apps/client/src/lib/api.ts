@@ -243,4 +243,11 @@ export const providerApi = {
     console.log('API stopService called with ID:', serviceId);
     return apiRequest<ServiceWithProvider>(`/services/${serviceId}/stop`, 'POST');
   },
+
+  // Get service logs
+  getServiceLogs: (serviceId: number) => {
+    console.log('API getServiceLogs called with ID:', serviceId);
+    // Make sure we're using the correct path
+    return apiRequest<string[]>(`/services/${serviceId}/logs`, 'GET');
+  },
 };
