@@ -95,6 +95,58 @@ const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>)
     });
     const authType = watch("authType");
 
+    // --- Test Connection State ---
+    const [testLoading, setTestLoading] = useState(false);
+    const [testResult, setTestResult] = useState<null | { ok: boolean; message: string }>(null);
+
+    // Helper to get current form values
+    const getValues = () => {
+        // Use the DOM to get current values (since react-hook-form's getValues is not available here)
+        // Instead, we can use the 'watch' function for all fields
+        return {
+            name: watch("name"),
+            hostname: watch("hostname"),
+            port: watch("port"),
+            username: watch("username"),
+            authType: watch("authType"),
+            password: watch("password"),
+            sshKey: watch("sshKey"),
+        };
+    };
+
+    const handleTestConnection = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        setTestResult(null);
+        setTestLoading(true);
+        // Validate required fields before testing
+        const values = getValues();
+        if (!values.name || !values.hostname || !values.port || !values.username || (values.authType === 'password' && !values.password)) {
+            setTestResult({ ok: false, message: 'Please fill all required fields before testing connection.' });
+            setTestLoading(false);
+            return;
+        }
+        try {
+            const providerData = {
+                name: values.name,
+                providerIp: values.hostname,
+                username: values.username,
+                privateKeyFilename: values.authType === 'key' ? values.sshKey || 'id_rsa' : 'none',
+                SSHPort: values.port,
+                providerType: 'VM',
+            };
+            const response = await providerApi.testProviderConnection(providerData);
+            if (response.success && response.data?.isValidConnection) {
+                setTestResult({ ok: true, message: 'TEST OK' });
+            } else {
+                setTestResult({ ok: false, message: response.error || 'Connection failed.' });
+            }
+        } catch (err: any) {
+            setTestResult({ ok: false, message: err?.message || 'Unknown error' });
+        } finally {
+            setTestLoading(false);
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
             <FormSectionHeader title="Server Details" />
@@ -149,6 +201,16 @@ const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>)
                 </FieldWrapper>
             )}
 
+            {/* Test Connection Button and Result */}
+            <div className="flex flex-col items-start gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={handleTestConnection} disabled={testLoading || isSubmitting}>
+                    {testLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Testing...</>) : 'Test Connection'}
+                </Button>
+                {testResult && (
+                    <span className={testResult.ok ? 'text-green-600' : 'text-red-600'}>{testResult.message}</span>
+                )}
+            </div>
+            {/* End Test Connection */}
             <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
                 <Button type="submit" disabled={isSubmitting}>
