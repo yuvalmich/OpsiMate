@@ -10,13 +10,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { IntegrationInstance } from "@/pages/MyIntegrations";
+import { ProviderInstance } from "@/pages/MyProviders";
 
-interface EditIntegrationDialogProps {
-  integration: IntegrationInstance | null;
+interface EditProviderDialogProps {
+  provider: ProviderInstance | null;
   open: boolean;
   onClose: () => void;
-  onSave: (integrationId: string, updatedData: {
+  onSave: (providerId: string, updatedData: {
     name: string;
     providerIp: string;
     username: string;
@@ -26,12 +26,12 @@ interface EditIntegrationDialogProps {
   }) => Promise<void>;
 }
 
-export function EditIntegrationDialog({
-  integration,
+export function EditProviderDialog({
+  provider,
   open,
   onClose,
   onSave,
-}: EditIntegrationDialogProps) {
+}: EditProviderDialogProps) {
   const [formData, setFormData] = useState({
     name: "",
     providerIp: "",
@@ -42,30 +42,30 @@ export function EditIntegrationDialog({
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Update form data when integration changes or dialog opens
+  // Update form data when provider changes or dialog opens
   useEffect(() => {
-    if (integration && open) {
-      // Get the private key filename from the integration details
-      console.log('Integration details:', integration.details);
+    if (provider && open) {
+      // Get the private key filename from the provider details
+      console.log('Provider details:', provider.details);
       
-      // Determine provider_type based on integration.type
+      // Determine provider_type based on provider.type
       let providerType = 'VM'; // Default to VM
       
-      // Map integration types to provider types
-      if (integration.type.includes('kubernetes')) {
+      // Map provider types to provider types
+      if (provider.type.includes('kubernetes')) {
         providerType = 'K8S';
       }
       
       setFormData({
-        name: integration.name,
-        providerIp: integration.details?.Hostname || "",
-        username: integration.details?.Username || "",
-        privateKeyFilename: integration.details?.Private_key_filename || "",
-        SSHPort: parseInt(integration.details?.Port || "22"),
+        name: provider.name,
+        providerIp: provider.details?.Hostname || "",
+        username: provider.details?.Username || "",
+        privateKeyFilename: provider.details?.Private_key_filename || "",
+        SSHPort: parseInt(provider.details?.Port || "22"),
         providerType: providerType
       });
     }
-  }, [integration, open]);
+  }, [provider, open]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -77,14 +77,14 @@ export function EditIntegrationDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!integration) return;
+    if (!provider) return;
     
     setIsLoading(true);
     try {
-      await onSave(integration.id, formData);
+      await onSave(provider.id, formData);
       onClose();
     } catch (error) {
-      console.error("Error updating integration:", error);
+      console.error("Error updating provider:", error);
     } finally {
       setIsLoading(false);
     }
@@ -94,9 +94,9 @@ export function EditIntegrationDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Integration</DialogTitle>
+          <DialogTitle>Edit Provider</DialogTitle>
           <DialogDescription>
-            Update the details for this integration. Click save when you're done.
+            Update the details for this provider. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

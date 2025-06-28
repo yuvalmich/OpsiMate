@@ -52,9 +52,6 @@ async function apiRequest<T>(
 }
 
 /**
- * Integration API endpoints
- */
-/**
  * Views API endpoints
  */
 export const viewsApi = {
@@ -90,9 +87,9 @@ export const viewsApi = {
 };
 
 /**
- * Integration API endpoints
+ * Provider API endpoints
  */
-export const integrationApi = {
+export const providerApi = {
   // Provider APIs
   
   // Get all providers

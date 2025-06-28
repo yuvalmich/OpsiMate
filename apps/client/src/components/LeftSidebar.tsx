@@ -34,32 +34,32 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
         </Button>
         
         <Button 
-          variant={location.pathname === "/integrations" ? "default" : "ghost"}
+          variant={location.pathname === "/providers" ? "default" : "ghost"}
           className={cn(
             "gap-3 h-10", 
             collapsed ? "w-10 justify-center p-0" : "w-full justify-start px-3",
-            location.pathname === "/integrations" && "text-primary-foreground"
+            location.pathname === "/providers" && "text-primary-foreground"
           )}
           asChild
         >
-          <Link to="/integrations">
+          <Link to="/providers">
             <Layers className="h-5 w-5 flex-shrink-0" />
             <span className={cn("font-medium", collapsed && "sr-only")}>Add Integration</span>
           </Link>
         </Button>
         
         <Button 
-          variant={location.pathname === "/my-integrations" ? "default" : "ghost"}
+          variant={location.pathname === "/my-providers" ? "default" : "ghost"}
           className={cn(
             "gap-3 h-10", 
             collapsed ? "w-10 justify-center p-0" : "w-full justify-start px-3",
-            location.pathname === "/my-integrations" && "text-primary-foreground"
+            location.pathname === "/my-providers" && "text-primary-foreground"
           )}
           asChild
         >
-          <Link to="/my-integrations">
+          <Link to="/my-providers">
             <Database className="h-5 w-5 flex-shrink-0" />
-            <span className={cn("font-medium", collapsed && "sr-only")}>My Integrations</span>
+            <span className={cn("font-medium", collapsed && "sr-only")}>My Providers</span>
           </Link>
         </Button>
       </div>
