@@ -178,7 +178,7 @@ export const providerApi = {
   // Test provider connection
   testProviderConnection: (providerData: {
     name: string;
-    providerIp: string;
+    providerIP: string;
     username: string;
     privateKeyFilename: string;
     SSHPort?: number;

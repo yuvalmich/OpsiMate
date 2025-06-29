@@ -128,7 +128,7 @@ const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>)
         try {
             const providerData = {
                 name: values.name,
-                providerIp: values.hostname,
+                providerIP: values.hostname,
                 username: values.username,
                 privateKeyFilename: values.authType === 'key' ? values.sshKey || 'id_rsa' : 'none',
                 SSHPort: values.port,

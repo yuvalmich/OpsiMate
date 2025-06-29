@@ -131,7 +131,7 @@ export async function testConnection(provider: Provider): Promise<boolean> {
 
   try {
     const sshConfig = {
-      host: provider.providerIp,
+      host: provider.providerIP,
       username: provider.username,
       privateKeyPath: getKeyPath(provider.privateKeyFilename),
       port: provider.SSHPort,
@@ -149,7 +149,7 @@ export async function testConnection(provider: Provider): Promise<boolean> {
 
     return result.code === 0 && result.stdout.trim() === 'Connection test';
   } catch (error) {
-    console.error(`Connection test failed for provider ${provider.providerIp}:`, error);
+    console.error(`Connection test failed for provider ${provider.providerIP}:`, error);
     return false;
   } finally {
     ssh.dispose();
