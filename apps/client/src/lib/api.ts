@@ -175,6 +175,22 @@ export const providerApi = {
     return apiRequest<Provider>(`/providers/${providerId}`, 'PUT', providerData);
   },
 
+  // Test provider connection
+  testProviderConnection: (providerData: {
+    name: string;
+    providerIP: string;
+    username: string;
+    privateKeyFilename: string;
+    SSHPort?: number;
+    providerType: string;
+  }) => {
+    return apiRequest<{ isValidConnection: boolean }>(
+      '/providers/test-connection',
+      'POST',
+      providerData
+    );
+  },
+
   // Service APIs
 
   // Get all services with provider details

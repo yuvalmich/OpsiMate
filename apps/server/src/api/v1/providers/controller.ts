@@ -1,6 +1,7 @@
 import {Request, Response} from "express";
-import {AddBulkServiceSchema, CreateProviderSchema} from "@service-peek/shared";
+import {AddBulkServiceSchema, CreateProviderSchema, Provider} from "@service-peek/shared";
 import {z} from "zod";
+import {providerConnectorFactory} from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import {
     getAllProviders,
     createProvider,
@@ -26,6 +27,24 @@ export async function createProviderHandler(req: Request, res: Response) {
 
         const createdProvider = await createProvider({...providerToCreate, createdAt: Date.now()});
         res.status(201).json({success: true, data: createdProvider});
+    } catch (error) {
+
+        if (error instanceof z.ZodError) {
+            res.status(400).json({success: false, error: 'Validation error', details: error.errors});
+        } else {
+            console.error('Error creating provider:', error);
+            res.status(500).json({success: false, error: 'Internal server error'});
+        }
+    }
+}
+
+export async function testProviderConnectionHandler(req: Request, res: Response) {
+    try {
+        const provider = CreateProviderSchema.parse(req.body) as Provider;
+        const providerConnector = providerConnectorFactory(provider.providerType);
+        const isValidConnection = await providerConnector.testConnection(provider)
+
+        res.status(201).json({success: true, data: {isValidConnection}});
     } catch (error) {
 
         if (error instanceof z.ZodError) {

@@ -14,4 +14,7 @@ export class K8SProviderConnector implements ProviderConnector {
     async discoverServices(provider: Provider): Promise<DiscoveredService[]> {
         throw new Error("Method not implemented.");
     }
+    async testConnection(provider: Provider): Promise<boolean> {
+        throw new Error("Method not implemented.");
+    }
 }
