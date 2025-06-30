@@ -269,29 +269,28 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
   const toggleContainerSelection = (containerId: string) => {
     const updatedContainers = containers.map(container => {
       if (container.id === containerId) {
+        // Toggle selection state for the clicked container
         const newSelected = !container.selected;
-        // If this container is being selected, update the selectedContainer state
-        if (newSelected) {
-          setSelectedContainer(container);
-          setServiceName(container.name);
-          setServicePort(container.serviceIP?.split(':')[1] || '');
-        } else if (selectedContainer?.id === containerId) {
-          // If this container is being deselected and it was the selected one, clear the selection
-          setSelectedContainer(null);
-          setServiceName('');
-          setServicePort('');
-        }
         return { ...container, selected: newSelected };
-      } else {
-        // Deselect other containers since we only want one selected at a time
-        if (container.selected) {
-          return { ...container, selected: false };
-        }
-        return container;
       }
+      // Leave other containers unchanged to allow multi-select
+      return container;
     });
+    
+    // Update containers state
     setContainers(updatedContainers);
+    
+    // Update selectedContainer state based on any selected container
+    const anySelected = updatedContainers.some(c => c.selected);
+    if (anySelected) {
+      // Just set selectedContainer to a non-null value to enable the Add button
+      // We don't need specific container details since we're using multi-select
+      setSelectedContainer({ id: 'multi-select' } as any);
+    } else {
+      setSelectedContainer(null);
+    }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -385,30 +384,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
                   ))}
                 </div>
 
-                {selectedContainer && (
-                  <div className="space-y-4 pt-4 border-t">
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="col-span-2 space-y-2">
-                        <Label htmlFor="container-name">Container Name</Label>
-                        <Input
-                          id="container-name"
-                          value={serviceName}
-                          onChange={(e) => setServiceName(e.target.value)}
-                          placeholder="Container name"
-                        />
-                      </div>
-                      <div className="col-span-1 space-y-2">
-                        <Label htmlFor="container-port">Port</Label>
-                        <Input
-                          id="container-port"
-                          value={servicePort}
-                          onChange={(e) => setServicePort(e.target.value.replace(/[^0-9]/g, ''))}
-                          placeholder="Port"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* No additional fields needed for container selection - we'll use the container's original properties */}
               </div>
             }
           </TabsContent>
