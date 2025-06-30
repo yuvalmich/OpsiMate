@@ -310,6 +310,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     }
   };
 
+  // Toggle selection for a single container
   const toggleContainerSelection = (containerId: string) => {
     // Find the container being toggled
     const containerToToggle = containers.find(c => c.id === containerId);
@@ -317,7 +318,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     // If container is already added as a service, don't allow selection
     if (containerToToggle?.alreadyAdded) {
       toast({
-        title: "Container already monitored",
+        title: "Container already exists",
         description: "This container is already being monitored as a service",
         variant: "default"
       });
@@ -344,6 +345,36 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
       // We don't need specific container details since we're using multi-select
       setSelectedContainer({ id: 'multi-select' } as any);
     } else {
+      setSelectedContainer(null);
+    }
+  };
+  
+  // Toggle selection for all containers at once
+  const toggleAllContainersSelection = () => {
+    // Check if all selectable containers are already selected
+    const selectableContainers = containers.filter(container => !container.alreadyAdded);
+    const allSelected = selectableContainers.every(container => container.selected);
+    
+    // Toggle all containers (except already added ones)
+    const updatedContainers = containers.map(container => {
+      // Skip already added containers
+      if (container.alreadyAdded) {
+        return container;
+      }
+      
+      // Set all to the opposite of current state
+      return { ...container, selected: !allSelected };
+    });
+    
+    // Update containers state
+    setContainers(updatedContainers);
+    
+    // Update selectedContainer state
+    if (!allSelected && selectableContainers.length > 0) {
+      // If we're selecting all and there are selectable containers, enable the Add button
+      setSelectedContainer({ id: 'multi-select' } as any);
+    } else {
+      // If we're deselecting all, disable the Add button
       setSelectedContainer(null);
     }
   };
@@ -389,71 +420,80 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
           </TabsContent>
 
           <TabsContent value="container" className="py-4">
-            {/* Container list */}
-            {loadingContainers ? (
-              <div className="flex justify-center items-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : error ? (
-              <div className="text-center py-8 text-destructive">
-                <p>{error}</p>
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => {
-                    fetchContainers();
-                  }}
-                >
-                  Retry
-                </Button>
-              </div>
-            ) : containers.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No containers found on this server.</p>
-              </div>
-            ) :
-              <div className="space-y-4">
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {containers.map(container => (
-                    <div
-                      key={container.id}
-                      className={cn(
-                        "flex items-center space-x-3 border rounded-md p-3",
-                        container.selected && "border-primary bg-primary/5",
-                        container.alreadyAdded ? "opacity-60 cursor-not-allowed" : "hover:bg-accent cursor-pointer"
-                      )}
-                      onClick={() => toggleContainerSelection(container.id)}
-                    >
-                      <Checkbox
-                        id={`container-${container.id}`}
-                        checked={container.alreadyAdded || container.selected}
-                        disabled={container.alreadyAdded}
-                        onCheckedChange={() => toggleContainerSelection(container.id)}
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className="font-medium">{container.name}</div>
-                          {container.alreadyAdded && (
-                            <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3" />
-                              Already exists
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{container.image}</div>
-                        <div className="text-xs mt-1">
-                          <span className={`inline-block px-2 py-1 rounded-full ${container.serviceStatus === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {container.serviceStatus}
-                          </span>
+            <div className="space-y-4 mt-4">
+              {loadingContainers ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Loading containers...</span>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <p className="text-destructive">{error}</p>
+                  <Button variant="outline" onClick={fetchContainers} className="mt-4">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Try Again
+                  </Button>
+                </div>
+              ) : containers.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No containers found</p>
+                  <Button variant="outline" onClick={fetchContainers} className="mt-4">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Refresh
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 mb-4 p-2 border rounded bg-muted/20">
+                    <Checkbox
+                      id="select-all-containers"
+                      checked={containers.filter(c => !c.alreadyAdded).every(c => c.selected)}
+                      onCheckedChange={toggleAllContainersSelection}
+                    />
+                    <Label htmlFor="select-all-containers" className="font-medium cursor-pointer">
+                      Monitor all Docker containers
+                    </Label>
+                  </div>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {containers.map(container => (
+                      <div
+                        key={container.id}
+                        className={cn(
+                          "flex items-center space-x-3 border rounded-md p-3",
+                          container.selected && "border-primary bg-primary/5",
+                          container.alreadyAdded ? "opacity-60 cursor-not-allowed" : "hover:bg-accent cursor-pointer"
+                        )}
+                        onClick={() => toggleContainerSelection(container.id)}
+                      >
+                        <Checkbox
+                          id={`container-${container.id}`}
+                          checked={container.alreadyAdded || container.selected}
+                          disabled={container.alreadyAdded}
+                          onCheckedChange={() => toggleContainerSelection(container.id)}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium">{container.name}</div>
+                            {container.alreadyAdded && (
+                              <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                Already exists
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">{container.image}</div>
+                          <div className="text-xs mt-1">
+                            <span className={`inline-block px-2 py-1 rounded-full ${container.serviceStatus === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                              {container.serviceStatus}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-
-                {/* No additional fields needed for container selection - we'll use the container's original properties */}
-              </div>
-            }
+              )}
+            </div>
           </TabsContent>
         </Tabs>
 
