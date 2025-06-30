@@ -236,6 +236,59 @@ export function MyProviders() {
   useEffect(() => {
     fetchProviders();
   }, [toast]);
+  
+  // Function to load services for all providers
+  const loadAllProviderServices = async () => {
+    if (providerInstances.length === 0) return;
+    
+    try {
+      // Fetch all services at once
+      const response = await providerApi.getAllServices();
+      
+      if (response.success && response.data) {
+        // Create a map of provider ID to services
+        const servicesByProvider = response.data.reduce((acc, service) => {
+          const providerId = service.providerId?.toString();
+          if (providerId) {
+            if (!acc[providerId]) {
+              acc[providerId] = [];
+            }
+            acc[providerId].push({
+              id: service.id.toString(),
+              name: service.name,
+              status: service.serviceStatus as "running" | "stopped" | "error" | "unknown",
+              type: service.serviceType,
+              serviceIP: service.serviceIP,
+              containerDetails: service.containerDetails || undefined
+            });
+          }
+          return acc;
+        }, {} as Record<string, ServiceConfig[]>);
+        
+        // Update all providers with their services
+        const updatedProviders = providerInstances.map(provider => ({
+          ...provider,
+          services: servicesByProvider[provider.id] || []
+        }));
+        
+        setProviderInstances(updatedProviders);
+      }
+    } catch (error) {
+      console.error("Error loading all provider services:", error);
+      toast({
+        title: "Error loading services",
+        description: "There was a problem loading services for your providers",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Load all provider services when providers are loaded
+  useEffect(() => {
+    if (!isLoading && providerInstances.length > 0) {
+      loadAllProviderServices();
+    }
+  }, [isLoading, providerInstances.length]);
 
   // Filter providers based on search query and active tab
   const filteredProviders = providerInstances.filter(provider => {
