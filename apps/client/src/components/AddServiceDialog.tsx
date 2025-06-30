@@ -5,11 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import { providerApi } from "../lib/api";
-import { DiscoveredService } from "@service-peek/shared";
 import { cn } from "@/lib/utils";
+import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { providerApi } from "@/lib/api";
+import { DiscoveredService, ServiceWithProvider } from "@service-peek/shared";
 
 // Define service types
 export interface ServiceConfig {
@@ -47,10 +47,41 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
   const [serviceName, setServiceName] = useState("");
   const [servicePort, setServicePort] = useState("");
   const [loading, setLoading] = useState(false);
-  const [containers, setContainers] = useState<Array<Container & { id: string; selected: boolean; name: string; created: string }>>([]);
+  const [containers, setContainers] = useState<Array<Container & { 
+    id: string; 
+    selected: boolean; 
+    name: string; 
+    created: string;
+    alreadyAdded?: boolean; // Flag to mark containers that are already added as services
+  }>>([]);
   const [loadingContainers, setLoadingContainers] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedContainer, setSelectedContainer] = useState<(Container & { id: string; selected: boolean; name: string; created: string }) | null>(null);
+  const [existingServices, setExistingServices] = useState<ServiceWithProvider[]>([]);
+
+  // Function to fetch existing services for this provider
+  const fetchExistingServices = async () => {
+    try {
+      // Use getAllServices instead and filter by providerId
+      const response = await providerApi.getAllServices();
+      
+      if (response.success && response.data) {
+        // Filter services to only include those from this provider
+        const providerServices = response.data.filter(service => 
+          service.providerId === parseInt(serverId)
+        );
+        
+        setExistingServices(providerServices);
+        return providerServices;
+      } else {
+        console.error('Failed to fetch existing services');
+        return [];
+      }
+    } catch (err) {
+      console.error('Error fetching existing services:', err);
+      return [];
+    }
+  };
 
   // Function to fetch containers from the API
   const fetchContainers = async () => {
@@ -59,19 +90,32 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     setSelectedContainer(null); // Reset selected container when fetching new ones
 
     try {
+      // First, fetch existing services to check for duplicates
+      const existingServices = await fetchExistingServices();
+      
       const response = await providerApi.getProviderInstances(parseInt(serverId));
 
       if (response.success && response.data) {
         // Transform API discovered service data to match our UI format
-        const containerData = response.data.map((service: DiscoveredService, index) => ({
-          serviceStatus: service.serviceStatus,
-          serviceIP: service.serviceIP,
-          image: 'N/A', // DiscoveredService doesn't have image info
-          id: `container-${index}`,
-          name: service.name,
-          selected: false,
-          created: new Date().toISOString() // API doesn't provide creation date, so we use current time
-        }));
+        const containerData = response.data.map((service: DiscoveredService, index) => {
+          // Check if this container is already added as a service by matching name
+          // We need to compare the container name with existing service names
+          const isAlreadyAdded = existingServices.some(existingService => 
+            existingService.serviceType === 'DOCKER' && 
+            existingService.name === service.name
+          );
+          
+          return {
+            serviceStatus: service.serviceStatus,
+            serviceIP: service.serviceIP,
+            image: 'N/A', // DiscoveredService doesn't have image info
+            id: `container-${index}`, // Generate ID since DiscoveredService doesn't have id
+            name: service.name,
+            selected: false,
+            created: new Date().toISOString(),
+            alreadyAdded: isAlreadyAdded // Mark if already added
+          };
+        });
 
         setContainers(containerData);
       } else {
@@ -267,6 +311,19 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
   };
 
   const toggleContainerSelection = (containerId: string) => {
+    // Find the container being toggled
+    const containerToToggle = containers.find(c => c.id === containerId);
+    
+    // If container is already added as a service, don't allow selection
+    if (containerToToggle?.alreadyAdded) {
+      toast({
+        title: "Container already monitored",
+        description: "This container is already being monitored as a service",
+        variant: "default"
+      });
+      return;
+    }
+    
     const updatedContainers = containers.map(container => {
       if (container.id === containerId) {
         // Toggle selection state for the clicked container
@@ -361,18 +418,28 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
                     <div
                       key={container.id}
                       className={cn(
-                        "flex items-center space-x-3 border rounded-md p-3 hover:bg-accent cursor-pointer",
-                        container.selected && "border-primary bg-primary/5"
+                        "flex items-center space-x-3 border rounded-md p-3",
+                        container.selected && "border-primary bg-primary/5",
+                        container.alreadyAdded ? "opacity-60 cursor-not-allowed" : "hover:bg-accent cursor-pointer"
                       )}
                       onClick={() => toggleContainerSelection(container.id)}
                     >
                       <Checkbox
                         id={`container-${container.id}`}
-                        checked={container.selected}
+                        checked={container.alreadyAdded || container.selected}
+                        disabled={container.alreadyAdded}
                         onCheckedChange={() => toggleContainerSelection(container.id)}
                       />
                       <div className="flex-1">
-                        <div className="font-medium">{container.name}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium">{container.name}</div>
+                          {container.alreadyAdded && (
+                            <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              Already exists
+                            </div>
+                          )}
+                        </div>
                         <div className="text-sm text-muted-foreground">{container.image}</div>
                         <div className="text-xs mt-1">
                           <span className={`inline-block px-2 py-1 rounded-full ${container.serviceStatus === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
