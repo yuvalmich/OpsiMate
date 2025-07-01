@@ -17,12 +17,14 @@ export async function connectAndListContainers(provider: Provider) {
   const ssh = new NodeSSH();
   const privateKeyPath = getKeyPath(provider.privateKeyFilename);
 
-  await ssh.connect({
+  const sshConfig = {
     host: provider.providerIP,
     username: provider.username,
     privateKeyPath: privateKeyPath,
     port: provider.SSHPort,
-  });
+  };
+
+  await timeoutPromise(ssh.connect(sshConfig), 5 * 1000, 'SSH connection timed out');
 
   // Check if docker is available
   const dockerCheck = await ssh.execCommand('docker --version');

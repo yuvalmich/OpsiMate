@@ -272,6 +272,51 @@ export async function getServiceWithProvider(id: number): Promise<Service | null
     });
 }
 
+export async function getServicesByProviderId(providerId: number): Promise<Service[]> {
+    return new Promise<Service[]>((resolve, reject) => {
+        const query = `
+            SELECT s.id         as service_id,
+                   s.provider_id,
+                   s.service_name,
+                   s.service_ip,
+                   s.service_status,
+                   s.service_type,
+                   s.created_at as service_created_at,
+                   s.container_details
+            FROM services s
+            WHERE s.provider_id = ?
+        `;
+
+        db.all(query, [providerId], (err, rows: any[]) => {
+            if (err) reject(err);
+            else {
+                const services = rows.map(row => {
+                    let containerDetails = null;
+                    if (row.container_details) {
+                        try {
+                            containerDetails = JSON.parse(row.container_details);
+                        } catch (e) {
+                            console.error('Error parsing container_details JSON:', e);
+                        }
+                    }
+                    const service: Service = {
+                        id: row.service_id,
+                        providerId: row.provider_id,
+                        name: row.service_name,
+                        serviceIP: row.service_ip,
+                        serviceStatus: row.service_status,
+                        serviceType: row.service_type,
+                        createdAt: row.service_created_at,
+                        containerDetails: containerDetails,
+                    };
+                    return service;
+                });
+                resolve(services);
+            }
+        });
+    });
+}
+
 export async function initServicesTable(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         db.run(`
