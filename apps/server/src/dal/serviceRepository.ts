@@ -18,15 +18,6 @@ export async function createService(data: Omit<Service, 'id' | 'createdAt'>) {
     });
 }
 
-export async function getServicesByProviderId(providerId: number) {
-    return new Promise<any[]>((resolve, reject) => {
-        db.all('SELECT * FROM services WHERE provider_id = ? ORDER BY created_at DESC', [providerId], (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-        });
-    });
-}
-
 export async function bulkCreateServices(providerId: number, services: Omit<Service, 'id' | 'providerId' | 'createdAt'>[]) {
     const newServicesPromises = services.map(async (serviceToCreate) => {
             const result = await createService({
@@ -90,33 +81,46 @@ export async function getServiceById(id: number) {
 }
 
 export async function updateService(id: number, data: Partial<Service>) {
-    // First get the existing service to merge with updates
     const existingService = await getServiceById(id);
     if (!existingService) {
         throw new Error('Service not found');
     }
 
-    // Prepare data for update
-    const updateData = {
-        ...data,
-        container_details: data.containerDetails ?
-            JSON.stringify(data.containerDetails) :
-            existingService.containerDetails ?
-                JSON.stringify(existingService.containerDetails) :
-                null
+    // Mapping from camelCase to snake_case
+    const fieldMap: Record<keyof Partial<Service>, string> = {
+        id: 'id',
+        providerId: 'provider_id',
+        name: 'service_name',
+        serviceIP: 'service_ip',
+        serviceStatus: 'service_status',
+        createdAt: 'created_at',
+        serviceType: 'service_type',
+        containerDetails: 'container_details',
     };
 
-    return new Promise<void>((resolve, reject) => {
-        // Build dynamic update query based on provided fields
-        const fields = Object.keys(data).filter(key => key !== 'id' && key !== 'created_at');
-        if (fields.length === 0) {
-            resolve(); // Nothing to update
-            return;
+    // Build the update data, converting field names and serializing if needed
+    const updateData: Record<string, any> = {};
+    for (const key in data) {
+        if (key === 'containerDetails') {
+            updateData['container_details'] = data.containerDetails
+                ? JSON.stringify(data.containerDetails)
+                : existingService.containerDetails
+                    ? JSON.stringify(existingService.containerDetails)
+                    : null;
+        } else if (key in fieldMap && key !== 'id' && key !== 'createdAt') {
+            updateData[fieldMap[key as keyof typeof fieldMap]] = data[key as keyof typeof data];
         }
+    }
 
-        const setClause = fields.map(field => `${field} = ?`).join(', ');
-        const values = fields.map(field => field === 'container_details' ? updateData.container_details : data[field as keyof typeof data]);
+    const fields = Object.keys(updateData);
+    if (fields.length === 0) {
+        return; // Nothing to update
+    }
 
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+    const values = fields.map(field => updateData[field]);
+
+    return new Promise<void>((resolve, reject) => {
         db.run(
             `UPDATE services
              SET ${setClause}
