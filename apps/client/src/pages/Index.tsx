@@ -243,8 +243,15 @@ const Index = () => {
         setVisibleColumns(prev => ({
             ...prev,
             [column]: !prev[column]
-        }))
-    }
+        }));
+    };
+
+    const handleServiceUpdate = (updatedService: Service) => {
+        setServices(prev => prev.map(s => s.id === updatedService.id ? updatedService : s));
+        if (selectedService && selectedService.id === updatedService.id) {
+            setSelectedService(updatedService);
+        }
+    };
 
     const handleStart = async () => {
         if (selectedServices.length > 0) {
@@ -500,6 +507,7 @@ const Index = () => {
                                     service={selectedService}
                                     onClose={() => setSelectedService(null)}
                                     collapsed={rightSidebarCollapsed}
+                                    onServiceUpdate={handleServiceUpdate}
                                 />
                             </div>
                         )}

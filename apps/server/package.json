@@ -8,7 +8,10 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
-    "lint-fix": "eslint src --ext .ts --fix"
+    "lint-fix": "eslint src --ext .ts --fix",
+    "test:tags": "node test-tags.js",
+    "test:integration": "node test-integration.js",
+    "test:all": "npm run test:tags && npm run test:integration"
   },
   "dependencies": {
     "@service-peek/shared": "^1.0.0",

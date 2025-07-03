@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Settings, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useMemo } from "react"
+import { Tag } from "@service-peek/shared"
 
 export interface Service {
   id: string
@@ -29,6 +30,7 @@ export interface Service {
     image?: string
     created?: string
   }
+  tags?: Tag[]
 }
 
 interface ServiceTableProps {
