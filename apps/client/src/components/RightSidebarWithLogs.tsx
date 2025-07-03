@@ -58,10 +58,24 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
     }
   };
 
+  const fetchTags = async () => {
+    if (!service) return;
+    try {
+      const response = await providerApi.getServiceTags(parseInt(service.id));
+      if (response.success && response.data) {
+        setServiceTags(response.data);
+      } else {
+        setServiceTags([]);
+      }
+    } catch (err) {
+      setServiceTags([]);
+    }
+  };
+
   useEffect(() => {
     if (service) {
       fetchLogs();
-      setServiceTags(service.tags || []);
+      fetchTags();
     }
   }, [service?.id]);
 
@@ -159,9 +173,6 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
             serviceId={parseInt(service.id)}
             className=""
           />
-          {serviceTags.length === 0 && (
-            <div className="text-muted-foreground py-2 text-xs">No tags assigned</div>
-          )}
         </div>
 
         <Separator />
