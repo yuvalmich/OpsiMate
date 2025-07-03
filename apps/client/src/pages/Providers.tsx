@@ -7,7 +7,7 @@ import { ProviderSidebar } from "../components/ProviderSidebar";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { useToast } from "@/hooks/use-toast";
 
-// Integration types
+// Provider types
 export type ProviderType = "server" | "kubernetes" | "aws-ec2" | "aws-eks" | "gcp-compute" | "azure-vm";
 
 interface Provider {

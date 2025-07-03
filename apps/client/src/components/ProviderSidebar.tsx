@@ -67,7 +67,7 @@ type AzureFormData = z.infer<typeof azureSchema>;
 
 type AnyFormData = ServerFormData | KubernetesFormData | AWSFormData | GCPFormData | AzureFormData;
 
-interface IntegrationFormProps<T extends AnyFormData> {
+interface ProviderFormProps<T extends AnyFormData> {
   onSubmit: SubmitHandler<T>;
   onClose: () => void;
 }
@@ -88,7 +88,7 @@ const FieldWrapper = ({ children, error }: { children: React.ReactNode, error?: 
 
 // --- FORM COMPONENTS ---
 
-const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>) => {
+const ServerForm = ({ onSubmit, onClose }: ProviderFormProps<ServerFormData>) => {
     const { control, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<ServerFormData>({
         resolver: zodResolver(serverSchema),
         defaultValues: { port: 22, authType: "key" },
@@ -220,7 +220,7 @@ const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>)
                             Adding...
                         </>
                     ) : (
-                        "Add Integration"
+                        "Add Provider"
                     )}
                 </Button>
             </div>
@@ -228,7 +228,7 @@ const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>)
     );
 }
 
-const KubernetesForm = ({ onSubmit, onClose }: IntegrationFormProps<KubernetesFormData>) => {
+const KubernetesForm = ({ onSubmit, onClose }: ProviderFormProps<KubernetesFormData>) => {
     const { control, handleSubmit, formState: { errors } } = useForm<KubernetesFormData>({
         resolver: zodResolver(kubernetesSchema),
     });
@@ -249,13 +249,13 @@ const KubernetesForm = ({ onSubmit, onClose }: IntegrationFormProps<KubernetesFo
             </FieldWrapper>
             <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                <Button type="submit">Add Integration</Button>
+                <Button type="submit">Add Provider</Button>
             </div>
         </form>
     );
 };
 
-const AWSForm = ({ onSubmit, onClose }: IntegrationFormProps<AWSFormData>) => {
+const AWSForm = ({ onSubmit, onClose }: ProviderFormProps<AWSFormData>) => {
     const { control, handleSubmit, formState: { errors } } = useForm<AWSFormData>({
         resolver: zodResolver(awsSchema),
     });
@@ -298,7 +298,7 @@ const AWSForm = ({ onSubmit, onClose }: IntegrationFormProps<AWSFormData>) => {
 
             <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                <Button type="submit">Add Integration</Button>
+                <Button type="submit">Add Provider</Button>
             </div>
         </form>
     );
@@ -365,10 +365,10 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
     try {
       // Map form data to API request format
       const serverData = data as ServerFormData;
-      // Determine provider_type based on integration.type
+      // Determine provider_type based on provider.type
       let providerType = 'VM'; // Default to VM
 
-      // Map integration types to provider types
+      // Map provider types to provider types
       // Using type assertion to handle the comparison
       if (provider.type.includes('kubernetes')) {
         providerType = 'K8S';
@@ -419,7 +419,7 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
         case "aws-eks":
             return <AWSForm onSubmit={handleFormSubmit as SubmitHandler<AWSFormData>} onClose={onClose} />;
         default:
-            return <div className="py-4">This integration type is not yet supported with the new form.</div>;
+            return <div className="py-4">This provider type is not yet supported with the new form.</div>;
     }
   };
 
