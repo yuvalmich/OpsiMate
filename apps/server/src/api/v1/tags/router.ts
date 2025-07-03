@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import PromiseRouter from 'express-promise-router';
 import {
     getAllTagsHandler,
     getTagByIdHandler,
@@ -10,7 +10,7 @@ import {
     getServiceTagsHandler
 } from './controller';
 
-const router = Router();
+const router = PromiseRouter();
 
 // Tag management routes
 router.get('/', getAllTagsHandler);

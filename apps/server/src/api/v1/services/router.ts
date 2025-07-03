@@ -1,4 +1,4 @@
-import {Router} from 'express';
+import PromiseRouter from 'express-promise-router';
 import {
     createServiceHandler,
     getAllServicesHandler,
@@ -7,7 +7,7 @@ import {
     startServiceHandler, getServiceByIdHandler, updateServiceHandler, deleteServiceHandler
 } from "./controller";
 
-const router = Router();
+const router = PromiseRouter();
 
 // POST /api/v1/integration/services
 router.post('/', createServiceHandler);

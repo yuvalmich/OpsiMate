@@ -1,4 +1,4 @@
-import express from 'express';
+import PromiseRouter from 'express-promise-router';
 import {
     createViewHandler,
     deleteViewHandler, getActiveViewHandler,
@@ -7,7 +7,7 @@ import {
     setActiveViewHandler
 } from "./controller";
 
-const router = express.Router();
+const router = PromiseRouter();
 
 /**
  * Get all views
