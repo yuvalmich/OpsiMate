@@ -11,7 +11,7 @@ import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
-import { integrationApi } from "@/lib/api";
+import { providerApi } from "@/lib/api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -67,7 +67,7 @@ type AzureFormData = z.infer<typeof azureSchema>;
 
 type AnyFormData = ServerFormData | KubernetesFormData | AWSFormData | GCPFormData | AzureFormData;
 
-interface IntegrationFormProps<T extends AnyFormData> {
+interface ProviderFormProps<T extends AnyFormData> {
   onSubmit: SubmitHandler<T>;
   onClose: () => void;
 }
@@ -88,7 +88,7 @@ const FieldWrapper = ({ children, error }: { children: React.ReactNode, error?: 
 
 // --- FORM COMPONENTS ---
 
-const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>) => {
+const ServerForm = ({ onSubmit, onClose }: ProviderFormProps<ServerFormData>) => {
     const { control, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<ServerFormData>({
         resolver: zodResolver(serverSchema),
         defaultValues: { port: 22, authType: "key" },
@@ -158,7 +158,7 @@ const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>)
                             Adding...
                         </>
                     ) : (
-                        "Add Integration"
+                        "Add Provider"
                     )}
                 </Button>
             </div>
@@ -166,7 +166,7 @@ const ServerForm = ({ onSubmit, onClose }: IntegrationFormProps<ServerFormData>)
     );
 }
 
-const KubernetesForm = ({ onSubmit, onClose }: IntegrationFormProps<KubernetesFormData>) => {
+const KubernetesForm = ({ onSubmit, onClose }: ProviderFormProps<KubernetesFormData>) => {
     const { control, handleSubmit, formState: { errors } } = useForm<KubernetesFormData>({
         resolver: zodResolver(kubernetesSchema),
     });
@@ -187,13 +187,13 @@ const KubernetesForm = ({ onSubmit, onClose }: IntegrationFormProps<KubernetesFo
             </FieldWrapper>
             <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                <Button type="submit">Add Integration</Button>
+                <Button type="submit">Add Provider</Button>
             </div>
         </form>
     );
 };
 
-const AWSForm = ({ onSubmit, onClose }: IntegrationFormProps<AWSFormData>) => {
+const AWSForm = ({ onSubmit, onClose }: ProviderFormProps<AWSFormData>) => {
     const { control, handleSubmit, formState: { errors } } = useForm<AWSFormData>({
         resolver: zodResolver(awsSchema),
     });
@@ -236,7 +236,7 @@ const AWSForm = ({ onSubmit, onClose }: IntegrationFormProps<AWSFormData>) => {
 
             <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                <Button type="submit">Add Integration</Button>
+                <Button type="submit">Add Provider</Button>
             </div>
         </form>
     );
@@ -263,8 +263,8 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
 
   const handleFormSubmit: SubmitHandler<AnyFormData> = async (data) => {
     if (provider.type !== 'server') {
-      // For non-server integrations, use the old localStorage approach
-      const newIntegration = {
+      // For non-server providers, use the old localStorage approach
+      const newProvider = {
         id: `${provider.type}-${Date.now()}`,
         name: data.name,
         type: provider.type,
@@ -275,38 +275,38 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
       };
 
       try {
-        const existingIntegrationsJson = localStorage.getItem('integrations');
-        const existingIntegrations = existingIntegrationsJson ? JSON.parse(existingIntegrationsJson) : [];
-        const updatedIntegrations = [...existingIntegrations, newIntegration];
-        localStorage.setItem('integrations', JSON.stringify(updatedIntegrations));
+        const existingProvidersJson = localStorage.getItem('providers');
+        const existingProviders = existingProvidersJson ? JSON.parse(existingProvidersJson) : [];
+        const updatedProviders = [...existingProviders, newProvider];
+        localStorage.setItem('providers', JSON.stringify(updatedProviders));
 
         toast({
-          title: "Integration added",
-          description: `Successfully added ${provider.name} integration`
+          title: "Provider added",
+          description: `Successfully added ${provider.name} provider`
         });
         onClose();
-        // Redirect to My Integrations page
-        navigate('/my-integrations');
+        // Redirect to My Providers page
+        navigate('/my-providers');
       } catch (error) {
-        console.error("Error saving integration:", error);
+        console.error("Error saving provider:", error);
         toast({
-          title: "Error adding integration",
-          description: "There was a problem saving your integration",
+          title: "Error adding provider",
+          description: "There was a problem saving your provider",
           variant: "destructive"
         });
       }
       return;
     }
 
-    // For server integration, use the API
+    // For server provider, use the API
     setIsSubmitting(true);
     try {
       // Map form data to API request format
       const serverData = data as ServerFormData;
-      // Determine provider_type based on integration.type
+      // Determine provider_type based on provider.type
       let providerType = 'VM'; // Default to VM
 
-      // Map integration types to provider types
+      // Map provider types to provider types
       // Using type assertion to handle the comparison
       if (provider.type.includes('kubernetes')) {
         providerType = 'K8S';
@@ -322,24 +322,24 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
       };
 
       // Call the API to create a new provider
-      const response = await integrationApi.createProvider(providerData);
+      const response = await providerApi.createProvider(providerData);
 
       if (response.success && response.data) {
         toast({
-          title: "Integration added",
-          description: `Successfully added ${serverData.name} server integration`
+          title: "Provider added",
+          description: `Successfully added ${serverData.name} server provider`
         });
         onClose();
-        // Redirect to My Integrations page
-        navigate('/my-integrations');
+        // Redirect to My Providers page
+        navigate('/my-providers');
       } else {
-        throw new Error(response.error || 'Failed to create integration');
+        throw new Error(response.error || 'Failed to create provider');
       }
     } catch (error) {
-      console.error("Error creating server integration:", error);
+      console.error("Error creating server provider:", error);
       toast({
-        title: "Error adding integration",
-        description: error instanceof Error ? error.message : "There was a problem creating your integration",
+        title: "Error adding provider",
+        description: error instanceof Error ? error.message : "There was a problem creating your provider",
         variant: "destructive"
       });
     } finally {
@@ -357,7 +357,7 @@ export function ProviderSidebar({ provider, onClose }: ProviderSidebarProps) {
         case "aws-eks":
             return <AWSForm onSubmit={handleFormSubmit as SubmitHandler<AWSFormData>} onClose={onClose} />;
         default:
-            return <div className="py-4">This integration type is not yet supported with the new form.</div>;
+            return <div className="py-4">This provider type is not yet supported with the new form.</div>;
     }
   };
 

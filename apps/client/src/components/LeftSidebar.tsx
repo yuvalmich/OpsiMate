@@ -44,7 +44,7 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
         >
           <Link to="/providers">
             <Layers className="h-5 w-5 flex-shrink-0" />
-            <span className={cn("font-medium", collapsed && "sr-only")}>Add Integration</span>
+            <span className={cn("font-medium", collapsed && "sr-only")}>Add Provider</span>
           </Link>
         </Button>
         
