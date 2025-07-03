@@ -1,8 +1,6 @@
-import sqlite3 from 'sqlite3';
-import { Tag, ServiceTag } from '@service-peek/shared';
-import path from "path";
+import {Tag} from '@service-peek/shared';
+import {db} from "./providerRepository";
 
-const db = new sqlite3.Database(path.join(__dirname, '../../service_peek.db'));
 
 // Data access for tags
 export async function createTag(data: Omit<Tag, 'id' | 'createdAt'>): Promise<{ lastID: number }> {

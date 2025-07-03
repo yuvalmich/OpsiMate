@@ -88,7 +88,7 @@ export async function updateService(id: number, data: Partial<Service>) {
     }
 
     // Mapping from camelCase to snake_case
-    const fieldMap: Record<keyof Partial<Service>, string> = {
+    const fieldMap: Record<keyof Partial<Omit<Service, 'tags'>>, string> = {
         id: 'id',
         providerId: 'provider_id',
         name: 'service_name',
@@ -146,10 +146,10 @@ export async function deleteService(id: number): Promise<void> {
 
 // Temp solution...
 // Type for service with provider and tags
-type ServiceWithProviderAndTags = Service & { provider: Provider; tags?: Tag[] }
+type ServiceWithProvider = Service & { provider: Provider}
 
-export async function getServicesWithProvider(): Promise<ServiceWithProviderAndTags[]> {
-    return new Promise<ServiceWithProviderAndTags[]>((resolve, reject) => {
+export async function getServicesWithProvider(): Promise<ServiceWithProvider[]> {
+    return new Promise<ServiceWithProvider[]>((resolve, reject) => {
         const query = `
             SELECT s.id         as service_id,
                    s.provider_id,
@@ -220,8 +220,8 @@ export async function getServicesWithProvider(): Promise<ServiceWithProviderAndT
     });
 }
 
-export async function getServiceWithProvider(id: number): Promise<ServiceWithProviderAndTags | null> {
-    return new Promise<ServiceWithProviderAndTags | null>((resolve, reject) => {
+export async function getServiceWithProvider(id: number): Promise<ServiceWithProvider | null> {
+    return new Promise<ServiceWithProvider | null>((resolve, reject) => {
         const query = `
             SELECT s.id         as service_id,
                    s.provider_id,
@@ -266,7 +266,7 @@ export async function getServiceWithProvider(id: number): Promise<ServiceWithPro
                 const tags = await tagRepo.getServiceTags(row.service_id);
 
                 // Create the service object with provider nested
-                const service: ServiceWithProviderAndTags = {
+                const service: ServiceWithProvider = {
                     id: row.service_id,
                     providerId: row.provider_id,
                     name: row.service_name,

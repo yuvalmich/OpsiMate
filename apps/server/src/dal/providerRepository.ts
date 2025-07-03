@@ -19,7 +19,7 @@ export async function createProvider(data: Omit<Provider, 'id'>): Promise<{ last
 }
 
 export async function getProviderById(id: number): Promise<Provider> {
-    return new Promise<any>((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         db.get(`
             SELECT id,
                    provider_name        AS name,
