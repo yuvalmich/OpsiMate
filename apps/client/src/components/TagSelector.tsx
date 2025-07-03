@@ -46,64 +46,60 @@ export function TagSelector({ selectedTags, onTagsChange, serviceId, className }
     }
   };
 
-  const handleTagSelect = async (tag: Tag) => {
-    const isSelected = selectedTags.some(t => t.id === tag.id);
-    
-    if (isSelected) {
-      // Remove tag
-      try {
-        const response = await providerApi.removeTagFromService(serviceId, tag.id);
-        if (response.success) {
-          onTagsChange(selectedTags.filter(t => t.id !== tag.id));
-          toast({
-            title: "Success",
-            description: "Tag removed from service"
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: response.error || "Failed to remove tag",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
+  const addTag = async (tag: Tag) => {
+    try {
+      const response = await providerApi.addTagToService(Number(serviceId), Number(tag.id));
+      if (response.success) {
+        onTagsChange([...selectedTags, tag]);
+        toast({
+          title: "Success",
+          description: "Tag added to service"
+        });
+      } else {
         toast({
           title: "Error",
-          description: "Failed to remove tag",
+          description: response.error || "Failed to add tag",
           variant: "destructive"
         });
       }
-    } else {
-      // Add tag
-      try {
-        const response = await providerApi.addTagToService(serviceId, tag.id);
-        if (response.success) {
-          onTagsChange([...selectedTags, tag]);
-          toast({
-            title: "Success",
-            description: "Tag added to service"
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: response.error || "Failed to add tag",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add tag",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const removeTag = async (tag: Tag) => {
+    try {
+      const response = await providerApi.removeTagFromService(Number(serviceId), Number(tag.id));
+      if (response.success) {
+        onTagsChange(selectedTags.filter(t => t.id !== tag.id));
+        toast({
+          title: "Success",
+          description: "Tag removed from service"
+        });
+      } else {
         toast({
           title: "Error",
-          description: "Failed to add tag",
+          description: response.error || "Failed to remove tag",
           variant: "destructive"
         });
       }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove tag",
+        variant: "destructive"
+      });
     }
   };
 
   const handleTagCreated = (newTag: Tag) => {
     setAllTags([...allTags, newTag]);
     // Optionally auto-add the new tag to the service
-    handleTagSelect(newTag);
+    addTag(newTag);
   };
 
   const availableTags = allTags.filter(tag => !selectedTags.some(selected => selected.id === tag.id));
@@ -115,7 +111,7 @@ export function TagSelector({ selectedTags, onTagsChange, serviceId, className }
           <TagBadge
             key={tag.id}
             tag={tag}
-            onRemove={() => handleTagSelect(tag)}
+            onRemove={() => removeTag(tag)}
             className="text-xs"
           />
         ))}
@@ -158,7 +154,7 @@ export function TagSelector({ selectedTags, onTagsChange, serviceId, className }
                   {availableTags.map((tag) => (
                     <CommandItem
                       key={tag.id}
-                      onSelect={() => handleTagSelect(tag)}
+                      onSelect={() => addTag(tag)}
                       className="flex items-center gap-2"
                     >
                       <div
