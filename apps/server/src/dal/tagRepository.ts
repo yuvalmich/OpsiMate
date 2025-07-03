@@ -2,7 +2,6 @@ import {Tag} from '@service-peek/shared';
 import {db} from "./providerRepository";
 
 
-// Data access for tags
 export async function createTag(data: Omit<Tag, 'id' | 'createdAt'>): Promise<{ lastID: number }> {
     return new Promise<{ lastID: number }>((resolve, reject) => {
         db.run(
@@ -18,39 +17,25 @@ export async function createTag(data: Omit<Tag, 'id' | 'createdAt'>): Promise<{ 
 
 export async function getAllTags(): Promise<Tag[]> {
     return new Promise<Tag[]>((resolve, reject) => {
-        db.all('SELECT * FROM tags ORDER BY name', [], (err, rows: any[]) => {
+        db.all('SELECT id, name, color, created_at as createdAt FROM tags ORDER BY name', [], (err, tags: Tag[]) => {
             if (err) reject(err);
             else {
-                const tags = rows.map(row => ({
-                    id: row.id,
-                    name: row.name,
-                    color: row.color,
-                    createdAt: row.created_at
-                }));
                 resolve(tags);
             }
         });
     });
 }
 
-export async function getTagById(id: number): Promise<Tag | null> {
-    return new Promise<Tag | null>((resolve, reject) => {
-        db.get('SELECT * FROM tags WHERE id = ?', [id], (err, row: any) => {
-            if (err) reject(err);
-            else {
-                if (!row) {
-                    resolve(null);
-                    return;
-                }
-                const tag = {
-                    id: row.id,
-                    name: row.name,
-                    color: row.color,
-                    createdAt: row.created_at
-                };
-                resolve(tag);
+export async function getTagById(id: number): Promise<Tag> {
+    return new Promise((resolve, reject) => {
+        db.get(
+            'SELECT id, name, color, created_at as createdAt FROM tags WHERE id = ?',
+            [id],
+            (err, row: Tag) => {
+                if (err) reject(err);
+                else resolve(row);
             }
-        });
+        );
     });
 }
 
@@ -122,22 +107,16 @@ export async function removeTagFromService(serviceId: number, tagId: number): Pr
 export async function getServiceTags(serviceId: number): Promise<Tag[]> {
     return new Promise<Tag[]>((resolve, reject) => {
         const query = `
-            SELECT t.id, t.name, t.color, t.created_at
+            SELECT t.id as id, t.name as name, t.color as color, t.created_at as createdAt
             FROM tags t
             JOIN service_tags st ON t.id = st.tag_id
             WHERE st.service_id = ?
             ORDER BY t.name
         `;
         
-        db.all(query, [serviceId], (err, rows: any[]) => {
+        db.all(query, [serviceId], (err, tags: Tag[]) => {
             if (err) reject(err);
             else {
-                const tags = rows.map(row => ({
-                    id: row.id,
-                    name: row.name,
-                    color: row.color,
-                    createdAt: row.created_at
-                }));
                 resolve(tags);
             }
         });
