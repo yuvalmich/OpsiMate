@@ -148,10 +148,8 @@ export async function startServiceHandler(req: Request, res: Response) {
 
         const providerConnector = providerConnectorFactory(provider.providerType)
         await providerConnector.startService(provider, service.name);
-        // Update service status in DB
 
-        // todo: fix types, serviceStatus is broken
-        // await serviceRepo.updateService(serviceId, { serviceStatus: 'running' });
+        await serviceRepo.updateService(serviceId, { serviceStatus: 'running' });
         const updatedService = await serviceRepo.getServiceWithProvider(serviceId);
         res.json({success: true, data: updatedService, message: 'Service started successfully'});
     } catch (error) {
@@ -181,9 +179,8 @@ export async function stopServiceHandler(req: Request, res: Response) {
         }
         const providerConnector = providerConnectorFactory(provider.providerType);
         await providerConnector.stopService(provider, service.name);
-        // Update service status in DB
-        // todo: fix types, serviceStatus is broken
-        // await serviceRepo.updateService(serviceId, { serviceStatus: 'stopped' });
+
+        await serviceRepo.updateService(serviceId, { serviceStatus: 'stopped' });
         const updatedService = await serviceRepo.getServiceWithProvider(serviceId);
         res.json({success: true, data: updatedService, message: 'Service stopped successfully'});
     } catch (error) {
