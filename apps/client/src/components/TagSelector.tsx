@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { providerApi } from "@/lib/api";
 import { Tag } from "@service-peek/shared";
 import { CreateTagDialog } from "./CreateTagDialog";
+import { DeleteTagDialog } from "./DeleteTagDialog";
 import { TagBadge } from "./ui/tag-badge";
 
 interface TagSelectorProps {
@@ -23,6 +24,8 @@ export function TagSelector({ selectedTags, onTagsChange, serviceId, className }
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [tagToDelete, setTagToDelete] = useState<Tag | null>(null);
 
   useEffect(() => {
     fetchTags();
@@ -102,6 +105,23 @@ export function TagSelector({ selectedTags, onTagsChange, serviceId, className }
     addTag(newTag);
   };
 
+  const handleTagDeleted = (tagId: number) => {
+    // Remove the tag from all tags list
+    setAllTags(allTags.filter(tag => tag.id !== tagId));
+    
+    // Remove the tag from selected tags if it was selected
+    if (selectedTags.some(tag => tag.id === tagId)) {
+      onTagsChange(selectedTags.filter(tag => tag.id !== tagId));
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, tag: Tag) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setTagToDelete(tag);
+    setShowDeleteDialog(true);
+  };
+
   const availableTags = allTags.filter(tag => !selectedTags.some(selected => selected.id === tag.id));
 
   return (
@@ -155,13 +175,22 @@ export function TagSelector({ selectedTags, onTagsChange, serviceId, className }
                     <CommandItem
                       key={tag.id}
                       onSelect={() => addTag(tag)}
-                      className="flex items-center gap-2"
+                      className="flex items-center justify-between gap-2 group"
                     >
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: tag.color }}
-                      />
-                      <span>{tag.name}</span>
+                      <div className="flex items-center gap-2 flex-1">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        <span>{tag.name}</span>
+                      </div>
+                      <button
+                        onClick={(e) => handleDeleteClick(e, tag)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive/10 rounded text-white hover:text-white/80"
+                        title="Delete tag"
+                      >
+                        <X className="h-3 w-3 font-bold" />
+                      </button>
                     </CommandItem>
                   ))}
                   {availableTags.length > 0 && (
@@ -184,6 +213,16 @@ export function TagSelector({ selectedTags, onTagsChange, serviceId, className }
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
         onTagCreated={handleTagCreated}
+      />
+
+      <DeleteTagDialog
+        open={showDeleteDialog}
+        onClose={() => {
+          setShowDeleteDialog(false);
+          setTagToDelete(null);
+        }}
+        tag={tagToDelete}
+        onTagDeleted={handleTagDeleted}
       />
     </>
   );
