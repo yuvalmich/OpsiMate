@@ -144,22 +144,6 @@ export async function getServiceTags(serviceId: number): Promise<Tag[]> {
     });
 }
 
-export async function getServicesByTag(tagId: number): Promise<number[]> {
-    return new Promise<number[]>((resolve, reject) => {
-        db.all(
-            'SELECT service_id FROM service_tags WHERE tag_id = ?',
-            [tagId],
-            (err, rows: any[]) => {
-                if (err) reject(err);
-                else {
-                    const serviceIds = rows.map(row => row.service_id);
-                    resolve(serviceIds);
-                }
-            }
-        );
-    });
-}
-
 export async function initTagsTables(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         // Create tags table
