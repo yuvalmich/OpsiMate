@@ -17,5 +17,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: "🚀 Thanks for the commit! Action has run successfully. - Updated by GitHub Actions"
+              body: "🚀 Thanks for the commit! Action has run successfully."
             })
