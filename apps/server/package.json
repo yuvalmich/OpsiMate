@@ -9,9 +9,7 @@
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
     "lint-fix": "eslint src --ext .ts --fix",
-    "test:tags": "node test-tags.js",
-    "test:integration": "node test-integration.js",
-    "test:all": "npm run test:tags && npm run test:integration"
+    "test:all": "node test-tags.js && node test-integration.js"
   },
   "dependencies": {
     "@service-peek/shared": "^1.0.0",

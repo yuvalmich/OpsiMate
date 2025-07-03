@@ -145,10 +145,11 @@ export async function deleteService(id: number): Promise<void> {
 }
 
 // Temp solution...
-type ServiceWithProvider = Service & { provider: Provider }
+// Type for service with provider and tags
+type ServiceWithProviderAndTags = Service & { provider: Provider; tags?: Tag[] }
 
-export async function getServicesWithProvider(): Promise<(Service & { provider: Provider; tags?: Tag[] })[]> {
-    return new Promise<any[]>((resolve, reject) => {
+export async function getServicesWithProvider(): Promise<ServiceWithProviderAndTags[]> {
+    return new Promise<ServiceWithProviderAndTags[]>((resolve, reject) => {
         const query = `
             SELECT s.id         as service_id,
                    s.provider_id,
@@ -219,8 +220,8 @@ export async function getServicesWithProvider(): Promise<(Service & { provider: 
     });
 }
 
-export async function getServiceWithProvider(id: number): Promise<(Service & { provider: Provider; tags?: Tag[] }) | null> {
-    return new Promise<any | null>((resolve, reject) => {
+export async function getServiceWithProvider(id: number): Promise<ServiceWithProviderAndTags | null> {
+    return new Promise<ServiceWithProviderAndTags | null>((resolve, reject) => {
         const query = `
             SELECT s.id         as service_id,
                    s.provider_id,
@@ -265,7 +266,7 @@ export async function getServiceWithProvider(id: number): Promise<(Service & { p
                 const tags = await tagRepo.getServiceTags(row.service_id);
 
                 // Create the service object with provider nested
-                const service: Service & { provider: Provider; tags?: Tag[] } = {
+                const service: ServiceWithProviderAndTags = {
                     id: row.service_id,
                     providerId: row.provider_id,
                     name: row.service_name,
