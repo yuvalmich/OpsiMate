@@ -74,9 +74,18 @@ const Index = () => {
         }
     }, [])
 
-    // Load services on component mount
+    // Load services on component mount and set up periodic refresh
     useEffect(() => {
         fetchServices()
+        
+        // Set up automatic refresh every 30 seconds (30000 ms)
+        const refreshInterval = setInterval(() => {
+            console.log('Auto-refreshing services data...')
+            fetchServices()
+        }, 30000)
+        
+        // Clean up interval on component unmount
+        return () => clearInterval(refreshInterval)
     }, [fetchServices])
 
     // Load saved views and active view on component mount
