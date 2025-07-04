@@ -12,7 +12,8 @@ import {ServiceController} from "./api/v1/services/controller";
 import {ViewController} from "./api/v1/views/controller";
 import {ViewRepository} from "./dal/viewRepository";
 import {RefreshJob} from "./jobs/refresh-job";
-import { initTagsTables } from './dal/tagRepository';
+import {TagRepository} from './dal/tagRepository';
+import {TagController} from "./api/v1/tags/controller";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -33,6 +34,7 @@ const dbInstance = initializeDb()
 const providerRepo = new ProviderRepository(dbInstance)
 const serviceRepo = new ServiceRepository(dbInstance)
 const viewRepo = new ViewRepository(dbInstance)
+const tagRepo = new TagRepository(dbInstance)
 
 // BL
 const providerBL = new ProviderBL(providerRepo, serviceRepo)
@@ -41,10 +43,11 @@ const providerBL = new ProviderBL(providerRepo, serviceRepo)
 const providerController = new ProviderController(providerBL)
 const serviceController = new ServiceController(providerRepo, serviceRepo) // todo: change to work with BL layer
 const viewController = new ViewController(new ViewBL(viewRepo))
+const tagController = new TagController(tagRepo, serviceRepo)
 
 // API routes
 app.use('/', healthRouter);
-app.use('/api/v1', createV1Router(providerController, serviceController, viewController));
+app.use('/api/v1', createV1Router(providerController, serviceController, viewController, tagController));
 
 // Initialize database tables
 // todo: move it from here.
@@ -72,7 +75,7 @@ viewRepo.initViewsTable()
     console.error('Failed to initialize views tables:', err);
   });
 
-initTagsTables()
+tagRepo.initTagsTables()
     .then(() => {
         console.log('Tags tables initialized');
     })

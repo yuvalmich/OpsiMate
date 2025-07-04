@@ -1,7 +1,7 @@
 import PromiseRouter from 'express-promise-router';
 import { ViewController } from './controller';
 
-export default function createViewRouter(controller: ViewController): Router {
+export default function createViewRouter(controller: ViewController) {
     const router = PromiseRouter();
 
     /**

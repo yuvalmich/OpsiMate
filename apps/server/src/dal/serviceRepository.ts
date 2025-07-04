@@ -1,9 +1,8 @@
 import Database from 'better-sqlite3';
-import { Service, Provider } from '@service-peek/shared';
+import {Service, Provider, Tag} from '@service-peek/shared';
 import { runAsync } from './db';
-import * as tagRepo from './tagRepository';
 
-type ServiceWithProvider = Service & { provider: Provider };
+type ServiceWithProvider = Service & { provider: Provider } & { tags: Tag[] };
 
 export class ServiceRepository {
     constructor(private db: Database.Database) {}
@@ -113,7 +112,7 @@ export class ServiceRepository {
 
             const rows = this.db.prepare(query).all();
 
-            return rows.map(async (row: any) => {
+            return rows.map((row: any): ServiceWithProvider => {
                 let containerDetails = null;
                 if (row.container_details) {
                     try {
@@ -123,7 +122,14 @@ export class ServiceRepository {
                     }
                 }
 
-                const tags = await tagRepo.getServiceTags(row.service_id);
+                const query = `
+                    SELECT t.id as id, t.name as name, t.color as color, t.created_at as createdAt
+                    FROM tags t
+                             JOIN service_tags st ON t.id = st.tag_id
+                    WHERE st.service_id = ?
+                    ORDER BY t.name
+                `;
+                const tags = this.db.prepare(query).all(row.service_id) as Tag[];
 
                 return {
                     id: row.service_id,
@@ -145,13 +151,13 @@ export class ServiceRepository {
                         createdAt: row.provider_created_at,
                         providerType: row.provider_type,
                     },
-                };
+                } as ServiceWithProvider;
             });
         });
     }
 
     async getServiceWithProvider(id: number): Promise<ServiceWithProvider | null> {
-        return runAsync(() => {
+        return runAsync(async () => {
             const query = `
                 SELECT s.id as service_id, s.provider_id, s.service_name, s.service_ip,
                        s.service_status, s.service_type, s.created_at as service_created_at,
@@ -176,7 +182,14 @@ export class ServiceRepository {
                 }
             }
 
-            const tags = await tagRepo.getServiceTags(row.service_id);
+            const tagsQuery = `
+                    SELECT t.id as id, t.name as name, t.color as color, t.created_at as createdAt
+                    FROM tags t
+                             JOIN service_tags st ON t.id = st.tag_id
+                    WHERE st.service_id = ?
+                    ORDER BY t.name
+                `;
+            const tags = this.db.prepare(tagsQuery).all(row.service_id) as Tag[];
 
             return {
                 id: row.service_id,

@@ -1,21 +1,17 @@
 import PromiseRouter from 'express-promise-router';
-import {
-    getAllTagsHandler,
-    getTagByIdHandler,
-    createTagHandler,
-    updateTagHandler,
-    deleteTagHandler,
-} from './controller';
+import { TagController } from './controller';
 
-const router = PromiseRouter();
+export default function createTagRouter(tagController: TagController) {
+    const router = PromiseRouter();
 
-// Tag management routes
-router.get('/', getAllTagsHandler);
-router.post('/', createTagHandler);
+    // Tag management routes
+    router.get('/', tagController.getAllTagsHandler);
+    router.post('/', tagController.createTagHandler);
 
-// Parameterized tag routes (must come after specific routes)
-router.get('/:tagId', getTagByIdHandler);
-router.put('/:tagId', updateTagHandler);
-router.delete('/:tagId', deleteTagHandler);
+    // Parameterized tag routes
+    router.get('/:tagId', tagController.getTagByIdHandler);
+    router.put('/:tagId', tagController.updateTagHandler);
+    router.delete('/:tagId', tagController.deleteTagHandler);
 
-export default router; 
+    return router;
+}
