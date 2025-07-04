@@ -1,5 +1,6 @@
 import {db} from './providerRepository';
-import {Service, ServiceType, ContainerDetails, Provider} from "@service-peek/shared";
+import {Service, ServiceType, ContainerDetails, Provider, Tag} from "@service-peek/shared";
+import * as tagRepo from './tagRepository';
 
 // Data access for services
 export async function createService(data: Omit<Service, 'id' | 'createdAt'>) {
@@ -87,7 +88,7 @@ export async function updateService(id: number, data: Partial<Service>) {
     }
 
     // Mapping from camelCase to snake_case
-    const fieldMap: Record<keyof Partial<Service>, string> = {
+    const fieldMap: Record<keyof Partial<Omit<Service, 'tags'>>, string> = {
         id: 'id',
         providerId: 'provider_id',
         name: 'service_name',
@@ -144,10 +145,11 @@ export async function deleteService(id: number): Promise<void> {
 }
 
 // Temp solution...
-type ServiceWithProvider = Service & { provider: Provider }
+// Type for service with provider and tags
+type ServiceWithProvider = Service & { provider: Provider}
 
 export async function getServicesWithProvider(): Promise<ServiceWithProvider[]> {
-    return new Promise<any[]>((resolve, reject) => {
+    return new Promise<ServiceWithProvider[]>((resolve, reject) => {
         const query = `
             SELECT s.id         as service_id,
                    s.provider_id,
@@ -170,11 +172,11 @@ export async function getServicesWithProvider(): Promise<ServiceWithProvider[]> 
             ORDER BY s.created_at DESC
         `;
 
-        db.all(query, [], (err, rows) => {
+        db.all(query, [], async (err, rows) => {
             if (err) reject(err);
             else {
                 // Transform the flat result into nested objects
-                const services = rows.map((row: any) => {
+                const services = await Promise.all(rows.map(async (row: any) => {
                     // Parse container_details if it exists
                     let containerDetails = null;
                     if (row.container_details) {
@@ -184,6 +186,9 @@ export async function getServicesWithProvider(): Promise<ServiceWithProvider[]> 
                             console.error('Error parsing container_details JSON:', e);
                         }
                     }
+
+                    // Get tags for this service
+                    const tags = await tagRepo.getServiceTags(row.service_id);
 
                     // Create the service object with provider nested
                     return {
@@ -195,6 +200,7 @@ export async function getServicesWithProvider(): Promise<ServiceWithProvider[]> 
                         serviceType: row.service_type,
                         createdAt: row.service_created_at,
                         containerDetails: containerDetails,
+                        tags: tags,
                         provider: {
                             id: row.provider_id,
                             name: row.provider_name,
@@ -206,7 +212,7 @@ export async function getServicesWithProvider(): Promise<ServiceWithProvider[]> 
                             providerType: row.provider_type
                         }
                     };
-                });
+                }));
 
                 resolve(services);
             }
@@ -214,15 +220,17 @@ export async function getServicesWithProvider(): Promise<ServiceWithProvider[]> 
     });
 }
 
-export async function getServiceWithProvider(id: number): Promise<Service | null> {
-    return new Promise<any | null>((resolve, reject) => {
+export async function getServiceWithProvider(id: number): Promise<ServiceWithProvider | null> {
+    return new Promise<ServiceWithProvider | null>((resolve, reject) => {
         const query = `
             SELECT s.id         as service_id,
                    s.provider_id,
                    s.service_name,
                    s.service_ip,
                    s.service_status,
+                   s.service_type,
                    s.created_at as service_created_at,
+                   s.container_details,
                    p.id         as provider_id,
                    p.provider_name,
                    p.provider_ip,
@@ -236,7 +244,7 @@ export async function getServiceWithProvider(id: number): Promise<Service | null
             WHERE s.id = ?
         `;
 
-        db.get(query, [id], (err, row: any) => {
+        db.get(query, [id], async (err, row: any) => {
             if (err) reject(err);
             else {
                 if (!row) {
@@ -254,8 +262,11 @@ export async function getServiceWithProvider(id: number): Promise<Service | null
                     }
                 }
 
+                // Get tags for this service
+                const tags = await tagRepo.getServiceTags(row.service_id);
+
                 // Create the service object with provider nested
-                const service: Service = {
+                const service: ServiceWithProvider = {
                     id: row.service_id,
                     providerId: row.provider_id,
                     name: row.service_name,
@@ -264,6 +275,17 @@ export async function getServiceWithProvider(id: number): Promise<Service | null
                     serviceType: row.service_type,
                     createdAt: row.service_created_at,
                     containerDetails: containerDetails,
+                    tags: tags,
+                    provider: {
+                        id: row.provider_id,
+                        name: row.provider_name,
+                        providerIP: row.provider_ip,
+                        username: row.username,
+                        privateKeyFilename: row.private_key_filename,
+                        SSHPort: row.ssh_port,
+                        createdAt: row.provider_created_at,
+                        providerType: row.provider_type
+                    }
                 };
 
                 resolve(service);

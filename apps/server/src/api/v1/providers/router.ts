@@ -1,4 +1,4 @@
-import {Router} from 'express';
+import PromiseRouter from 'express-promise-router';
 import {
     getProvidersHandler,
     createProviderHandler,
@@ -8,7 +8,7 @@ import {
     discoverServicesInProviderHandler, testProviderConnectionHandler
 } from './controller'
 
-const router = Router();
+const router = PromiseRouter();
 
 // CRUD API
 

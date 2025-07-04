@@ -1,4 +1,4 @@
-import {Router} from 'express';
+import PromiseRouter from 'express-promise-router';
 import {
     createServiceHandler,
     getAllServicesHandler,
@@ -6,8 +6,13 @@ import {
     stopServiceHandler,
     startServiceHandler, getServiceByIdHandler, updateServiceHandler, deleteServiceHandler
 } from "./controller";
+import { 
+    addTagToServiceHandler, 
+    removeTagFromServiceHandler, 
+    getServiceTagsHandler 
+} from '../tags/controller';
 
-const router = Router();
+const router = PromiseRouter();
 
 // POST /api/v1/integration/services
 router.post('/', createServiceHandler);
@@ -32,5 +37,10 @@ router.get('/:serviceId/logs', getServiceLogsHandler);
 
 // DELETE /api/v1/integration/services/:serviceId
 router.delete('/:serviceId', deleteServiceHandler);
+
+// Service tag association routes
+router.post('/tags', addTagToServiceHandler);
+router.delete('/tags', removeTagFromServiceHandler);
+router.get('/:serviceId/tags', getServiceTagsHandler);
 
 export default router;

@@ -58,6 +58,32 @@ export const ServiceIdSchema = z.object({
     })
 });
 
+export const TagSchema = z.object({
+    name: z.string().min(1, 'Tag name is required').max(50, 'Tag name must be less than 50 characters'),
+    color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Color must be a valid hex color')
+});
+
+export const CreateTagSchema = TagSchema;
+
+export const UpdateTagSchema = TagSchema.partial().extend({
+    id: z.number()
+});
+
+export const ServiceTagSchema = z.object({
+    serviceId: z.number(),
+    tagId: z.number()
+});
+
+export const TagIdSchema = z.object({
+    tagId: z.string().transform((val) => {
+        const parsed = parseInt(val);
+        if (isNaN(parsed)) {
+            throw new Error('Invalid tag ID');
+        }
+        return parsed;
+    })
+});
+
 export type CreateProviderRequest = z.infer<typeof CreateProviderSchema>;
 export type AddBulkServiceRequest = z.infer<typeof AddBulkServiceSchema>;
 export type ProviderIdParams = z.infer<typeof ProviderIdSchema>;

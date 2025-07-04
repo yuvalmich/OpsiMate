@@ -5,6 +5,7 @@ import v1Router from './api/v1/v1';
 import { customViewService } from './bl/custom-views/custom-view.bl';
 import { initProvidersTable } from './dal/providerRepository';
 import { initServicesTable } from './dal/serviceRepository';
+import { initTagsTables } from './dal/tagRepository';
 import { startRefreshJob } from "./jobs/refresh-job";
 
 const app = express();
@@ -39,6 +40,14 @@ initServicesTable()
   })
   .catch(err => {
     console.error('Failed to initialize services table:', err);
+  });
+
+initTagsTables()
+  .then(() => {
+    console.log('Tags tables initialized');
+  })
+  .catch(err => {
+    console.error('Failed to initialize tags tables:', err);
   });
 
 customViewService.initViewsTables()
