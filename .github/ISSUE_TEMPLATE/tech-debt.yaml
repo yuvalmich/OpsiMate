@@ -1,0 +1,42 @@
+name: Tech Debt
+description: Track technical debt and refactoring opportunities
+title: "[Tech Debt]: "
+labels: [tech-debt]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 💡 What’s the issue?
+      description: Describe the technical debt or area needing refactor.
+      placeholder: e.g. Hardcoded config values in multiple places...
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: ⚠️ Why it matters
+      description: Explain the impact of this tech debt (bugs, scalability, DX, etc).
+      placeholder: e.g. Makes it hard to add new config types and increases duplication
+    validations:
+      required: false
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 🛠️ Suggested improvement
+      description: (Optional) How could this be improved or resolved?
+      placeholder: e.g. Move config to a central module and use env vars
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 🚨 Priority
+      options:
+        - 🟢 Low
+        - 🟡 Medium
+        - 🔴 High
+    validations:
+      required: false
