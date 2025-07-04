@@ -1,42 +1,38 @@
 import PromiseRouter from 'express-promise-router';
-import {
-    createViewHandler,
-    deleteViewHandler, getActiveViewHandler,
-    getViewsByIdHandler,
-    getViewsHandler,
-    setActiveViewHandler
-} from "./controller";
+import { ViewController } from './controller';
 
-const router = PromiseRouter();
+export default function createViewRouter(controller: ViewController) {
+    const router = PromiseRouter();
 
-/**
- * Get all views
- */
-router.get('/', getViewsHandler);
+    /**
+     * Get all views
+     */
+    router.get('/', controller.getViewsHandler);
 
-/**
- * Get a specific view by ID
- */
-router.get('/:viewId', getViewsByIdHandler);
+    /**
+     * Get a specific view by ID
+     */
+    router.get('/:viewId', controller.getViewsByIdHandler);
 
-/**
- * Create or update a view
- */
-router.post('/', createViewHandler);
+    /**
+     * Create or update a view
+     */
+    router.post('/', controller.createViewHandler);
 
-/**
- * Delete a view
- */
-router.delete('/:viewId', deleteViewHandler);
+    /**
+     * Delete a view
+     */
+    router.delete('/:viewId', controller.deleteViewHandler);
 
-/**
- * Set active view
- */
-router.post('/active/:viewId', setActiveViewHandler);
+    /**
+     * Set active view
+     */
+    router.post('/active/:viewId', controller.setActiveViewHandler);
 
-/**
- * Get active view ID
- */
-router.get('/active', getActiveViewHandler);
+    /**
+     * Get active view ID
+     */
+    router.get('/active', controller.getActiveViewHandler);
 
-export default router;
+    return router;
+}

@@ -1,159 +1,112 @@
+import Database from 'better-sqlite3';
 import {Tag} from '@service-peek/shared';
-import {db} from "./providerRepository";
+import {runAsync} from './db';
 
+export class TagRepository {
+    constructor(private db: Database.Database) {
+    }
 
-export async function createTag(data: Omit<Tag, 'id' | 'createdAt'>): Promise<{ lastID: number }> {
-    return new Promise<{ lastID: number }>((resolve, reject) => {
-        db.run(
-            'INSERT INTO tags (name, color) VALUES (?, ?)',
-            [data.name, data.color],
-            function (err) {
-                if (err) reject(err);
-                else resolve({ lastID: this.lastID });
-            }
-        );
-    });
-}
-
-export async function getAllTags(): Promise<Tag[]> {
-    return new Promise<Tag[]>((resolve, reject) => {
-        db.all('SELECT id, name, color, created_at as createdAt FROM tags ORDER BY name', [], (err, tags: Tag[]) => {
-            if (err) reject(err);
-            else {
-                resolve(tags);
-            }
+    async createTag(data: Omit<Tag, 'id' | 'createdAt'>): Promise<{ lastID: number }> {
+        return runAsync(() => {
+            const stmt = this.db.prepare('INSERT INTO tags (name, color) VALUES (?, ?)');
+            const result = stmt.run(data.name, data.color);
+            return {lastID: result.lastInsertRowid as number};
         });
-    });
-}
+    }
 
-export async function getTagById(id: number): Promise<Tag> {
-    return new Promise((resolve, reject) => {
-        db.get(
-            'SELECT id, name, color, created_at as createdAt FROM tags WHERE id = ?',
-            [id],
-            (err, row: Tag) => {
-                if (err) reject(err);
-                else resolve(row);
-            }
-        );
-    });
-}
-
-export async function updateTag(id: number, data: Partial<Omit<Tag, 'id' | 'createdAt'>>): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        const updates: string[] = [];
-        const values: any[] = [];
-        
-        if (data.name !== undefined) {
-            updates.push('name = ?');
-            values.push(data.name);
-        }
-        if (data.color !== undefined) {
-            updates.push('color = ?');
-            values.push(data.color);
-        }
-        
-        if (updates.length === 0) {
-            resolve();
-            return;
-        }
-        
-        values.push(id);
-        const query = `UPDATE tags SET ${updates.join(', ')} WHERE id = ?`;
-        
-        db.run(query, values, (err) => {
-            if (err) reject(err);
-            else resolve();
+    async getAllTags(): Promise<Tag[]> {
+        return runAsync(() => {
+            const stmt = this.db.prepare('SELECT id, name, color, created_at as createdAt FROM tags ORDER BY name');
+            return stmt.all() as Tag[];
         });
-    });
-}
+    }
 
-export async function deleteTag(id: number): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        db.run('DELETE FROM tags WHERE id = ?', [id], (err) => {
-            if (err) reject(err);
-            else resolve();
+    async getTagById(id: number): Promise<Tag> {
+        return runAsync(() => {
+            const stmt = this.db.prepare('SELECT id, name, color, created_at as createdAt FROM tags WHERE id = ?');
+            return stmt.get(id) as Tag;
         });
-    });
-}
+    }
 
-// Service tag operations
-export async function addTagToService(serviceId: number, tagId: number): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        db.run(
-            'INSERT OR IGNORE INTO service_tags (service_id, tag_id) VALUES (?, ?)',
-            [serviceId, tagId],
-            (err) => {
-                if (err) reject(err);
-                else resolve();
-            }
-        );
-    });
-}
+    async updateTag(id: number, data: Partial<Omit<Tag, 'id' | 'createdAt'>>): Promise<void> {
+        return runAsync(() => {
+            const updates: string[] = [];
+            const values: any[] = [];
 
-export async function removeTagFromService(serviceId: number, tagId: number): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        db.run(
-            'DELETE FROM service_tags WHERE service_id = ? AND tag_id = ?',
-            [serviceId, tagId],
-            (err) => {
-                if (err) reject(err);
-                else resolve();
+            if (data.name !== undefined) {
+                updates.push('name = ?');
+                values.push(data.name);
             }
-        );
-    });
-}
+            if (data.color !== undefined) {
+                updates.push('color = ?');
+                values.push(data.color);
+            }
 
-export async function getServiceTags(serviceId: number): Promise<Tag[]> {
-    return new Promise<Tag[]>((resolve, reject) => {
-        const query = `
-            SELECT t.id as id, t.name as name, t.color as color, t.created_at as createdAt
-            FROM tags t
-            JOIN service_tags st ON t.id = st.tag_id
-            WHERE st.service_id = ?
-            ORDER BY t.name
-        `;
-        
-        db.all(query, [serviceId], (err, tags: Tag[]) => {
-            if (err) reject(err);
-            else {
-                resolve(tags);
-            }
+            if (updates.length === 0) return;
+
+            values.push(id);
+            const query = `UPDATE tags
+                           SET ${updates.join(', ')}
+                           WHERE id = ?`;
+            this.db.prepare(query).run(...values);
         });
-    });
-}
+    }
 
-export async function initTagsTables(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        // Create tags table
-        db.run(`
-            CREATE TABLE IF NOT EXISTS tags (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE,
-                color TEXT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `, (err) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            
-            // Create service_tags junction table
-            db.run(`
-                CREATE TABLE IF NOT EXISTS service_tags (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    async deleteTag(id: number): Promise<void> {
+        return runAsync(() => {
+            this.db.prepare('DELETE FROM tags WHERE id = ?').run(id);
+        });
+    }
+
+    async addTagToService(serviceId: number, tagId: number): Promise<void> {
+        return runAsync(() => {
+            this.db.prepare('INSERT OR IGNORE INTO service_tags (service_id, tag_id) VALUES (?, ?)').run(serviceId, tagId);
+        });
+    }
+
+    async removeTagFromService(serviceId: number, tagId: number): Promise<void> {
+        return runAsync(() => {
+            this.db.prepare('DELETE FROM service_tags WHERE service_id = ? AND tag_id = ?').run(serviceId, tagId);
+        });
+    }
+
+    async getServiceTags(serviceId: number): Promise<Tag[]> {
+        return runAsync(() => {
+            const query = `
+                SELECT t.id as id, t.name as name, t.color as color, t.created_at as createdAt
+                FROM tags t
+                         JOIN service_tags st ON t.id = st.tag_id
+                WHERE st.service_id = ?
+                ORDER BY t.name
+            `;
+            return this.db.prepare(query).all(serviceId) as Tag[];
+        });
+    }
+
+    async initTagsTables(): Promise<void> {
+        return runAsync(() => {
+            this.db.prepare(`
+                CREATE TABLE IF NOT EXISTS tags
+                (
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name       TEXT NOT NULL UNIQUE,
+                    color      TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            `).run();
+
+            this.db.prepare(`
+                CREATE TABLE IF NOT EXISTS service_tags
+                (
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
                     service_id INTEGER NOT NULL,
-                    tag_id INTEGER NOT NULL,
+                    tag_id     INTEGER NOT NULL,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(service_id, tag_id),
+                    UNIQUE (service_id, tag_id),
                     FOREIGN KEY (service_id) REFERENCES services (id) ON DELETE CASCADE,
                     FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
                 )
-            `, (err) => {
-                if (err) reject(err);
-                else resolve();
-            });
+            `).run();
         });
-    });
-} 
+    }
+}

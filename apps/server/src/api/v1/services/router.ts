@@ -1,46 +1,38 @@
 import PromiseRouter from 'express-promise-router';
-import {
-    createServiceHandler,
-    getAllServicesHandler,
-    getServiceLogsHandler,
-    stopServiceHandler,
-    startServiceHandler, getServiceByIdHandler, updateServiceHandler, deleteServiceHandler
-} from "./controller";
-import { 
-    addTagToServiceHandler, 
-    removeTagFromServiceHandler, 
-    getServiceTagsHandler 
-} from '../tags/controller';
+import { ServiceController } from './controller';
+import {TagController} from "../tags/controller";
 
-const router = PromiseRouter();
+export default function createServiceRouter(serviceController: ServiceController, tagController: TagController) {
+    const router = PromiseRouter();
 
-// POST /api/v1/integration/services
-router.post('/', createServiceHandler);
+    // POST /api/v1/integration/services
+    router.post('/', serviceController.createServiceHandler);
 
-// GET /api/v1/integration/services
-router.get('/', getAllServicesHandler);
+    // GET /api/v1/integration/services
+    router.get('/', serviceController.getAllServicesHandler);
 
-// GET /api/v1/integration/services/:serviceId
-router.get('/:serviceId', getServiceByIdHandler);
+    // GET /api/v1/integration/services/:serviceId
+    router.get('/:serviceId', serviceController.getServiceByIdHandler);
 
-// PUT /api/v1/integration/services/:serviceId
-router.put('/:serviceId', updateServiceHandler);
+    // PUT /api/v1/integration/services/:serviceId
+    router.put('/:serviceId', serviceController.updateServiceHandler);
 
-// POST /api/v1/integration/services/:serviceId/start
-router.post('/:serviceId/start', startServiceHandler);
+    // POST /api/v1/integration/services/:serviceId/start
+    router.post('/:serviceId/start', serviceController.startServiceHandler);
 
-// POST /api/v1/integration/services/:serviceId/stop
-router.post('/:serviceId/stop', stopServiceHandler);
+    // POST /api/v1/integration/services/:serviceId/stop
+    router.post('/:serviceId/stop', serviceController.stopServiceHandler);
 
-// POST /api/v1/integration/services/:serviceId/stop
-router.get('/:serviceId/logs', getServiceLogsHandler);
+    // GET /api/v1/integration/services/:serviceId/logs
+    router.get('/:serviceId/logs', serviceController.getServiceLogsHandler);
 
-// DELETE /api/v1/integration/services/:serviceId
-router.delete('/:serviceId', deleteServiceHandler);
+    // DELETE /api/v1/integration/services/:serviceId
+    router.delete('/:serviceId', serviceController.deleteServiceHandler);
 
-// Service tag association routes
-router.post('/tags', addTagToServiceHandler);
-router.delete('/tags', removeTagFromServiceHandler);
-router.get('/:serviceId/tags', getServiceTagsHandler);
+    // Service tag association routes
+    router.post('/tags', tagController.addTagToServiceHandler);
+    router.delete('/tags', tagController.removeTagFromServiceHandler);
+    router.get('/:serviceId/tags', tagController.getServiceTagsHandler);
 
-export default router;
+    return router;
+}

@@ -1,73 +1,83 @@
-import { getAllProviders } from '../bl/providers/provider.bl';
-import * as serviceRepo from '../dal/serviceRepository';
+import { ProviderBL } from '../bl/providers/provider.bl';
 import { providerConnectorFactory } from '../bl/providers/provider-connector/providerConnectorFactory';
-import {DiscoveredService, Provider} from '@service-peek/shared';
+import { DiscoveredService, Provider } from '@service-peek/shared';
+import { ServiceRepository } from "../dal/serviceRepository";
 
 const BATCH_SIZE = 10;
 
-async function refreshAllProvidersServices() {
-    const providers = await getAllProviders();
-    const batches = chunkArray(providers, BATCH_SIZE);
+export class RefreshJob {
+    constructor(
+        private providerBL: ProviderBL,
+        private serviceRepo: ServiceRepository
+    ) {}
 
-    for (const batch of batches) {
-        await Promise.all(batch.map(refreshProviderServicesSafely));
-    }
-}
+    startRefreshJob = () => {
+        console.log('[Job] Starting refreshAllProvidersServices job (every 10 minutes)');
 
-async function refreshProviderServicesSafely(provider: Provider): Promise<void> {
-    try {
-        await refreshProviderServices(provider);
-    } catch (err) {
-        console.error(`Failed to refresh services for provider ${provider.id}:`, err);
-    }
-}
+        // Run immediately on startup (optional)
+        this.refreshAllProvidersServices().catch((err) =>
+            console.error('[Job] Initial run failed:', err)
+        );
 
-async function refreshProviderServices(provider: Provider): Promise<void> {
-    const connector = providerConnectorFactory(provider.providerType);
-    const discoveredServices: DiscoveredService[] = await connector.discoverServices(provider);
-    const dbServices = await serviceRepo.getServicesByProviderId(provider.id);
+        // Then run every 10 minutes
+        setInterval(async () => {
+            console.log('[Job] Running refreshAllProvidersServices');
+            try {
+                await this.refreshAllProvidersServices();
+            } catch (err) {
+                console.error('[Job] Failed to refresh services:', err);
+            }
+        }, 10 * 1000);
+    };
 
-    for (const dbService of dbServices) {
-        const matchedService = findMatchingService(discoveredServices, dbService.name);
+    private refreshAllProvidersServices = async () => {
+        const providers = await this.providerBL.getAllProviders();
+        const batches = this.chunkArray(providers, BATCH_SIZE);
 
-        // Update service status only if it is different to reduce db calls.
-        if (matchedService && matchedService.serviceStatus !== dbService.serviceStatus) {
-            await serviceRepo.updateService(dbService.id, {
-                serviceStatus: matchedService.serviceStatus
-            });
+        for (const batch of batches) {
+            await Promise.all(batch.map(this.refreshProviderServicesSafely));
         }
-    }
-}
+    };
 
-function findMatchingService(discoveredServices: DiscoveredService[], dbServiceName: string): DiscoveredService | undefined {
-    return discoveredServices.find(
-        ds => ds.name.trim().toLowerCase() === dbServiceName.trim().toLowerCase()
-    );
-}
-
-function chunkArray<T>(array: T[], chunkSize: number): T[][] {
-    const chunks: T[][] = [];
-    for (let i = 0; i < array.length; i += chunkSize) {
-        chunks.push(array.slice(i, i + chunkSize));
-    }
-    return chunks;
-}
-
-export function startRefreshJob() {
-    console.log('[Job] Starting refreshAllProvidersServices job (every 10 minutes)');
-
-    // Run immediately on startup (optional)
-    refreshAllProvidersServices().catch((err) =>
-        console.error('[Job] Initial run failed:', err)
-    );
-
-    // Then run every 10 minutes
-    setInterval(async () => {
-        console.log('[Job] Running refreshAllProvidersServices');
+    private refreshProviderServicesSafely = async (provider: Provider): Promise<void> => {
         try {
-            await refreshAllProvidersServices();
+            await this.refreshProviderServices(provider);
         } catch (err) {
-            console.error('[Job] Failed to refresh services:', err);
+            console.error(`Failed to refresh services for provider ${provider.id}:`, err);
         }
-    }, 10 * 1000);
+    };
+
+    private refreshProviderServices = async (provider: Provider): Promise<void> => {
+        const connector = providerConnectorFactory(provider.providerType);
+        const discoveredServices: DiscoveredService[] = await connector.discoverServices(provider);
+        const dbServices = await this.serviceRepo.getServicesByProviderId(provider.id);
+
+        for (const dbService of dbServices) {
+            const matchedService = this.findMatchingService(discoveredServices, dbService.name);
+
+            // Update service status only if it is different to reduce db calls.
+            if (matchedService && matchedService.serviceStatus !== dbService.serviceStatus) {
+                await this.serviceRepo.updateService(dbService.id, {
+                    serviceStatus: matchedService.serviceStatus
+                });
+            }
+        }
+    };
+
+    private findMatchingService = (
+        discoveredServices: DiscoveredService[],
+        dbServiceName: string
+    ): DiscoveredService | undefined => {
+        return discoveredServices.find(
+            ds => ds.name.trim().toLowerCase() === dbServiceName.trim().toLowerCase()
+        );
+    };
+
+    private chunkArray = <T>(array: T[], chunkSize: number): T[][] => {
+        const chunks: T[][] = [];
+        for (let i = 0; i < array.length; i += chunkSize) {
+            chunks.push(array.slice(i, i + chunkSize));
+        }
+        return chunks;
+    };
 }

@@ -30,4 +30,4 @@ jobs:
 
       # Uncomment when ready
       # - name: Run tests
-      #   run: npm test
+      #   run: npm run test

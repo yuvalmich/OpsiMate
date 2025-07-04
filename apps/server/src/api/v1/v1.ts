@@ -1,14 +1,21 @@
 import PromiseRouter from 'express-promise-router';
-import providersRouter from './providers/router';
-import servicesRouter from './services/router';
-import viewsRouter from './views/router';
-import tagsRouter from './tags/router';
+import providerRouter from './providers/router';
+import serviceRouter from './services/router';
+import viewRouter from './views/router';
+import tagRouter from './tags/router';
+import {ProviderController} from "./providers/controller";
+import {ServiceController} from "./services/controller";
+import {ViewController} from "./views/controller";
+import {TagController} from "./tags/controller";
 
-const router = PromiseRouter();
 
-router.use('/providers', providersRouter);
-router.use('/services', servicesRouter);
-router.use('/views', viewsRouter);
-router.use('/tags', tagsRouter);
+export default function createV1Router(providerController: ProviderController, serviceController: ServiceController, viewController: ViewController, tagController: TagController) {
+    const router = PromiseRouter();
 
-export default router;
+    router.use('/providers', providerRouter(providerController));
+    router.use('/services', serviceRouter(serviceController, tagController));
+    router.use('/views', viewRouter(viewController));
+    router.use('/tags', tagRouter(tagController));
+
+    return router;
+}

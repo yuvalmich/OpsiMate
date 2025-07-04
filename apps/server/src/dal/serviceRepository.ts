@@ -1,258 +1,118 @@
-import {db} from './providerRepository';
-import {Service, ServiceType, ContainerDetails, Provider, Tag} from "@service-peek/shared";
-import * as tagRepo from './tagRepository';
+import Database from 'better-sqlite3';
+import {Service, Provider, Tag} from '@service-peek/shared';
+import { runAsync } from './db';
 
-// Data access for services
-export async function createService(data: Omit<Service, 'id' | 'createdAt'>) {
-    return new Promise<{ lastID: number }>((resolve, reject) => {
-        // Convert container_details to JSON string if it exists
-        const containerDetailsJson = data.containerDetails ? JSON.stringify(data.containerDetails) : null;
+type ServiceWithProvider = Service & { provider: Provider } & { tags: Tag[] };
 
-        db.run(
-            'INSERT INTO services (provider_id, service_name, service_ip, service_status, service_type, container_details) VALUES (?, ?, ?, ?, ?, ?)',
-            [data.providerId, data.name, data.serviceIP, data.serviceStatus || 'unknown', data.serviceType, containerDetailsJson],
-            function (err) {
-                if (err) reject(err);
-                else resolve({lastID: this.lastID});
-            }
-        );
-    });
-}
+export class ServiceRepository {
+    constructor(private db: Database.Database) {}
 
-export async function bulkCreateServices(providerId: number, services: Omit<Service, 'id' | 'providerId' | 'createdAt'>[]) {
-    const newServicesPromises = services.map(async (serviceToCreate) => {
-            const result = await createService({
-                providerId: providerId,
-                serviceType: serviceToCreate.serviceType,
-                name: serviceToCreate.name,
-                serviceIP: serviceToCreate.serviceIP,
-                serviceStatus: serviceToCreate.serviceStatus,
-            });
+    async createService(data: Omit<Service, 'id' | 'createdAt'>): Promise<{ lastID: number }> {
+        return runAsync(() => {
+            const stmt = this.db.prepare(`
+                INSERT INTO services (provider_id, service_name, service_ip, service_status, service_type, container_details)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `);
 
-            return await getServiceById(result.lastID);
+            const result = stmt.run(
+                data.providerId,
+                data.name,
+                data.serviceIP,
+                data.serviceStatus || 'unknown',
+                data.serviceType,
+                data.containerDetails ? JSON.stringify(data.containerDetails) : null
+            );
+
+            return { lastID: result.lastInsertRowid as number };
+        });
+    }
+
+    async bulkCreateServices(providerId: number, services: Omit<Service, 'id' | 'providerId' | 'createdAt'>[]): Promise<Service[]> {
+        const created = [];
+
+        for (const service of services) {
+            const result = await this.createService({ ...service, providerId });
+            const fullService = await this.getServiceById(result.lastID);
+            if (fullService) created.push(fullService);
         }
-    )
-    try {
-        const newServices = await Promise.all(newServicesPromises)
-        // todo remove this filter when the get by id throws an error if service not found
-        return newServices.filter(a => a !== null);
 
-    } catch (error) {
-        console.error('Error creating services:', error);
-        throw error;
+        return created;
     }
-}
 
-// todo this function should throw an error if service not found
-export async function getServiceById(id: number) {
-    return new Promise<Service | null>((resolve, reject) => {
-        db.get('SELECT * FROM services WHERE id = ?', [id], (err, row: any) => {
-            if (err) reject(err);
-            else {
-                if (!row) {
-                    resolve(null);
-                    return;
+    async getServiceById(id: number): Promise<Service | null> {
+        return runAsync(() => {
+            const row: any = this.db.prepare('SELECT * FROM services WHERE id = ?').get(id);
+            if (!row) return null;
+
+            let containerDetails = null;
+            if (row.container_details) {
+                try {
+                    containerDetails = JSON.parse(row.container_details);
+                } catch (e) {
+                    console.error('Error parsing container_details JSON:', e);
                 }
-
-                // Parse container_details JSON if it exists
-                if (row.container_details) {
-                    try {
-                        row.container_details = JSON.parse(row.container_details);
-                    } catch (e) {
-                        console.error('Error parsing container_details JSON:', e);
-                        row.container_details = null;
-                    }
-                }
-
-                const service = {
-                    id: row.id,
-                    providerId: row.provider_id,
-                    name: row.service_name,
-                    serviceIP: row.service_ip,
-                    serviceStatus: row.service_status,
-                    serviceType: row.service_type,
-                    createdAt: row.service_created_at,
-                    containerDetails: row.container_details,
-                };
-
-                resolve(service);
             }
-        });
-    });
-}
 
-export async function updateService(id: number, data: Partial<Service>) {
-    const existingService = await getServiceById(id);
-    if (!existingService) {
-        throw new Error('Service not found');
+            return {
+                id: row.id,
+                providerId: row.provider_id,
+                name: row.service_name,
+                serviceIP: row.service_ip,
+                serviceStatus: row.service_status,
+                serviceType: row.service_type,
+                createdAt: row.created_at,
+                containerDetails,
+            };
+        });
     }
 
-    // Mapping from camelCase to snake_case
-    const fieldMap: Record<keyof Partial<Omit<Service, 'tags'>>, string> = {
-        id: 'id',
-        providerId: 'provider_id',
-        name: 'service_name',
-        serviceIP: 'service_ip',
-        serviceStatus: 'service_status',
-        createdAt: 'created_at',
-        serviceType: 'service_type',
-        containerDetails: 'container_details',
-    };
+    async updateService(id: number, data: Partial<Service>): Promise<void> {
+        const existing = await this.getServiceById(id);
+        if (!existing) throw new Error('Service not found');
 
-    // Build the update data, converting field names and serializing if needed
-    const updateData: Record<string, any> = {};
-    for (const key in data) {
-        if (key === 'containerDetails') {
-            updateData['container_details'] = data.containerDetails
-                ? JSON.stringify(data.containerDetails)
-                : existingService.containerDetails
-                    ? JSON.stringify(existingService.containerDetails)
-                    : null;
-        } else if (key in fieldMap && key !== 'id' && key !== 'createdAt') {
-            updateData[fieldMap[key as keyof typeof fieldMap]] = data[key as keyof typeof data];
+        const updates: Record<string, any> = {};
+        if (data.name !== undefined) updates.service_name = data.name;
+        if (data.serviceIP !== undefined) updates.service_ip = data.serviceIP;
+        if (data.serviceStatus !== undefined) updates.service_status = data.serviceStatus;
+        if (data.serviceType !== undefined) updates.service_type = data.serviceType;
+        if (data.containerDetails !== undefined) {
+            updates.container_details = data.containerDetails ? JSON.stringify(data.containerDetails) : null;
         }
+
+        const fields = Object.keys(updates);
+        if (fields.length === 0) return;
+
+        const setClause = fields.map(f => `${f} = ?`).join(', ');
+        const values = fields.map(f => updates[f]);
+
+        return runAsync(() => {
+            this.db.prepare(`UPDATE services SET ${setClause} WHERE id = ?`).run(...values, id);
+        });
     }
 
-    const fields = Object.keys(updateData);
-    if (fields.length === 0) {
-        return; // Nothing to update
+    async deleteService(id: number): Promise<void> {
+        return runAsync(() => {
+            this.db.prepare('DELETE FROM services WHERE id = ?').run(id);
+        });
     }
 
-    const setClause = fields.map(field => `${field} = ?`).join(', ');
-    const values = fields.map(field => updateData[field]);
+    async getServicesWithProvider(): Promise<ServiceWithProvider[]> {
+        return runAsync(() => {
+            const query = `
+                SELECT s.id as service_id, s.provider_id, s.service_name, s.service_ip,
+                       s.service_status, s.service_type, s.created_at as service_created_at,
+                       s.container_details,
+                       p.id as provider_id, p.provider_name, p.provider_ip, p.username,
+                       p.private_key_filename, p.ssh_port, p.created_at as provider_created_at,
+                       p.provider_type
+                FROM services s
+                JOIN providers p ON s.provider_id = p.id
+                ORDER BY s.created_at DESC
+            `;
 
-    return new Promise<void>((resolve, reject) => {
-        db.run(
-            `UPDATE services
-             SET ${setClause}
-             WHERE id = ?`,
-            [...values, id],
-            function (err) {
-                if (err) reject(err);
-                else resolve();
-            }
-        );
-    });
-}
+            const rows = this.db.prepare(query).all();
 
-export async function deleteService(id: number): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        db.run('DELETE FROM services WHERE id = ?', [id], function (err) {
-            if (err) reject(err);
-            else resolve();
-        });
-    });
-}
-
-// Temp solution...
-// Type for service with provider and tags
-type ServiceWithProvider = Service & { provider: Provider}
-
-export async function getServicesWithProvider(): Promise<ServiceWithProvider[]> {
-    return new Promise<ServiceWithProvider[]>((resolve, reject) => {
-        const query = `
-            SELECT s.id         as service_id,
-                   s.provider_id,
-                   s.service_name,
-                   s.service_ip,
-                   s.service_status,
-                   s.service_type,
-                   s.created_at as service_created_at,
-                   s.container_details,
-                   p.id         as provider_id,
-                   p.provider_name,
-                   p.provider_ip,
-                   p.username,
-                   p.private_key_filename,
-                   p.ssh_port,
-                   p.created_at as provider_created_at,
-                   p.provider_type
-            FROM services s
-                     JOIN providers p ON s.provider_id = p.id
-            ORDER BY s.created_at DESC
-        `;
-
-        db.all(query, [], async (err, rows) => {
-            if (err) reject(err);
-            else {
-                // Transform the flat result into nested objects
-                const services = await Promise.all(rows.map(async (row: any) => {
-                    // Parse container_details if it exists
-                    let containerDetails = null;
-                    if (row.container_details) {
-                        try {
-                            containerDetails = JSON.parse(row.container_details);
-                        } catch (e) {
-                            console.error('Error parsing container_details JSON:', e);
-                        }
-                    }
-
-                    // Get tags for this service
-                    const tags = await tagRepo.getServiceTags(row.service_id);
-
-                    // Create the service object with provider nested
-                    return {
-                        id: row.service_id,
-                        providerId: row.provider_id,
-                        name: row.service_name,
-                        serviceIP: row.service_ip,
-                        serviceStatus: row.service_status,
-                        serviceType: row.service_type,
-                        createdAt: row.service_created_at,
-                        containerDetails: containerDetails,
-                        tags: tags,
-                        provider: {
-                            id: row.provider_id,
-                            name: row.provider_name,
-                            providerIP: row.provider_ip,
-                            username: row.username,
-                            privateKeyFilename: row.private_key_filename,
-                            SSHPort: row.ssh_port,
-                            createdAt: row.provider_created_at,
-                            providerType: row.provider_type
-                        }
-                    };
-                }));
-
-                resolve(services);
-            }
-        });
-    });
-}
-
-export async function getServiceWithProvider(id: number): Promise<ServiceWithProvider | null> {
-    return new Promise<ServiceWithProvider | null>((resolve, reject) => {
-        const query = `
-            SELECT s.id         as service_id,
-                   s.provider_id,
-                   s.service_name,
-                   s.service_ip,
-                   s.service_status,
-                   s.service_type,
-                   s.created_at as service_created_at,
-                   s.container_details,
-                   p.id         as provider_id,
-                   p.provider_name,
-                   p.provider_ip,
-                   p.username,
-                   p.private_key_filename,
-                   p.ssh_port,
-                   p.created_at as provider_created_at,
-                   p.provider_type
-            FROM services s
-                     JOIN providers p ON s.provider_id = p.id
-            WHERE s.id = ?
-        `;
-
-        db.get(query, [id], async (err, row: any) => {
-            if (err) reject(err);
-            else {
-                if (!row) {
-                    resolve(null);
-                    return;
-                }
-
-                // Parse container_details if it exists
+            return rows.map((row: any): ServiceWithProvider => {
                 let containerDetails = null;
                 if (row.container_details) {
                     try {
@@ -262,11 +122,16 @@ export async function getServiceWithProvider(id: number): Promise<ServiceWithPro
                     }
                 }
 
-                // Get tags for this service
-                const tags = await tagRepo.getServiceTags(row.service_id);
+                const query = `
+                    SELECT t.id as id, t.name as name, t.color as color, t.created_at as createdAt
+                    FROM tags t
+                             JOIN service_tags st ON t.id = st.tag_id
+                    WHERE st.service_id = ?
+                    ORDER BY t.name
+                `;
+                const tags = this.db.prepare(query).all(row.service_id) as Tag[];
 
-                // Create the service object with provider nested
-                const service: ServiceWithProvider = {
+                return {
                     id: row.service_id,
                     providerId: row.provider_id,
                     name: row.service_name,
@@ -274,7 +139,7 @@ export async function getServiceWithProvider(id: number): Promise<ServiceWithPro
                     serviceStatus: row.service_status,
                     serviceType: row.service_type,
                     createdAt: row.service_created_at,
-                    containerDetails: containerDetails,
+                    containerDetails,
                     tags: tags,
                     provider: {
                         id: row.provider_id,
@@ -284,107 +149,122 @@ export async function getServiceWithProvider(id: number): Promise<ServiceWithPro
                         privateKeyFilename: row.private_key_filename,
                         SSHPort: row.ssh_port,
                         createdAt: row.provider_created_at,
-                        providerType: row.provider_type
+                        providerType: row.provider_type,
+                    },
+                } as ServiceWithProvider;
+            });
+        });
+    }
+
+    async getServiceWithProvider(id: number): Promise<ServiceWithProvider | null> {
+        return runAsync(async () => {
+            const query = `
+                SELECT s.id as service_id, s.provider_id, s.service_name, s.service_ip,
+                       s.service_status, s.service_type, s.created_at as service_created_at,
+                       s.container_details,
+                       p.id as provider_id, p.provider_name, p.provider_ip, p.username,
+                       p.private_key_filename, p.ssh_port, p.created_at as provider_created_at,
+                       p.provider_type
+                FROM services s
+                JOIN providers p ON s.provider_id = p.id
+                WHERE s.id = ?
+            `;
+
+            const row: any = this.db.prepare(query).get(id);
+            if (!row) return null;
+
+            let containerDetails = null;
+            if (row.container_details) {
+                try {
+                    containerDetails = JSON.parse(row.container_details);
+                } catch (e) {
+                    console.error('Error parsing container_details JSON:', e);
+                }
+            }
+
+            const tagsQuery = `
+                    SELECT t.id as id, t.name as name, t.color as color, t.created_at as createdAt
+                    FROM tags t
+                             JOIN service_tags st ON t.id = st.tag_id
+                    WHERE st.service_id = ?
+                    ORDER BY t.name
+                `;
+            const tags = this.db.prepare(tagsQuery).all(row.service_id) as Tag[];
+
+            return {
+                id: row.service_id,
+                providerId: row.provider_id,
+                name: row.service_name,
+                serviceIP: row.service_ip,
+                serviceStatus: row.service_status,
+                serviceType: row.service_type,
+                createdAt: row.service_created_at,
+                containerDetails,
+                tags: tags,
+                provider: {
+                    id: row.provider_id,
+                    name: row.provider_name,
+                    providerIP: row.provider_ip,
+                    username: row.username,
+                    privateKeyFilename: row.private_key_filename,
+                    SSHPort: row.ssh_port,
+                    createdAt: row.provider_created_at,
+                    providerType: row.provider_type,
+                },
+            };
+        });
+    }
+
+    async getServicesByProviderId(providerId: number): Promise<Service[]> {
+        return runAsync(() => {
+            const stmt = this.db.prepare(`
+                SELECT id, provider_id, service_name, service_ip,
+                       service_status, service_type, created_at, container_details
+                FROM services
+                WHERE provider_id = ?
+            `);
+
+            const rows = stmt.all(providerId);
+
+            return rows.map((row: any) => {
+                let containerDetails = null;
+                if (row.container_details) {
+                    try {
+                        containerDetails = JSON.parse(row.container_details);
+                    } catch (e) {
+                        console.error('Error parsing container_details JSON:', e);
                     }
+                }
+
+                return {
+                    id: row.id,
+                    providerId: row.provider_id,
+                    name: row.service_name,
+                    serviceIP: row.service_ip,
+                    serviceStatus: row.service_status,
+                    serviceType: row.service_type,
+                    createdAt: row.created_at,
+                    containerDetails,
                 };
-
-                resolve(service);
-            }
+            });
         });
-    });
-}
+    }
 
-export async function getServicesByProviderId(providerId: number): Promise<Service[]> {
-    return new Promise<Service[]>((resolve, reject) => {
-        const query = `
-            SELECT s.id         as service_id,
-                   s.provider_id,
-                   s.service_name,
-                   s.service_ip,
-                   s.service_status,
-                   s.service_type,
-                   s.created_at as service_created_at,
-                   s.container_details
-            FROM services s
-            WHERE s.provider_id = ?
-        `;
-
-        db.all(query, [providerId], (err, rows: any[]) => {
-            if (err) reject(err);
-            else {
-                const services = rows.map(row => {
-                    let containerDetails = null;
-                    if (row.container_details) {
-                        try {
-                            containerDetails = JSON.parse(row.container_details);
-                        } catch (e) {
-                            console.error('Error parsing container_details JSON:', e);
-                        }
-                    }
-                    const service: Service = {
-                        id: row.service_id,
-                        providerId: row.provider_id,
-                        name: row.service_name,
-                        serviceIP: row.service_ip,
-                        serviceStatus: row.service_status,
-                        serviceType: row.service_type,
-                        createdAt: row.service_created_at,
-                        containerDetails: containerDetails,
-                    };
-                    return service;
-                });
-                resolve(services);
-            }
-        });
-    });
-}
-
-export async function initServicesTable(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        db.run(`
-            CREATE TABLE IF NOT EXISTS services
-            (
-                id
-                INTEGER
-                PRIMARY
-                KEY
-                AUTOINCREMENT,
-                provider_id
-                INTEGER
-                NOT
-                NULL,
-                service_name
-                TEXT
-                NOT
-                NULL,
-                service_ip
-                TEXT,
-                service_status
-                TEXT
-                DEFAULT
-                'unknown',
-                service_type
-                TEXT
-                NOT
-                NULL,
-                container_details
-                TEXT,
-                created_at
-                DATETIME
-                DEFAULT
-                CURRENT_TIMESTAMP,
-                FOREIGN
-                KEY
-            (
-                provider_id
-            ) REFERENCES providers
-            (
-                id
-            )
+    async initServicesTable(): Promise<void> {
+        return runAsync(() => {
+            this.db.prepare(`
+                CREATE TABLE IF NOT EXISTS services (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    provider_id INTEGER NOT NULL,
+                    service_name TEXT NOT NULL,
+                    service_ip TEXT,
+                    service_status TEXT DEFAULT 'unknown',
+                    service_type TEXT NOT NULL,
+                    container_details TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (provider_id) REFERENCES providers (id)
                 )
-        `, (err) => {
-            if (err) reject(err);
-            else resolve();
+            `).run();
         });
-    });
+    }
 }
