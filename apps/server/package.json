@@ -11,7 +11,7 @@
     "lint-fix": "eslint src --ext .ts --fix"
   },
   "dependencies": {
-    "@service-peek/shared": "workspace:*",
+    "@service-peek/shared": "*",
     "@types/cors": "^2.8.19",
     "better-sqlite3": "^12.2.0",
     "cors": "^2.8.5",

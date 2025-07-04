@@ -1,14 +1,17 @@
-import {ProviderBL} from '../bl/providers/provider.bl';
+import { ProviderBL } from '../bl/providers/provider.bl';
 import { providerConnectorFactory } from '../bl/providers/provider-connector/providerConnectorFactory';
-import {DiscoveredService, Provider} from '@service-peek/shared';
-import {ServiceRepository} from "../dal/serviceRepository";
+import { DiscoveredService, Provider } from '@service-peek/shared';
+import { ServiceRepository } from "../dal/serviceRepository";
 
 const BATCH_SIZE = 10;
 
 export class RefreshJob {
-    constructor(private providerBL: ProviderBL, private serviceRepo: ServiceRepository) {}
+    constructor(
+        private providerBL: ProviderBL,
+        private serviceRepo: ServiceRepository
+    ) {}
 
-    async startRefreshJob() {
+    startRefreshJob = () => {
         console.log('[Job] Starting refreshAllProvidersServices job (every 10 minutes)');
 
         // Run immediately on startup (optional)
@@ -25,26 +28,26 @@ export class RefreshJob {
                 console.error('[Job] Failed to refresh services:', err);
             }
         }, 10 * 1000);
-    }
+    };
 
-    private async refreshAllProvidersServices() {
+    private refreshAllProvidersServices = async () => {
         const providers = await this.providerBL.getAllProviders();
         const batches = this.chunkArray(providers, BATCH_SIZE);
 
         for (const batch of batches) {
             await Promise.all(batch.map(this.refreshProviderServicesSafely));
         }
-    }
+    };
 
-    private async refreshProviderServicesSafely(provider: Provider): Promise<void> {
+    private refreshProviderServicesSafely = async (provider: Provider): Promise<void> => {
         try {
             await this.refreshProviderServices(provider);
         } catch (err) {
             console.error(`Failed to refresh services for provider ${provider.id}:`, err);
         }
-    }
+    };
 
-    private async refreshProviderServices(provider: Provider): Promise<void> {
+    private refreshProviderServices = async (provider: Provider): Promise<void> => {
         const connector = providerConnectorFactory(provider.providerType);
         const discoveredServices: DiscoveredService[] = await connector.discoverServices(provider);
         const dbServices = await this.serviceRepo.getServicesByProviderId(provider.id);
@@ -59,19 +62,22 @@ export class RefreshJob {
                 });
             }
         }
-    }
+    };
 
-    private findMatchingService(discoveredServices: DiscoveredService[], dbServiceName: string): DiscoveredService | undefined {
+    private findMatchingService = (
+        discoveredServices: DiscoveredService[],
+        dbServiceName: string
+    ): DiscoveredService | undefined => {
         return discoveredServices.find(
             ds => ds.name.trim().toLowerCase() === dbServiceName.trim().toLowerCase()
         );
-    }
+    };
 
-    private chunkArray<T>(array: T[], chunkSize: number): T[][] {
+    private chunkArray = <T>(array: T[], chunkSize: number): T[][] => {
         const chunks: T[][] = [];
         for (let i = 0; i < array.length; i += chunkSize) {
             chunks.push(array.slice(i, i + chunkSize));
         }
         return chunks;
-    }
+    };
 }

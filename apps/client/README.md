@@ -30,10 +30,10 @@ git clone <YOUR_GIT_URL>
 cd <YOUR_PROJECT_NAME>
 
 # Step 3: Install the necessary dependencies.
-pnpm i
+npm i
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
-pnpm run dev
+npm run dev
 ```
 
 **Edit a file directly in GitHub**

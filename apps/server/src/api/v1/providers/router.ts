@@ -7,7 +7,7 @@ export default function createProviderRouter(controller: ProviderController): Ro
     // CRUD API
     router.get('/', controller.getProviders.bind(controller));
     router.post('/', controller.createProvider.bind(controller));
-    router.put('/:providerId', controller.updateProvider.bind(controller));
+    router.put('/:providerIdçç', controller.updateProvider.bind(controller));
     router.delete('/:providerId', controller.deleteProvider.bind(controller));
 
     // Additional APIs

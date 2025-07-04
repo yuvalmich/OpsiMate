@@ -20,32 +20,32 @@ service-peek/
 ### Prerequisites
 
 - Node.js 18+ 
-- pnpm 10+
+- npm 10+
 
 ### Installation
 
 1. Install dependencies for all workspaces:
 ```bash
-pnpm install
+npm install
 ```
 
 2. Build all packages:
 ```bash
-pnpm run build
+npm run build
 ```
 
 3. Start development servers:
 ```bash
-pnpm run dev
+npm run dev
 ```
 
 ## Available Scripts
 
-- `pnpm run build` - Build all packages and apps
-- `pnpm run dev` - Start development servers for all apps
-- `pnpm run lint` - Run linting for all packages
-- `pnpm run clean` - Clean build outputs
-- `pnpm run format` - Format code with Prettier
+- `npm run build` - Build all packages and apps
+- `npm run dev` - Start development servers for all apps
+- `npm run lint` - Run linting for all packages
+- `npm run clean` - Clean build outputs
+- `npm run format` - Format code with Prettier
 
 ## Workspaces
 
@@ -83,24 +83,24 @@ Each workspace can be developed independently:
 ```bash
 # Work on client only
 cd apps/client
-pnpm run dev
+npm run dev
 
 # Work on server only
 cd apps/server
-pnpm run dev
+npm run dev
 
 # Work on shared package
 cd packages/shared
-pnpm run dev
+npm run dev
 ```
 
 ## Building for Production
 
 ```bash
 # Build all workspaces
-pnpm run build
+npm run build
 
 # Start production server
 cd apps/server
-pnpm start
+npm start
 ``` 

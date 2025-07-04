@@ -73,10 +73,7 @@ viewRepo.initViewsTable()
 
 
 // this job refreshes the services status periodically.
-// todo: when this job fails, it doesn't retry again
-(new RefreshJob(providerBL, serviceRepo)).startRefreshJob().catch(err => {
-  console.error('Failed to start refresh job:', err);
-})
+(new RefreshJob(providerBL, serviceRepo)).startRefreshJob()
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

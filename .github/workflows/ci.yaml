@@ -19,15 +19,15 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Build project
-        run: pnpm run build
+        run: npm run build
 
       # Uncomment when ready
       # - name: Run linter
-      #   run: pnpm run lint
+      #   run: npm run lint
 
       # Uncomment when ready
       # - name: Run tests
-      #   run: pnpm run test
+      #   run: npm run test
