@@ -3,7 +3,6 @@ import cors from 'cors';
 import healthRouter from './api/health';
 import v1Router from './api/v1/v1';
 import { customViewService } from './bl/custom-views/custom-view.bl';
-import { initProvidersTable } from './dal/providerRepository';
 import { initServicesTable } from './dal/serviceRepository';
 import { startRefreshJob } from "./jobs/refresh-job";
 

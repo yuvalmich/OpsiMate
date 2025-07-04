@@ -36,8 +36,4 @@ router.get('/:providerId/discover-services', discoverServicesInProviderHandler);
 router.post('/test-connection', testProviderConnectionHandler);
 
 
-// router.get('/:providerId/services', getServicesByProviderHandler);
-
-
-
 export default router;
