@@ -296,16 +296,16 @@ export const providerApi = {
 
   // Add tag to service
   addTagToService: (serviceId: number, tagId: number) => {
-    return apiRequest<{ message: string }>('/tags/service', 'POST', { serviceId, tagId });
+    return apiRequest<{ message: string }>(`/services/${serviceId}/tags`, 'POST', { tagId });
   },
 
   // Remove tag from service
   removeTagFromService: (serviceId: number, tagId: number) => {
-    return apiRequest<{ message: string }>('/tags/service', 'DELETE', { serviceId, tagId });
+    return apiRequest<{ message: string }>(`/services/${serviceId}/tags/${tagId}`, 'DELETE');
   },
 
   // Get tags for a service
   getServiceTags: (serviceId: number) => {
-    return apiRequest<Tag[]>(`/tags/service/${serviceId}`);
+    return apiRequest<Tag[]>(`/services/${serviceId}/tags`);
   },
 };

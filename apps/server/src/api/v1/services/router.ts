@@ -30,8 +30,8 @@ export default function createServiceRouter(serviceController: ServiceController
     router.delete('/:serviceId', serviceController.deleteServiceHandler);
 
     // Service tag association routes
-    router.post('/tags', tagController.addTagToServiceHandler);
-    router.delete('/tags', tagController.removeTagFromServiceHandler);
+    router.post('/:serviceId/tags', tagController.addTagToServiceHandler);
+    router.delete('/:serviceId/tags/:tagId', tagController.removeTagFromServiceHandler);
     router.get('/:serviceId/tags', tagController.getServiceTagsHandler);
 
     return router;

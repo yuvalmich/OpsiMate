@@ -98,19 +98,25 @@ export class TagController {
 
     addTagToServiceHandler = async (req: Request, res: Response) => {
         try {
-            const { serviceId, tagId } = ServiceTagSchema.parse(req.body);
+            // Get serviceId from params, tagId from body
+            const { serviceId } = req.params;
+            const { tagId } = req.body;
+            const parsed = ServiceTagSchema.parse({
+                serviceId: Number(serviceId),
+                tagId: Number(tagId)
+            });
 
-            const service = await this.serviceRepo.getServiceById(serviceId);
+            const service = await this.serviceRepo.getServiceById(parsed.serviceId);
             if (!service) {
                 return res.status(404).json({ success: false, error: 'Service not found' });
             }
 
-            const tag = await this.tagRepo.getTagById(tagId);
+            const tag = await this.tagRepo.getTagById(parsed.tagId);
             if (!tag) {
                 return res.status(404).json({ success: false, error: 'Tag not found' });
             }
 
-            await this.tagRepo.addTagToService(serviceId, tagId);
+            await this.tagRepo.addTagToService(parsed.serviceId, parsed.tagId);
             res.json({ success: true, message: 'Tag added to service successfully' });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -124,9 +130,14 @@ export class TagController {
 
     removeTagFromServiceHandler = async (req: Request, res: Response) => {
         try {
-            const { serviceId, tagId } = ServiceTagSchema.parse(req.body);
+            // Get serviceId and tagId from route params
+            const { serviceId, tagId } = req.params;
+            const parsed = ServiceTagSchema.parse({
+                serviceId: Number(serviceId),
+                tagId: Number(tagId)
+            });
 
-            await this.tagRepo.removeTagFromService(serviceId, tagId);
+            await this.tagRepo.removeTagFromService(parsed.serviceId, parsed.tagId);
             res.json({ success: true, message: 'Tag removed from service successfully' });
         } catch (error) {
             if (error instanceof z.ZodError) {
