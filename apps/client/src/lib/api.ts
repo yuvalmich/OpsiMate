@@ -1,4 +1,4 @@
-import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService } from '@service-peek/shared';
+import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService, Tag } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
@@ -265,5 +265,47 @@ export const providerApi = {
     console.log('API getServiceLogs called with ID:', serviceId);
     // Make sure we're using the correct path
     return apiRequest<string[]>(`/services/${serviceId}/logs`, 'GET');
+  },
+
+  // Tag APIs
+
+  // Get all tags
+  getAllTags: () => {
+    return apiRequest<Tag[]>('/tags');
+  },
+
+  // Get a specific tag
+  getTagById: (tagId: number) => {
+    return apiRequest<Tag>(`/tags/${tagId}`);
+  },
+
+  // Create a new tag
+  createTag: (tagData: { name: string; color: string }) => {
+    return apiRequest<Tag>('/tags', 'POST', tagData);
+  },
+
+  // Update a tag
+  updateTag: (tagId: number, tagData: Partial<{ name: string; color: string }>) => {
+    return apiRequest<Tag>(`/tags/${tagId}`, 'PUT', tagData);
+  },
+
+  // Delete a tag
+  deleteTag: (tagId: number) => {
+    return apiRequest<void>(`/tags/${tagId}`, 'DELETE');
+  },
+
+  // Add tag to service
+  addTagToService: (serviceId: number, tagId: number) => {
+    return apiRequest<{ message: string }>('/tags/service', 'POST', { serviceId, tagId });
+  },
+
+  // Remove tag from service
+  removeTagFromService: (serviceId: number, tagId: number) => {
+    return apiRequest<{ message: string }>('/tags/service', 'DELETE', { serviceId, tagId });
+  },
+
+  // Get tags for a service
+  getServiceTags: (serviceId: number) => {
+    return apiRequest<Tag[]>(`/tags/service/${serviceId}`);
   },
 };

@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import PromiseRouter from 'express-promise-router';
 import { ProviderController } from './controller';
 
 export default function createProviderRouter(controller: ProviderController): Router {
-    const router = Router();
+    const router = PromiseRouter();
 
     // CRUD API
     router.get('/', controller.getProviders.bind(controller));

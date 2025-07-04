@@ -26,6 +26,20 @@ export interface ContainerDetails {
   created?: string;
 }
 
+export interface Tag {
+  id: number;
+  name: string;
+  color: string;
+  createdAt: string;
+}
+
+export interface ServiceTag {
+  id: number;
+  serviceId: number;
+  tagId: number;
+  createdAt: string;
+}
+
 export interface Service {
   id: number;
   providerId: number;
@@ -36,6 +50,7 @@ export interface Service {
   serviceType: ServiceType;
   // todo - this be in different interface
   containerDetails?: ContainerDetails;
+  tags?: Tag[];
 }
 
 export interface ServiceWithProvider extends Service {

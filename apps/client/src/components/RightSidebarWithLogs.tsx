@@ -2,25 +2,30 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { X, AreaChart, FileText, RefreshCw } from "lucide-react";
+import { X, AreaChart, FileText, RefreshCw, Plus } from "lucide-react";
 import { Service } from "./ServiceTable";
 import { cn } from "@/lib/utils";
 import { GrafanaIcon } from "./icons/GrafanaIcon";
 import { CoralogixIcon } from "./icons/CoralogixIcon";
 import { providerApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { TagBadge } from "./ui/tag-badge";
+import { TagSelector } from "./TagSelector";
+import { Tag } from "@service-peek/shared";
 
 interface RightSidebarProps {
   service: Service | null;
   onClose: () => void;
   collapsed: boolean;
+  onServiceUpdate?: (updatedService: Service) => void;
 }
 
-export function RightSidebarWithLogs({ service, onClose, collapsed }: RightSidebarProps) {
+export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpdate }: RightSidebarProps) {
   const { toast } = useToast();
   const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [serviceTags, setServiceTags] = useState<Tag[]>(service?.tags || []);
 
   const fetchLogs = async () => {
     if (!service) return;
@@ -53,11 +58,70 @@ export function RightSidebarWithLogs({ service, onClose, collapsed }: RightSideb
     }
   };
 
+  const fetchTags = async () => {
+    if (!service) return;
+    try {
+      const response = await providerApi.getServiceTags(parseInt(service.id));
+      if (response.success && response.data) {
+        setServiceTags(response.data);
+      } else {
+        setServiceTags([]);
+      }
+    } catch (err) {
+      setServiceTags([]);
+    }
+  };
+
   useEffect(() => {
     if (service) {
       fetchLogs();
+      fetchTags();
     }
   }, [service?.id]);
+
+  const handleTagsChange = (newTags: Tag[]) => {
+    setServiceTags(newTags);
+    if (service && onServiceUpdate) {
+      onServiceUpdate({
+        ...service,
+        tags: newTags
+      });
+    }
+  };
+
+  const handleRemoveTag = async (tagToRemove: Tag) => {
+    if (!service) return;
+    
+    try {
+      const response = await providerApi.removeTagFromService(parseInt(service.id), tagToRemove.id);
+      if (response.success) {
+        const updatedTags = serviceTags.filter(tag => tag.id !== tagToRemove.id);
+        setServiceTags(updatedTags);
+        if (onServiceUpdate) {
+          onServiceUpdate({
+            ...service,
+            tags: updatedTags
+          });
+        }
+        toast({
+          title: "Success",
+          description: "Tag removed from service"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to remove tag",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove tag",
+        variant: "destructive"
+      });
+    }
+  };
 
   if (!service) return null;
 
@@ -96,6 +160,19 @@ export function RightSidebarWithLogs({ service, onClose, collapsed }: RightSideb
           <Badge className={cn(getStatusColor(service.serviceStatus), "text-xs py-0.5 px-2 flex-shrink-0")}>
             {service.serviceStatus}
           </Badge>
+        </div>
+
+        <Separator />
+
+        {/* Tags Section */}
+        <div>
+          <h4 className="font-medium text-foreground text-xs mb-2">Tags</h4>
+          <TagSelector
+            selectedTags={serviceTags}
+            onTagsChange={handleTagsChange}
+            serviceId={parseInt(service.id)}
+            className=""
+          />
         </div>
 
         <Separator />

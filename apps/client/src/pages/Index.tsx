@@ -74,9 +74,18 @@ const Index = () => {
         }
     }, [])
 
-    // Load services on component mount
+    // Load services on component mount and set up periodic refresh
     useEffect(() => {
         fetchServices()
+        
+        // Set up automatic refresh every 30 seconds (30000 ms)
+        const refreshInterval = setInterval(() => {
+            console.log('Auto-refreshing services data...')
+            fetchServices()
+        }, 30000)
+        
+        // Clean up interval on component unmount
+        return () => clearInterval(refreshInterval)
     }, [fetchServices])
 
     // Load saved views and active view on component mount
@@ -243,8 +252,15 @@ const Index = () => {
         setVisibleColumns(prev => ({
             ...prev,
             [column]: !prev[column]
-        }))
-    }
+        }));
+    };
+
+    const handleServiceUpdate = (updatedService: Service) => {
+        setServices(prev => prev.map(s => s.id === updatedService.id ? updatedService : s));
+        if (selectedService && selectedService.id === updatedService.id) {
+            setSelectedService(updatedService);
+        }
+    };
 
     const handleStart = async () => {
         if (selectedServices.length > 0) {
@@ -500,6 +516,7 @@ const Index = () => {
                                     service={selectedService}
                                     onClose={() => setSelectedService(null)}
                                     collapsed={rightSidebarCollapsed}
+                                    onServiceUpdate={handleServiceUpdate}
                                 />
                             </div>
                         )}

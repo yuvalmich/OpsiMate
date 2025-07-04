@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import PromiseRouter from 'express-promise-router';
 import { ServiceController } from './controller';
 
 export default function createServiceRouter(serviceController: ServiceController) {
-    const router = Router();
+    const router = PromiseRouter();
 
     // POST /api/v1/integration/services
     router.post('/', serviceController.createServiceHandler);
@@ -27,6 +27,11 @@ export default function createServiceRouter(serviceController: ServiceController
 
     // DELETE /api/v1/integration/services/:serviceId
     router.delete('/:serviceId', serviceController.deleteServiceHandler);
+
+    // Service tag association routes
+    router.post('/tags', serviceController.addTagToServiceHandler);
+    router.delete('/tags', serviceController.removeTagFromServiceHandler);
+    router.get('/:serviceId/tags', serviceController.getServiceTagsHandler);
 
     return router;
 }

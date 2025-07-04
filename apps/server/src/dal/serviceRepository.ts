@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import { Service, Provider } from '@service-peek/shared';
 import { runAsync } from './db';
+import * as tagRepo from './tagRepository';
 
 type ServiceWithProvider = Service & { provider: Provider };
 
@@ -112,7 +113,7 @@ export class ServiceRepository {
 
             const rows = this.db.prepare(query).all();
 
-            return rows.map((row: any) => {
+            return rows.map(async (row: any) => {
                 let containerDetails = null;
                 if (row.container_details) {
                     try {
@@ -121,6 +122,8 @@ export class ServiceRepository {
                         console.error('Error parsing container_details JSON:', e);
                     }
                 }
+
+                const tags = await tagRepo.getServiceTags(row.service_id);
 
                 return {
                     id: row.service_id,
@@ -131,6 +134,7 @@ export class ServiceRepository {
                     serviceType: row.service_type,
                     createdAt: row.service_created_at,
                     containerDetails,
+                    tags: tags,
                     provider: {
                         id: row.provider_id,
                         name: row.provider_name,
@@ -172,6 +176,8 @@ export class ServiceRepository {
                 }
             }
 
+            const tags = await tagRepo.getServiceTags(row.service_id);
+
             return {
                 id: row.service_id,
                 providerId: row.provider_id,
@@ -181,6 +187,7 @@ export class ServiceRepository {
                 serviceType: row.service_type,
                 createdAt: row.service_created_at,
                 containerDetails,
+                tags: tags,
                 provider: {
                     id: row.provider_id,
                     name: row.provider_name,

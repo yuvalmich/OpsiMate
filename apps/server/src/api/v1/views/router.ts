@@ -1,8 +1,8 @@
-import express, { Router } from 'express';
+import PromiseRouter from 'express-promise-router';
 import { ViewController } from './controller';
 
 export default function createViewRouter(controller: ViewController): Router {
-    const router = express.Router();
+    const router = PromiseRouter();
 
     /**
      * Get all views

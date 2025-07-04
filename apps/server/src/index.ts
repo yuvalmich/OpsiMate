@@ -12,6 +12,7 @@ import {ServiceController} from "./api/v1/services/controller";
 import {ViewController} from "./api/v1/views/controller";
 import {ViewRepository} from "./dal/viewRepository";
 import {RefreshJob} from "./jobs/refresh-job";
+import { initTagsTables } from './dal/tagRepository';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -70,6 +71,14 @@ viewRepo.initViewsTable()
   .catch(err => {
     console.error('Failed to initialize views tables:', err);
   });
+
+initTagsTables()
+    .then(() => {
+        console.log('Tags tables initialized');
+    })
+    .catch(err => {
+        console.error('Failed to initialize tags tables:', err);
+    });
 
 
 // this job refreshes the services status periodically.

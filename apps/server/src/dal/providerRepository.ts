@@ -1,6 +1,5 @@
 import Database from 'better-sqlite3';
 import {Provider} from '@service-peek/shared';
-import path from "path";
 import {runAsync} from "./db";
 
 export class ProviderRepository {
