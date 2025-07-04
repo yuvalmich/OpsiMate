@@ -1,12 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import healthRouter from './api/health';
-import v1Router from './api/v1/v1';
-import { customViewService } from './bl/custom-views/custom-view.bl';
-import { initServicesTable } from './dal/serviceRepository';
-import { startRefreshJob } from "./jobs/refresh-job";
+import {ViewBL} from './bl/custom-views/custom-view.bl';
+import { ServiceRepository} from './dal/serviceRepository';
 import {initializeDb} from "./dal/db";
 import createV1Router from "./api/v1/v1";
+import {ProviderController} from "./api/v1/providers/controller";
+import {ProviderBL} from "./bl/providers/provider.bl";
+import {ProviderRepository} from "./dal/providerRepository";
+import {ServiceController} from "./api/v1/services/controller";
+import {ViewController} from "./api/v1/views/controller";
+import {ViewRepository} from "./dal/viewRepository";
+import {RefreshJob} from "./jobs/refresh-job";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,12 +28,26 @@ app.use(cors({
 
 const dbInstance = initializeDb()
 
+// Repositories
+const providerRepo = new ProviderRepository(dbInstance)
+const serviceRepo = new ServiceRepository(dbInstance)
+const viewRepo = new ViewRepository(dbInstance)
+
+// BL
+const providerBL = new ProviderBL(providerRepo, serviceRepo)
+
+// Controllers
+const providerController = new ProviderController(providerBL)
+const serviceController = new ServiceController(providerRepo, serviceRepo) // todo: change to work with BL layer
+const viewController = new ViewController(new ViewBL(viewRepo))
+
 // API routes
 app.use('/', healthRouter);
-app.use('/api/v1', createV1Router(dbInstance));
+app.use('/api/v1', createV1Router(providerController, serviceController, viewController));
 
 // Initialize database tables
-initProvidersTable()
+// todo: move it from here.
+providerRepo.initProvidersTable()
   .then(() => {
     console.log('Providers table initialized');
   })
@@ -36,7 +55,7 @@ initProvidersTable()
     console.error('Failed to initialize providers table:', err);
   });
 
-initServicesTable()
+serviceRepo.initServicesTable()
   .then(() => {
     console.log('Services table initialized');
   })
@@ -44,7 +63,7 @@ initServicesTable()
     console.error('Failed to initialize services table:', err);
   });
 
-customViewService.initViewsTables()
+viewRepo.initViewsTable()
   .then(() => {
     console.log('Views tables initialized');
   })
@@ -52,8 +71,12 @@ customViewService.initViewsTables()
     console.error('Failed to initialize views tables:', err);
   });
 
+
 // this job refreshes the services status periodically.
-startRefreshJob()
+// todo: when this job fails, it doesn't retry again
+(new RefreshJob(providerBL, serviceRepo)).startRefreshJob().catch(err => {
+  console.error('Failed to start refresh job:', err);
+})
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

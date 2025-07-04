@@ -1,39 +1,19 @@
-import {Router} from 'express';
-import {
-    getProvidersHandler,
-    createProviderHandler,
-    updateProviderHandler,
-    deleteProviderHandler,
-    bulkAddServicesHandler,
-    discoverServicesInProviderHandler, testProviderConnectionHandler
-} from './controller'
+import { Router } from 'express';
+import { ProviderController } from './controller';
 
-const router = Router();
+export default function createProviderRouter(controller: ProviderController): Router {
+    const router = Router();
 
-// CRUD API
+    // CRUD API
+    router.get('/', controller.getProviders.bind(controller));
+    router.post('/', controller.createProvider.bind(controller));
+    router.put('/:providerId', controller.updateProvider.bind(controller));
+    router.delete('/:providerId', controller.deleteProvider.bind(controller));
 
-// GET /api/v1/integration/providers
-router.get('/', getProvidersHandler);
+    // Additional APIs
+    router.post('/:providerId/services/bulk', controller.bulkAddServices.bind(controller));
+    router.get('/:providerId/discover-services', controller.discoverServices.bind(controller));
+    router.post('/test-connection', controller.testConnection.bind(controller));
 
-// POST /api/v1/integration/providers
-router.post('/', createProviderHandler);
-
-// PUT /api/v1/integration/providers/:providerId
-router.put('/:providerId', updateProviderHandler);
-
-// DELETE /api/v1/integration/providers/:providerId
-router.delete('/:providerId', deleteProviderHandler);
-
-// Additional APIs
-
-// POST /api/v1/integration/providers/:providerId/instance/bulk
-router.post('/:providerId/services/bulk', bulkAddServicesHandler);
-
-// GET /api/v1/integration/providers/:providerId/services/search
-router.get('/:providerId/discover-services', discoverServicesInProviderHandler);
-
-// POST /api/v1/integration/providers/test-connection
-router.post('/test-connection', testProviderConnectionHandler);
-
-
-export default router;
+    return router;
+}
