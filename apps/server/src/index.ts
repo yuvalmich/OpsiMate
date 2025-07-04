@@ -5,6 +5,8 @@ import v1Router from './api/v1/v1';
 import { customViewService } from './bl/custom-views/custom-view.bl';
 import { initServicesTable } from './dal/serviceRepository';
 import { startRefreshJob } from "./jobs/refresh-job";
+import {initializeDb} from "./dal/db";
+import createV1Router from "./api/v1/v1";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -19,9 +21,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+const dbInstance = initializeDb()
+
 // API routes
 app.use('/', healthRouter);
-app.use('/api/v1', v1Router);
+app.use('/api/v1', createV1Router(dbInstance));
 
 // Initialize database tables
 initProvidersTable()

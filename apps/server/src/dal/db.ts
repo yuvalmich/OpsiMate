@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-export async function initializeDb(): Promise<Database.Database> {
+export function initializeDb(): Database.Database {
   const dbPath = path.resolve(__dirname, '../../service_peek.db');
   console.log(`SQLite database is connecting to ${dbPath}`);
 
