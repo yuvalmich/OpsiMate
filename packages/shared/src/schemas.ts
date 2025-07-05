@@ -22,6 +22,10 @@ export type Integration = z.infer<typeof CreateIntegrationSchema> & {
     createdAt: string;
 };
 
+export const IntegrationTagsquerySchema = z.object({
+    tags: z.union([z.string(), z.array(z.string())]),
+});
+
 export const AddBulkServiceSchema = z.array(
     z.object({
         name: z.string().min(1, 'Name is required'),

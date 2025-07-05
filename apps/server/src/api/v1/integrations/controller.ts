@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
-import { CreateIntegrationSchema, Integration, IntegrationTagsQuery } from "@service-peek/shared";
+import {
+    CreateIntegrationSchema,
+    Integration,
+    IntegrationTagsquerySchema
+} from "@service-peek/shared";
 import { z } from "zod";
 import { IntegrationBL } from "../../../bl/integrations/integration.bl";
 
@@ -71,7 +75,8 @@ export class IntegrationController {
         try {
             const integrationId = parseInt(req.params.integrationId);
             const tagsParam = req.query.tags;
-            const tags = Array.isArray(tagsParam) ? tagsParam : tagsParam ? [tagsParam] : [];
+            const parsed = IntegrationTagsquerySchema.parse(req.query);
+            const tags: string[] = Array.isArray(parsed.tags) ? parsed.tags : [parsed.tags];
             const response = await this.integrationBL.getIntegrationUrls(integrationId, tags)
             res.json({ success: true, data: response });
 
