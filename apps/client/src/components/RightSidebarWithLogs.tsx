@@ -164,15 +164,25 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
 
         <Separator />
 
-        {/* Tags Section */}
+        {/* External Links Section */}
         <div>
-          <h4 className="font-medium text-foreground text-xs mb-2">Tags</h4>
-          <TagSelector
-            selectedTags={serviceTags}
-            onTagsChange={handleTagsChange}
-            serviceId={parseInt(service.id)}
-            className=""
-          />
+          <h4 className="font-medium text-foreground text-xs mb-2">External Links</h4>
+          <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" className="justify-start gap-2 h-7 text-xs px-2">
+                <GrafanaIcon className="h-3 w-3" />
+                View in Grafana
+              </Button>
+              <Button variant="outline" size="sm" className="justify-start gap-2 h-7 text-xs px-2">
+                <CoralogixIcon className="h-3 w-3" />
+                View in Coralogix
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" className="w-full justify-center gap-2 h-7 text-xs px-2">
+              <AreaChart className="h-3 w-3" />
+              Server Monitoring
+            </Button>
+          </div>
         </div>
 
         <Separator />
@@ -248,23 +258,13 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
       <div className="pt-4 flex-shrink-0">
         <Separator />
         <div className="space-y-2 pt-4">
-          <h4 className="font-medium text-foreground text-xs">External Links</h4>
-          <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" size="sm" className="justify-start gap-2 h-7 text-xs px-2">
-                <GrafanaIcon className="h-3 w-3" />
-                View in Grafana
-              </Button>
-              <Button variant="outline" size="sm" className="justify-start gap-2 h-7 text-xs px-2">
-                <CoralogixIcon className="h-3 w-3" />
-                View in Coralogix
-              </Button>
-            </div>
-            <Button variant="outline" size="sm" className="w-full justify-center gap-2 h-7 text-xs px-2">
-              <AreaChart className="h-3 w-3" />
-              Server Monitoring
-            </Button>
-          </div>
+          <h4 className="font-medium text-foreground text-xs">Tags</h4>
+          <TagSelector
+            selectedTags={serviceTags}
+            onTagsChange={handleTagsChange}
+            serviceId={parseInt(service.id)}
+            className=""
+          />
         </div>
       </div>
     </div>
