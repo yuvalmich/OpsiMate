@@ -1,0 +1,109 @@
+import Database from 'better-sqlite3';
+import { runAsync } from './db';
+import { Integration } from '@service-peek/shared';
+
+type IntegrationRow = {
+    id: number;
+    name: string;
+    type: 'Grafana' | 'Prometheus' | 'Coralogix';
+    external_url: string;
+    credentials: string;
+    created_at: string;
+};
+
+const mapRowToIntegration = (row: IntegrationRow): Integration => ({
+    id: row.id,
+    name: row.name,
+    type: row.type,
+    externalUrl: row.external_url,
+    credentials: JSON.parse(row.credentials),
+    createdAt: row.created_at,
+});
+
+export class IntegrationRepository {
+    private db: Database.Database;
+
+    constructor(db: Database.Database) {
+        this.db = db;
+    }
+
+    async createIntegration(data: Omit<Integration, 'id' | 'createdAt'>): Promise<{ lastID: number }> {
+        return await runAsync(() => {
+            const stmt = this.db.prepare(`
+                INSERT INTO integrations (name, type, external_url, credentials)
+                VALUES (?, ?, ?, ?)
+            `);
+            const result = stmt.run(
+                data.name,
+                data.type,
+                data.externalUrl,
+                JSON.stringify(data.credentials)
+            );
+            return { lastID: result.lastInsertRowid as number };
+        });
+    }
+
+    async getIntegrationById(id: number): Promise<Integration> {
+        return runAsync(() => {
+            const stmt = this.db.prepare(`
+                SELECT id, name, type, external_url, credentials, created_at
+                FROM integrations
+                WHERE id = ?
+            `);
+            const row = stmt.get(id) as IntegrationRow;
+            return mapRowToIntegration(row);
+        });
+    }
+
+    async getAllIntegrations(): Promise<Integration[]> {
+        return runAsync(() => {
+            const stmt = this.db.prepare(`
+                SELECT id, name, type, external_url, credentials, created_at
+                FROM integrations
+                ORDER BY created_at DESC
+            `);
+            const rows = stmt.all() as IntegrationRow[];
+            return rows.map(mapRowToIntegration);
+        });
+    }
+
+    async deleteIntegration(id: number): Promise<void> {
+        return runAsync(() => {
+            const stmt = this.db.prepare('DELETE FROM integrations WHERE id = ?');
+            stmt.run(id);
+        });
+    }
+
+    async updateIntegration(id: number, data: Omit<Integration, 'id' | 'createdAt'>): Promise<void> {
+        return runAsync(() => {
+            const stmt = this.db.prepare(`
+                UPDATE integrations
+                SET name = ?, type = ?, external_url = ?, credentials = ?
+                WHERE id = ?
+            `);
+            stmt.run(
+                data.name,
+                data.type,
+                data.externalUrl,
+                JSON.stringify(data.credentials),
+                id
+            );
+        });
+    }
+
+    async initIntegrationsTable(): Promise<void> {
+        return runAsync(() => {
+            this.db.prepare(`
+                CREATE TABLE IF NOT EXISTS integrations
+                (
+                    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name         TEXT NOT NULL,
+                    type         TEXT NOT NULL CHECK (type IN ('Grafana', 'Prometheus', 'Coralogix')),
+                    external_url TEXT NOT NULL,
+                    credentials  JSON NOT NULL,
+                    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            `).run();
+        });
+    }
+}
