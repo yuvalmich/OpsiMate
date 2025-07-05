@@ -1,5 +1,6 @@
 import { IntegrationRepository } from "../../dal/integrationRepository";
 import { Integration } from "@service-peek/shared";
+import {integrationConnectorFactory} from "./integration-connector/integration-connector-factory";
 
 export class IntegrationBL {
     constructor(private integrationRepo: IntegrationRepository) {}
@@ -63,5 +64,13 @@ export class IntegrationBL {
         if (!integration) {
             throw new Error(`Integration with ID ${integrationId} does not exist.`);
         }
+    }
+
+    async getIntegrationUrls(integrationId: number, tags: string[]) {
+        const integration = await this.integrationRepo.getIntegrationById(integrationId);
+        if (!integration) {
+            throw new Error(`Integration with ID ${integrationId} does not exist.`);
+        }
+        return await integrationConnectorFactory(integration.type).getUrls(integration, tags)
     }
 }

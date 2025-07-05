@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {ProviderType, ServiceType} from './types';
+import {IntegrationType, ProviderType, ServiceType} from './types';
 
 export const CreateProviderSchema = z.object({
     name: z.string().min(1, 'Provider name is required'),
@@ -12,7 +12,7 @@ export const CreateProviderSchema = z.object({
 
 export const CreateIntegrationSchema = z.object({
     name: z.string().min(1),
-    type: z.enum(["Grafana", "Prometheus", "Coralogix"]),
+    type: z.nativeEnum(IntegrationType),
     externalUrl: z.string().url(),
     credentials: z.record(z.any()),
 });
