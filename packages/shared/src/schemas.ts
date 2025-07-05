@@ -10,6 +10,18 @@ export const CreateProviderSchema = z.object({
     providerType: z.nativeEnum(ProviderType),
 });
 
+export const CreateIntegrationSchema = z.object({
+    name: z.string().min(1),
+    type: z.enum(["Grafana", "Prometheus", "Coralogix"]),
+    externalUrl: z.string().url(),
+    credentials: z.record(z.any()),
+});
+
+export type Integration = z.infer<typeof CreateIntegrationSchema> & {
+    id: number;
+    createdAt: string;
+};
+
 export const AddBulkServiceSchema = z.array(
     z.object({
         name: z.string().min(1, 'Name is required'),

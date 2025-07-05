@@ -14,6 +14,9 @@ import {ViewRepository} from "./dal/viewRepository";
 import {RefreshJob} from "./jobs/refresh-job";
 import {TagRepository} from './dal/tagRepository';
 import {TagController} from "./api/v1/tags/controller";
+import {IntegrationController} from "./api/v1/integrations/controller";
+import {IntegrationRepository} from "./dal/integrationRepository";
+import {IntegrationBL} from "./bl/integrations/integration.bl";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -35,19 +38,22 @@ const providerRepo = new ProviderRepository(dbInstance)
 const serviceRepo = new ServiceRepository(dbInstance)
 const viewRepo = new ViewRepository(dbInstance)
 const tagRepo = new TagRepository(dbInstance)
+const integrationRepo = new IntegrationRepository(dbInstance)
 
 // BL
 const providerBL = new ProviderBL(providerRepo, serviceRepo)
+const integrationBL = new IntegrationBL(integrationRepo)
 
 // Controllers
 const providerController = new ProviderController(providerBL)
 const serviceController = new ServiceController(providerRepo, serviceRepo) // todo: change to work with BL layer
 const viewController = new ViewController(new ViewBL(viewRepo))
 const tagController = new TagController(tagRepo, serviceRepo)
+const integrationController = new IntegrationController(integrationBL)
 
 // API routes
 app.use('/', healthRouter);
-app.use('/api/v1', createV1Router(providerController, serviceController, viewController, tagController));
+app.use('/api/v1', createV1Router(providerController, serviceController, viewController, tagController, integrationController));
 
 // Initialize database tables
 // todo: move it from here.
@@ -83,6 +89,13 @@ tagRepo.initTagsTables()
         console.error('Failed to initialize tags tables:', err);
     });
 
+integrationRepo.initIntegrationsTable()
+    .then(() => {
+        console.log('Tags tables initialized');
+    })
+    .catch(err => {
+        console.error('Failed to initialize tags tables:', err);
+    });
 
 // this job refreshes the services status periodically.
 (new RefreshJob(providerBL, serviceRepo)).startRefreshJob()
