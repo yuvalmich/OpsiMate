@@ -1,15 +1,7 @@
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
 import { Integration } from '@service-peek/shared';
-
-type IntegrationRow = {
-    id: number;
-    name: string;
-    type: 'Grafana' | 'Prometheus' | 'Coralogix';
-    external_url: string;
-    credentials: string;
-    created_at: string;
-};
+import { IntegrationRow } from './models';
 
 const mapRowToIntegration = (row: IntegrationRow): Integration => ({
     id: row.id,
