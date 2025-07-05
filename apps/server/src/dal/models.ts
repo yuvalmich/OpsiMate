@@ -1,4 +1,4 @@
-type IntegrationRow = {
+export type IntegrationRow = {
     id: number;
     name: string;
     type: 'Grafana' | 'Prometheus' | 'Coralogix';
