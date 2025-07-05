@@ -383,8 +383,10 @@ export const integrationApi = {
   // Get integration URLs
   getIntegrationUrls: async (integrationId: number, tags: string[]) => {
     try {
-      const queryParams = tags.map(tag => `tags=${encodeURIComponent(tag)}`).join('&');
-      const response = await apiRequest<{name: string, url: string}[]>(`/integrations/${integrationId}/urls?${queryParams}`);
+      // The server expects a single 'tags' parameter with a comma-separated list
+      // This matches the IntegrationTagsquerySchema in the server
+      const tagsParam = tags.join(',');
+      const response = await apiRequest<{name: string, url: string}[]>(`/integrations/${integrationId}/urls?tags=${encodeURIComponent(tagsParam)}`);
       return response;
     } catch (error) {
       console.error('Error getting integration URLs:', error);

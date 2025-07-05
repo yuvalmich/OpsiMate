@@ -2,16 +2,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { X, AreaChart, FileText, RefreshCw, Plus } from "lucide-react";
+import { X, FileText, RefreshCw, Plus } from "lucide-react";
 import { Service } from "./ServiceTable";
 import { cn } from "@/lib/utils";
-import { GrafanaIcon } from "./icons/GrafanaIcon";
-import { CoralogixIcon } from "./icons/CoralogixIcon";
 import { providerApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { TagBadge } from "./ui/tag-badge";
 import { TagSelector } from "./TagSelector";
 import { Tag } from "@service-peek/shared";
+import { GrafanaDashboardDropdown } from "./GrafanaDashboardDropdown";
 
 interface RightSidebarProps {
   service: Service | null;
@@ -168,20 +167,10 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
         <div>
           <h4 className="font-medium text-foreground text-xs mb-2">External Links</h4>
           <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" size="sm" className="justify-start gap-2 h-7 text-xs px-2">
-                <GrafanaIcon className="h-3 w-3" />
-                View in Grafana
-              </Button>
-              <Button variant="outline" size="sm" className="justify-start gap-2 h-7 text-xs px-2">
-                <CoralogixIcon className="h-3 w-3" />
-                View in Coralogix
-              </Button>
-            </div>
-            <Button variant="outline" size="sm" className="w-full justify-center gap-2 h-7 text-xs px-2">
-              <AreaChart className="h-3 w-3" />
-              Server Monitoring
-            </Button>
+            <GrafanaDashboardDropdown 
+              tags={serviceTags} 
+              className="w-full"
+            />
           </div>
         </div>
 
