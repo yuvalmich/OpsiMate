@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { CreateIntegrationSchema, Integration } from "@service-peek/shared";
+import { CreateIntegrationSchema, Integration, IntegrationTagsQuery } from "@service-peek/shared";
 import { z } from "zod";
 import { IntegrationBL } from "../../../bl/integrations/integration.bl";
 
@@ -66,4 +66,29 @@ export class IntegrationController {
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     };
+
+    getIntegrationUrls = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const integrationId = parseInt(req.params.integrationId);
+            const tagsParam = req.query.tags;
+            const tags = Array.isArray(tagsParam) ? tagsParam : tagsParam ? [tagsParam] : [];
+            const response = await this.integrationBL.getIntegrationUrls(integrationId, tags)
+            res.json({ success: true, data: response });
+
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({
+                    success: false,
+                    error: 'Validation error',
+                    details: error.errors
+                });
+            } else {
+                console.error('Error in refreshServicesByTags:', error);
+                res.status(500).json({
+                    success: false,
+                    error: 'Internal server error'
+                });
+            }
+        }
+    }
 }

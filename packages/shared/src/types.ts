@@ -3,10 +3,19 @@ export enum ProviderType {
   K8S = 'K8S',
 }
 
+export enum IntegrationType {
+  Grafana = 'Grafana',
+}
+
 export enum ServiceType {
   DOCKER = 'DOCKER',
   SYSTEMD = 'SYSTEMD',
   MANUAL = 'MANUAL',
+}
+
+export interface IntegrationUrls {
+  name: string,
+  url: string,
 }
 
 export interface Provider {
