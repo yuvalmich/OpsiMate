@@ -1,4 +1,4 @@
-import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService, Tag } from '@service-peek/shared';
+import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
@@ -308,4 +308,92 @@ export const providerApi = {
   getServiceTags: (serviceId: number) => {
     return apiRequest<Tag[]>(`/services/${serviceId}/tags`);
   },
+};
+
+/**
+ * Integration API endpoints
+ */
+export const integrationApi = {
+  // Get all integrations
+  getIntegrations: async () => {
+    try {
+      const response = await apiRequest<{integrations: Integration[]}>('/integrations');
+      return response;
+    } catch (error) {
+      console.error('Error getting integrations:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  },
+
+  // Create a new integration
+  createIntegration: async (integrationData: {
+    name: string;
+    type: IntegrationType;
+    externalUrl: string;
+    credentials: Record<string, any>;
+  }) => {
+    try {
+      const response = await apiRequest<Integration>('/integrations', 'POST', integrationData);
+      return response;
+    } catch (error) {
+      console.error('Error creating integration:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  },
+
+  // Update an integration
+  updateIntegration: async (integrationId: number, integrationData: {
+    name: string;
+    type: IntegrationType;
+    externalUrl: string;
+    credentials: Record<string, any>;
+  }) => {
+    try {
+      const response = await apiRequest<Integration>(`/integrations/${integrationId}`, 'PUT', integrationData);
+      return response;
+    } catch (error) {
+      console.error('Error updating integration:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  },
+
+  // Delete an integration
+  deleteIntegration: async (integrationId: number) => {
+    try {
+      const response = await apiRequest<{message: string}>(`/integrations/${integrationId}`, 'DELETE');
+      return response;
+    } catch (error) {
+      console.error('Error deleting integration:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  },
+
+  // Get integration URLs
+  getIntegrationUrls: async (integrationId: number, tags: string[]) => {
+    try {
+      // The server expects a single 'tags' parameter with a comma-separated list
+      // This matches the IntegrationTagsquerySchema in the server
+      const tagsParam = tags.join(',');
+      const response = await apiRequest<{name: string, url: string}[]>(`/integrations/${integrationId}/urls?tags=${encodeURIComponent(tagsParam)}`);
+      return response;
+    } catch (error) {
+      console.error('Error getting integration URLs:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  }
 };

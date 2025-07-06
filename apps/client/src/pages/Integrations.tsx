@@ -1,8 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { integrationApi } from '@/lib/api';
+// Define IntegrationType locally until shared package export is fixed
+enum IntegrationType {
+  Grafana = 'Grafana',
+}
+import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +28,7 @@ import {
   Server,
   Database,
   LineChart,
+  Loader2,
   Bell,
   BarChart3,
   Eye,
@@ -203,7 +210,35 @@ export default function Integrations() {
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [configuredInstances, setConfiguredInstances] = useState<Record<string, number>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [savedIntegrations, setSavedIntegrations] = useState<any[]>([]);
+  const { toast } = useToast();
   
+  // Fetch saved integrations on component mount
+  useEffect(() => {
+    const fetchIntegrations = async () => {
+      try {
+        const response = await integrationApi.getIntegrations();
+        if (response.success && response.data?.integrations) {
+          setSavedIntegrations(response.data.integrations);
+          
+          // Update configured instances based on saved integrations
+          const instances: Record<string, number> = {};
+          response.data.integrations.forEach(integration => {
+            const type = integration.type.toLowerCase();
+            instances[type] = (instances[type] || 0) + 1;
+          });
+          setConfiguredInstances(instances);
+        }
+      } catch (error) {
+        console.error('Failed to fetch integrations:', error);
+      }
+    };
+    
+    fetchIntegrations();
+  }, []);
+
   const filteredIntegrations = useMemo(() => {
     return INTEGRATIONS.filter(integration => {
       const matchesSearch = integration.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -375,7 +410,28 @@ export default function Integrations() {
                     hoveredCard === integration.id && configuredInstances[integration.id] && configuredInstances[integration.id] > 0 ? "bg-primary" : "",
                     !configuredInstances[integration.id] || configuredInstances[integration.id] === 0 ? "border-dashed bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600" : ""
                   )}
-                  onClick={() => setSelectedIntegration(integration)}
+                  onClick={() => {
+                    // Find existing integration of this type if it exists
+                    const existingIntegration = savedIntegrations.find(
+                      integration2 => integration2.type === integration.id.charAt(0).toUpperCase() + integration.id.slice(1)
+                    );
+                    
+                    // If integration exists, pre-fill form data
+                    if (existingIntegration) {
+                      setFormData({
+                        url: existingIntegration.externalUrl || '',
+                        apiKey: existingIntegration.credentials?.token || ''
+                      });
+                    } else {
+                      // Clear form data for new integration
+                      setFormData({});
+                    }
+                    
+                    setSelectedIntegration(integration);
+                  }}
+                  title={configuredInstances[integration.id] && configuredInstances[integration.id] > 0 ? 
+                    `Configure ${integration.name} integration` : 
+                    `Add ${integration.name} integration`}
                 >
                   <Settings className="mr-2 h-4 w-4" />
                   {configuredInstances[integration.id] && configuredInstances[integration.id] > 0 ? "Configure" : "Add Integration"}
@@ -426,7 +482,12 @@ export default function Integrations() {
                     />
                   </div>
                   <div>
-                    <SheetTitle className="text-xl">{selectedIntegration.name}</SheetTitle>
+                    <SheetTitle>
+                      {configuredInstances[selectedIntegration.id] && configuredInstances[selectedIntegration.id] > 0 
+                        ? `Configure ${selectedIntegration.name} Integration` 
+                        : `Add ${selectedIntegration.name} Integration`
+                      }
+                    </SheetTitle>
                     <div className="flex items-center gap-1 mt-1">
                       <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">Official</Badge>
                       <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">Verified</Badge>
@@ -434,7 +495,10 @@ export default function Integrations() {
                   </div>
                 </div>
                 <SheetDescription className="mt-4">
-                  {selectedIntegration.description}
+                  {configuredInstances[selectedIntegration.id] && configuredInstances[selectedIntegration.id] > 0 
+                    ? `Update your ${selectedIntegration.name} integration settings or remove the integration.` 
+                    : selectedIntegration.description
+                  }
                 </SheetDescription>
               </SheetHeader>
               
@@ -461,7 +525,91 @@ export default function Integrations() {
                     </div>
                   </div>
                   
-                  <form className="space-y-5">
+                  <form className="space-y-5" onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!selectedIntegration) return;
+                    
+                    setIsSubmitting(true);
+                    try {
+                      // Check if an integration of this type already exists
+                      const existingIntegration = savedIntegrations.find(
+                        integration => integration.type === selectedIntegration.id.charAt(0).toUpperCase() + selectedIntegration.id.slice(1)
+                      );
+                      
+                      // Prepare the integration data
+                      const integrationData = {
+                        name: selectedIntegration.name,
+                        type: IntegrationType.Grafana,
+                        externalUrl: formData.url || '',
+                        credentials: {
+                          // Use 'token' instead of 'apiKey' to match what GrafanaIntegrationConnector expects
+                          token: formData.apiKey || '',
+                        }
+                      };
+                      
+                      let response;
+                      
+                      if (existingIntegration) {
+                        // Update existing integration
+                        response = await integrationApi.updateIntegration(existingIntegration.id, integrationData);
+                        
+                        if (response.success) {
+                          toast({
+                            title: 'Integration updated',
+                            description: `${selectedIntegration.name} integration has been successfully updated.`,
+                          });
+                        } else {
+                          toast({
+                            title: 'Error',
+                            description: response.error || 'Failed to update integration',
+                            variant: 'destructive',
+                          });
+                        }
+                      } else {
+                        // Create new integration
+                        response = await integrationApi.createIntegration(integrationData);
+                        
+                        if (response.success) {
+                          toast({
+                            title: 'Integration created',
+                            description: `${selectedIntegration.name} integration has been successfully created.`,
+                          });
+                          
+                          // Update configured instances
+                          setConfiguredInstances(prev => ({
+                            ...prev,
+                            [selectedIntegration.id]: (prev[selectedIntegration.id] || 0) + 1
+                          }));
+                        } else {
+                          toast({
+                            title: 'Error',
+                            description: response.error || 'Failed to create integration',
+                            variant: 'destructive',
+                          });
+                        }
+                      }
+                      
+                      if (response.success) {
+                        // Fetch updated integrations
+                        const updatedIntegrations = await integrationApi.getIntegrations();
+                        if (updatedIntegrations.success && updatedIntegrations.data?.integrations) {
+                          setSavedIntegrations(updatedIntegrations.data.integrations);
+                        }
+                        
+                        // Close the sheet
+                        setSelectedIntegration(null);
+                      }
+                    } catch (error) {
+                      console.error('Error managing integration:', error);
+                      toast({
+                        title: 'Error',
+                        description: 'An unexpected error occurred',
+                        variant: 'destructive',
+                      });
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}>
                     {selectedIntegration.configFields.map(field => (
                       <div key={field.name} className="space-y-2">
                         <label htmlFor={field.name} className="text-sm font-medium flex items-center gap-1">
@@ -473,6 +621,9 @@ export default function Integrations() {
                             name={field.name}
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             required={field.required}
+                            value={formData[field.name] || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
+                            disabled={isSubmitting}
                           >
                             <option value="">Select {field.label}</option>
                             {field.options?.map(option => (
@@ -486,32 +637,107 @@ export default function Integrations() {
                             type={field.type}
                             placeholder={field.placeholder}
                             required={field.required}
+                            value={formData[field.name] || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
+                            disabled={isSubmitting}
                           />
-                        )}
-                        {field.type === 'password' && (
-                          <p className="text-xs text-muted-foreground">Your credentials are securely encrypted.</p>
                         )}
                       </div>
                     ))}
                     
                     <div className="pt-4 space-y-3">
-                      <Button 
-                        type="submit" 
-                        className="w-full gap-2"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (selectedIntegration) {
-                            setConfiguredInstances(prev => ({
-                              ...prev,
-                              [selectedIntegration.id]: (prev[selectedIntegration.id] || 0) + 1
-                            }));
-                            setSelectedIntegration(null);
-                          }
-                        }}
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                        Add Integration
+                      <div className="flex justify-between mt-6">
+                      {/* Delete button - only show for existing integrations */}
+                      {savedIntegrations.find(
+                        integration => integration.type === selectedIntegration.id.charAt(0).toUpperCase() + selectedIntegration.id.slice(1)
+                      ) && (
+                        <Button 
+                          type="button" 
+                          variant="destructive"
+                          disabled={isSubmitting}
+                          onClick={async () => {
+                            if (!window.confirm(`Are you sure you want to delete this ${selectedIntegration.name} integration?`)) {
+                              return;
+                            }
+                            
+                            setIsSubmitting(true);
+                            try {
+                              const existingIntegration = savedIntegrations.find(
+                                integration => integration.type === selectedIntegration.id.charAt(0).toUpperCase() + selectedIntegration.id.slice(1)
+                              );
+                              
+                              if (!existingIntegration) {
+                                toast({
+                                  title: 'Error',
+                                  description: 'Integration not found',
+                                  variant: 'destructive',
+                                });
+                                return;
+                              }
+                              
+                              const response = await integrationApi.deleteIntegration(existingIntegration.id);
+                              
+                              if (response.success) {
+                                toast({
+                                  title: 'Integration deleted',
+                                  description: `${selectedIntegration.name} integration has been successfully deleted.`,
+                                });
+                                
+                                // Update configured instances
+                                setConfiguredInstances(prev => ({
+                                  ...prev,
+                                  [selectedIntegration.id]: 0
+                                }));
+                                
+                                // Fetch updated integrations
+                                const updatedIntegrations = await integrationApi.getIntegrations();
+                                if (updatedIntegrations.success && updatedIntegrations.data?.integrations) {
+                                  setSavedIntegrations(updatedIntegrations.data.integrations);
+                                }
+                                
+                                // Close the sheet
+                                setSelectedIntegration(null);
+                              } else {
+                                toast({
+                                  title: 'Error',
+                                  description: response.error || 'Failed to delete integration',
+                                  variant: 'destructive',
+                                });
+                              }
+                            } catch (error) {
+                              console.error('Error deleting integration:', error);
+                              toast({
+                                title: 'Error',
+                                description: 'An unexpected error occurred',
+                                variant: 'destructive',
+                              });
+                            } finally {
+                              setIsSubmitting(false);
+                            }
+                          }}
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            'Delete Integration'
+                          )}
+                        </Button>
+                      )}
+                      
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          'Save Integration'
+                        )}
                       </Button>
+                    </div>
                       <p className="text-xs text-center text-muted-foreground">
                         You can configure multiple instances of the same integration
                       </p>
