@@ -16,7 +16,7 @@ function getKeyPath(filename: string) {
 
 const executeCommandOnKubernetes = async (provider: Provider): Promise<DiscoveredService[]> => {
     const kc = new k8s.KubeConfig();
-    // todo - change to use config provider.
+    // TODO - change to use config provider.
     const privateKeyPath = getKeyPath("kubeconfig");
 
     kc.loadFromFile(privateKeyPath);
@@ -27,10 +27,12 @@ const executeCommandOnKubernetes = async (provider: Provider): Promise<Discovere
     return servicesResp.items.map(svc => {
         const name = svc.metadata?.name || 'unknown';
         const serviceIP = svc.spec?.clusterIP || 'None';
+        // TODO how to choose the correct port?
         const ports = (svc.spec?.ports || []).map(
             p => `${p.port}${p.protocol ? '/' + p.protocol : ''}`
         );
 
+        // TODO - should fetch the status of the service
         return {name, serviceIP, port: ports[0] ?? '', serviceStatus: "running"};
     });
 }
