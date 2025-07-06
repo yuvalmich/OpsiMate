@@ -8,12 +8,12 @@ interface KibanaDashboard {
 }
 
 export class KibanaIntegrationConnector implements IntegrationConnector {
-    async getUrls(integration: Integration, tags: string[]): Promise<IntegrationUrls> {
+    async getUrls(integration: Integration, tags: string[]): Promise<IntegrationUrls[]> {
         try {
             // Check if credentials exist and have the token field
             if (!integration.credentials || !integration.credentials["token"]) {
                 console.error('Missing Kibana API token in credentials');
-                return [] as unknown as IntegrationUrls;
+                return [];
             }
             
             const kibanaClient = new KibanaClient(integration.externalUrl, integration.credentials["token"]);
@@ -42,10 +42,10 @@ export class KibanaIntegrationConnector implements IntegrationConnector {
             return allDashboards.map((dash) => ({
                 name: dash.title,
                 url: dash.url,
-            })) as unknown as IntegrationUrls;
+            }));
         } catch (error) {
             console.error('Error in KibanaIntegrationConnector.getUrls:', error);
-            return [] as unknown as IntegrationUrls;
+            return [];
         }
     }
 }

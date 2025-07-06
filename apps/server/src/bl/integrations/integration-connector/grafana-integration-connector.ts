@@ -3,7 +3,7 @@ import {IntegrationConnector} from "./integration-connector";
 import {GrafanaClient} from "../../../dal/external-client/grafana-client";
 
 export class GrafanaIntegrationConnector implements IntegrationConnector {
-    async getUrls(integration: Integration, tags: string[]): Promise<IntegrationUrls> {
+    async getUrls(integration: Integration, tags: string[]): Promise<IntegrationUrls[]> {
         const grafanaClient = new GrafanaClient(integration.externalUrl, integration.credentials["token"]);
 
         // todo: add types to grafana
