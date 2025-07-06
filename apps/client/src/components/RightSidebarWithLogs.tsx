@@ -11,6 +11,7 @@ import { TagBadge } from "./ui/tag-badge";
 import { TagSelector } from "./TagSelector";
 import { Tag } from "@service-peek/shared";
 import { GrafanaDashboardDropdown } from "./GrafanaDashboardDropdown";
+import { KibanaDashboardDropdown } from "./KibanaDashboardDropdown";
 
 interface RightSidebarProps {
   service: Service | null;
@@ -168,6 +169,10 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
           <h4 className="font-medium text-foreground text-xs mb-2">External Links</h4>
           <div className="flex flex-col gap-2">
             <GrafanaDashboardDropdown 
+              tags={serviceTags} 
+              className="w-full"
+            />
+            <KibanaDashboardDropdown 
               tags={serviceTags} 
               className="w-full"
             />

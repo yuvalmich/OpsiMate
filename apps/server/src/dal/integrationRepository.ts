@@ -90,7 +90,7 @@ export class IntegrationRepository {
                 (
                     id           INTEGER PRIMARY KEY AUTOINCREMENT,
                     name         TEXT NOT NULL,
-                    type         TEXT NOT NULL CHECK (type IN ('Grafana', 'Prometheus', 'Coralogix')),
+                    type         TEXT NOT NULL CHECK (type IN ('Grafana', 'Prometheus', 'Coralogix', 'Kibana')),
                     external_url TEXT NOT NULL,
                     credentials  JSON NOT NULL,
                     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
