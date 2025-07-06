@@ -1,5 +1,6 @@
 import {ProviderConnector} from "./providerConnector";
 import {DiscoveredService, Provider} from "@service-peek/shared";
+import {executeCommandOnKubernetes} from "../../../dal/kubeConnector";
 
 export class K8SProviderConnector implements ProviderConnector {
     getServiceLogs(provider: Provider, serviceName: string): Promise<string[]> {
@@ -12,7 +13,7 @@ export class K8SProviderConnector implements ProviderConnector {
         throw new Error("Method not implemented.");
     }
     async discoverServices(provider: Provider): Promise<DiscoveredService[]> {
-        throw new Error("Method not implemented.");
+        return executeCommandOnKubernetes(provider);
     }
     async testConnection(provider: Provider): Promise<boolean> {
         throw new Error("Method not implemented.");
