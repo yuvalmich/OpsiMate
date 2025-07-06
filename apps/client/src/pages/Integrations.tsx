@@ -7,8 +7,19 @@ import { integrationApi } from '@/lib/api';
 // Define IntegrationType locally until shared package export is fixed
 enum IntegrationType {
   Grafana = 'Grafana',
+  Kibana = 'Kibana',
 }
 import { useToast } from '@/components/ui/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -62,6 +73,17 @@ const INTEGRATIONS: Integration[] = [
     tags: ['Monitoring', 'Visualization', 'Alerts'],
     configFields: [
       { name: 'url', label: 'Grafana URL', type: 'text', placeholder: 'https://your-grafana-instance.com', required: true },
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+    ],
+  },
+  {
+    id: 'kibana',
+    name: 'Kibana',
+    description: 'Visualize and explore data from Elasticsearch.',
+    logo: 'https://static-www.elastic.co/v3/assets/bltefdd0b53724fa2ce/blt8781708f8f37ed16/5c11ec2edf09df047814db23/logo-elastic-kibana-lt.svg',
+    tags: ['Monitoring', 'Visualization', 'Elasticsearch'],
+    configFields: [
+      { name: 'url', label: 'Kibana URL', type: 'text', placeholder: 'https://your-kibana-instance.com', required: true },
       { name: 'apiKey', label: 'API Key', type: 'password', required: true },
     ],
   },
@@ -213,6 +235,8 @@ export default function Integrations() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [savedIntegrations, setSavedIntegrations] = useState<any[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [integrationToDelete, setIntegrationToDelete] = useState<any>(null);
   const { toast } = useToast();
   
   // Fetch saved integrations on component mount
@@ -260,8 +284,9 @@ export default function Integrations() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="flex flex-col h-full p-6 gap-6 max-w-7xl mx-auto">
+    <>
+      <DashboardLayout>
+        <div className="flex flex-col h-full p-6 gap-6 max-w-7xl mx-auto">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
@@ -536,13 +561,20 @@ export default function Integrations() {
                         integration => integration.type === selectedIntegration.id.charAt(0).toUpperCase() + selectedIntegration.id.slice(1)
                       );
                       
+                      // Map integration id to the correct IntegrationType
+                      const typeMapping = {
+                        'grafana': IntegrationType.Grafana,
+                        'kibana': IntegrationType.Kibana,
+                        // Add other integration types as needed
+                      };
+                      
                       // Prepare the integration data
                       const integrationData = {
                         name: selectedIntegration.name,
-                        type: IntegrationType.Grafana,
+                        type: typeMapping[selectedIntegration.id as keyof typeof typeMapping] || IntegrationType.Grafana,
                         externalUrl: formData.url || '',
                         credentials: {
-                          // Use 'token' instead of 'apiKey' to match what GrafanaIntegrationConnector expects
+                          // Use 'token' instead of 'apiKey' to match what IntegrationConnector expects
                           token: formData.apiKey || '',
                         }
                       };
@@ -655,65 +687,22 @@ export default function Integrations() {
                           type="button" 
                           variant="destructive"
                           disabled={isSubmitting}
-                          onClick={async () => {
-                            if (!window.confirm(`Are you sure you want to delete this ${selectedIntegration.name} integration?`)) {
+                          onClick={() => {
+                            const existingIntegration = savedIntegrations.find(
+                              integration => integration.type === selectedIntegration.id.charAt(0).toUpperCase() + selectedIntegration.id.slice(1)
+                            );
+                            
+                            if (!existingIntegration) {
+                              toast({
+                                title: 'Error',
+                                description: 'Integration not found',
+                                variant: 'destructive',
+                              });
                               return;
                             }
                             
-                            setIsSubmitting(true);
-                            try {
-                              const existingIntegration = savedIntegrations.find(
-                                integration => integration.type === selectedIntegration.id.charAt(0).toUpperCase() + selectedIntegration.id.slice(1)
-                              );
-                              
-                              if (!existingIntegration) {
-                                toast({
-                                  title: 'Error',
-                                  description: 'Integration not found',
-                                  variant: 'destructive',
-                                });
-                                return;
-                              }
-                              
-                              const response = await integrationApi.deleteIntegration(existingIntegration.id);
-                              
-                              if (response.success) {
-                                toast({
-                                  title: 'Integration deleted',
-                                  description: `${selectedIntegration.name} integration has been successfully deleted.`,
-                                });
-                                
-                                // Update configured instances
-                                setConfiguredInstances(prev => ({
-                                  ...prev,
-                                  [selectedIntegration.id]: 0
-                                }));
-                                
-                                // Fetch updated integrations
-                                const updatedIntegrations = await integrationApi.getIntegrations();
-                                if (updatedIntegrations.success && updatedIntegrations.data?.integrations) {
-                                  setSavedIntegrations(updatedIntegrations.data.integrations);
-                                }
-                                
-                                // Close the sheet
-                                setSelectedIntegration(null);
-                              } else {
-                                toast({
-                                  title: 'Error',
-                                  description: response.error || 'Failed to delete integration',
-                                  variant: 'destructive',
-                                });
-                              }
-                            } catch (error) {
-                              console.error('Error deleting integration:', error);
-                              toast({
-                                title: 'Error',
-                                description: 'An unexpected error occurred',
-                                variant: 'destructive',
-                              });
-                            } finally {
-                              setIsSubmitting(false);
-                            }
+                            setIntegrationToDelete(existingIntegration);
+                            setDeleteDialogOpen(true);
                           }}
                         >
                           {isSubmitting ? (
@@ -792,5 +781,73 @@ export default function Integrations() {
         </SheetContent>
       </Sheet>
     </DashboardLayout>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the {integrationToDelete?.type} integration. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!integrationToDelete) return;
+                
+                setIsSubmitting(true);
+                try {
+                  const response = await integrationApi.deleteIntegration(integrationToDelete.id);
+                  
+                  if (response.success) {
+                    toast({
+                      title: 'Integration deleted',
+                      description: `${integrationToDelete.type} integration has been successfully deleted.`,
+                    });
+                    
+                    // Update configured instances
+                    const integrationType = integrationToDelete.type.toLowerCase();
+                    setConfiguredInstances(prev => ({
+                      ...prev,
+                      [integrationType]: 0
+                    }));
+                    
+                    // Fetch updated integrations
+                    const updatedIntegrations = await integrationApi.getIntegrations();
+                    if (updatedIntegrations.success && updatedIntegrations.data?.integrations) {
+                      setSavedIntegrations(updatedIntegrations.data.integrations);
+                    }
+                    
+                    // Close the sheet
+                    setSelectedIntegration(null);
+                  } else {
+                    toast({
+                      title: 'Error',
+                      description: response.error || 'Failed to delete integration',
+                      variant: 'destructive',
+                    });
+                  }
+                } catch (error) {
+                  console.error('Error deleting integration:', error);
+                  toast({
+                    title: 'Error',
+                    description: 'An unexpected error occurred',
+                    variant: 'destructive',
+                  });
+                } finally {
+                  setIsSubmitting(false);
+                  setDeleteDialogOpen(false);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
