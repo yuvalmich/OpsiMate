@@ -85,69 +85,18 @@ export class IntegrationRepository {
 
     async initIntegrationsTable(): Promise<void> {
         return runAsync(() => {
-            // First, check if the table exists and has the old constraint
-            const tableInfo = this.db.prepare(`
-                SELECT sql FROM sqlite_master 
-                WHERE type='table' AND name='integrations'
-            `).get() as any;
-            
-            // If table exists but doesn't include Kibana in the constraint, recreate it
-            if (tableInfo && !tableInfo.sql.includes('Kibana')) {
-                console.log('Updating integrations table to include Kibana support...');
-                
-                // Backup existing data
-                const existingData = this.db.prepare('SELECT * FROM integrations').all() as Array<{
-                    id: number;
-                    name: string;
-                    type: string;
-                    external_url: string;
-                    credentials: string;
-                    created_at: string;
-                }>;
-                
-                // Drop the old table
-                this.db.prepare('DROP TABLE integrations').run();
-                
-                // Create the new table with updated constraint
-                this.db.prepare(`
-                    CREATE TABLE integrations
-                    (
-                        id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name         TEXT NOT NULL,
-                        type         TEXT NOT NULL CHECK (type IN ('Grafana', 'Prometheus', 'Coralogix', 'Kibana')),
-                        external_url TEXT NOT NULL,
-                        credentials  JSON NOT NULL,
-                        created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
-                    );
-                `).run();
-                
-                // Restore existing data
-                if (existingData.length > 0) {
-                    const insertStmt = this.db.prepare(`
-                        INSERT INTO integrations (id, name, type, external_url, credentials, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    `);
-                    
-                    for (const row of existingData) {
-                        insertStmt.run(row.id, row.name, row.type, row.external_url, row.credentials, row.created_at);
-                    }
-                }
-                
-                console.log('Integrations table updated successfully');
-            } else {
-                // Create table if it doesn't exist
-                this.db.prepare(`
-                    CREATE TABLE IF NOT EXISTS integrations
-                    (
-                        id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name         TEXT NOT NULL,
-                        type         TEXT NOT NULL CHECK (type IN ('Grafana', 'Prometheus', 'Coralogix', 'Kibana')),
-                        external_url TEXT NOT NULL,
-                        credentials  JSON NOT NULL,
-                        created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
-                    );
-                `).run();
-            }
+            // Create table with Kibana support directly - no need for backward compatibility
+            this.db.prepare(`
+                CREATE TABLE IF NOT EXISTS integrations
+                (
+                    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name         TEXT NOT NULL,
+                    type         TEXT NOT NULL CHECK (type IN ('Grafana', 'Prometheus', 'Coralogix', 'Kibana')),
+                    external_url TEXT NOT NULL,
+                    credentials  JSON NOT NULL,
+                    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            `).run();
         });
     }
 }
