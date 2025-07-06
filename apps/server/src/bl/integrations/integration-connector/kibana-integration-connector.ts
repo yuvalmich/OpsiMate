@@ -18,32 +18,38 @@ export class KibanaIntegrationConnector implements IntegrationConnector {
             
             const kibanaClient = new KibanaClient(integration.externalUrl, integration.credentials["token"]);
             
-            // Process each tag and collect all dashboards
-            const allDashboards: KibanaDashboard[] = [];
-            
-            for (const tag of tags) {
+            // Process all tags in parallel and collect dashboards
+            const dashboardPromises = tags.map(async (tag: string) => {
                 try {
                     const dashboards = await kibanaClient.searchDashboardsByTag(tag);
+                    console.log(`Found ${dashboards.length} dashboards with tag '${tag}'`);
                     
-                    // Add dashboards to the collection
-                    dashboards.forEach((dash: any) => {
-                        allDashboards.push({
-                            title: dash.title,
-                            url: `${integration.externalUrl.replace(/\/$/, '')}${dash.url}`,
-                        });
-                    });
-                } catch (error) {
+                    // Transform dashboards to KibanaDashboard format
+                    return dashboards.map((dash: any) => ({
+                        title: dash.title,
+                        url: `${integration.externalUrl.replace(/\/$/, '')}${dash.url}`,
+                    }));
+                } catch (error: any) {
                     console.error(`Error fetching Kibana dashboards for tag ${tag}:`, error);
-                    // Continue with other tags even if one fails
+                    return []; // Return empty array for failed tags
                 }
-            }
+            });
+            
+            // Wait for all dashboard requests to complete
+            const dashboardResults = await Promise.all(dashboardPromises);
+            
+            // Flatten results and remove duplicates based on URL
+            const allDashboards = dashboardResults.flat();
+            const uniqueDashboards = Array.from(
+                new Map(allDashboards.map((dash: KibanaDashboard) => [dash.url, dash])).values()
+            );
             
             // Return dashboards as IntegrationUrls array
-            return allDashboards.map((dash) => ({
+            return uniqueDashboards.map((dash: KibanaDashboard) => ({
                 name: dash.title,
                 url: dash.url,
             }));
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error in KibanaIntegrationConnector.getUrls:', error);
             return [];
         }
