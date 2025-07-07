@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
-import {Service, Provider, Tag, Logger} from '@service-peek/shared';
+import {Service, Provider, Tag, Logger, ServiceType, ContainerDetails, ProviderType} from '@service-peek/shared';
 import { runAsync } from './db';
+import {ServiceRow, ServiceRowWithProviderRow} from "./models";
 
 type ServiceWithProvider = Service & { provider: Provider } & { tags: Tag[] };
 
@@ -42,14 +43,14 @@ export class ServiceRepository {
     }
 
     async getServiceById(id: number): Promise<Service | null> {
-        return runAsync(() => {
-            const row: any = this.db.prepare('SELECT * FROM services WHERE id = ?').get(id);
+        return runAsync((): Service | null => {
+            const row: ServiceRow = this.db.prepare('SELECT * FROM services WHERE id = ?').get(id) as ServiceRow;
             if (!row) return null;
 
-            let containerDetails = null;
+            let containerDetails: ContainerDetails | undefined;
             if (row.container_details) {
                 try {
-                    containerDetails = JSON.parse(row.container_details);
+                    containerDetails = JSON.parse(row.container_details) as ContainerDetails;
                 } catch (e) {
                     logger.error('Error parsing container_details JSON:', e);
                 }
@@ -61,9 +62,9 @@ export class ServiceRepository {
                 name: row.service_name,
                 serviceIP: row.service_ip,
                 serviceStatus: row.service_status,
-                serviceType: row.service_type,
+                serviceType: row.service_type as ServiceType,
                 createdAt: row.created_at,
-                containerDetails,
+                containerDetails: containerDetails,
             };
         });
     }
@@ -72,7 +73,7 @@ export class ServiceRepository {
         const existing = await this.getServiceById(id);
         if (!existing) throw new Error('Service not found');
 
-        const updates: Record<string, any> = {};
+        const updates: Record<string, unknown> = {};
         if (data.name !== undefined) updates.service_name = data.name;
         if (data.serviceIP !== undefined) updates.service_ip = data.serviceIP;
         if (data.serviceStatus !== undefined) updates.service_status = data.serviceStatus;
@@ -112,13 +113,13 @@ export class ServiceRepository {
                 ORDER BY s.created_at DESC
             `;
 
-            const rows = this.db.prepare(query).all();
+            const rows: ServiceRowWithProviderRow[] = this.db.prepare(query).all() as ServiceRowWithProviderRow[];
 
-            return rows.map((row: any): ServiceWithProvider => {
-                let containerDetails = null;
+            return rows.map((row: ServiceRowWithProviderRow): ServiceWithProvider => {
+                let containerDetails: ContainerDetails | undefined;
                 if (row.container_details) {
                     try {
-                        containerDetails = JSON.parse(row.container_details);
+                        containerDetails = JSON.parse(row.container_details) as ContainerDetails;
                     } catch (e) {
                         logger.error('Error parsing container_details JSON:', e);
                     }
@@ -139,7 +140,7 @@ export class ServiceRepository {
                     name: row.service_name,
                     serviceIP: row.service_ip,
                     serviceStatus: row.service_status,
-                    serviceType: row.service_type,
+                    serviceType: row.service_type as ServiceType,
                     createdAt: row.service_created_at,
                     containerDetails,
                     tags: tags,
@@ -151,7 +152,7 @@ export class ServiceRepository {
                         privateKeyFilename: row.private_key_filename,
                         SSHPort: row.ssh_port,
                         createdAt: row.provider_created_at,
-                        providerType: row.provider_type,
+                        providerType: row.provider_type as ProviderType,
                     },
                 } as ServiceWithProvider;
             });
@@ -172,13 +173,13 @@ export class ServiceRepository {
                 WHERE s.id = ?
             `;
 
-            const row: any = this.db.prepare(query).get(id);
+            const row: ServiceRowWithProviderRow = this.db.prepare(query).get(id) as ServiceRowWithProviderRow;
             if (!row) return null;
 
-            let containerDetails = null;
+            let containerDetails: ContainerDetails | undefined;
             if (row.container_details) {
                 try {
-                    containerDetails = JSON.parse(row.container_details);
+                    containerDetails = JSON.parse(row.container_details) as ContainerDetails;
                 } catch (e) {
                     logger.error('Error parsing container_details JSON:', e);
                 }
@@ -199,7 +200,7 @@ export class ServiceRepository {
                 name: row.service_name,
                 serviceIP: row.service_ip,
                 serviceStatus: row.service_status,
-                serviceType: row.service_type,
+                serviceType: row.service_type as ServiceType,
                 createdAt: row.service_created_at,
                 containerDetails,
                 tags: tags,
@@ -211,7 +212,7 @@ export class ServiceRepository {
                     privateKeyFilename: row.private_key_filename,
                     SSHPort: row.ssh_port,
                     createdAt: row.provider_created_at,
-                    providerType: row.provider_type,
+                    providerType: row.provider_type as ProviderType,
                 },
             };
         });
@@ -220,19 +221,18 @@ export class ServiceRepository {
     async getServicesByProviderId(providerId: number): Promise<Service[]> {
         return runAsync(() => {
             const stmt = this.db.prepare(`
-                SELECT id, provider_id, service_name, service_ip,
-                       service_status, service_type, created_at, container_details
+                SELECT *
                 FROM services
                 WHERE provider_id = ?
             `);
 
-            const rows = stmt.all(providerId);
+            const rows: ServiceRow[] = stmt.all(providerId) as ServiceRow[];
 
-            return rows.map((row: any) => {
-                let containerDetails = null;
+            return rows.map((row: ServiceRow) => {
+                let containerDetails: ContainerDetails | undefined;
                 if (row.container_details) {
                     try {
-                        containerDetails = JSON.parse(row.container_details);
+                        containerDetails = JSON.parse(row.container_details) as ContainerDetails;
                     } catch (e) {
                         logger.error('Error parsing container_details JSON:', e);
                     }
@@ -244,7 +244,7 @@ export class ServiceRepository {
                     name: row.service_name,
                     serviceIP: row.service_ip,
                     serviceStatus: row.service_status,
-                    serviceType: row.service_type,
+                    serviceType: row.service_type as ServiceType,
                     createdAt: row.created_at,
                     containerDetails,
                 };

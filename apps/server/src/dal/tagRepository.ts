@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import Database, {Statement} from 'better-sqlite3';
 import {Tag} from '@service-peek/shared';
 import {runAsync} from './db';
 
@@ -16,7 +16,7 @@ export class TagRepository {
 
     async getAllTags(): Promise<Tag[]> {
         return runAsync(() => {
-            const stmt = this.db.prepare('SELECT id, name, color, created_at as createdAt FROM tags ORDER BY name');
+            const stmt: Statement<Tag[]> = this.db.prepare('SELECT id, name, color, created_at as createdAt FROM tags ORDER BY name');
             return stmt.all() as Tag[];
         });
     }
@@ -31,7 +31,7 @@ export class TagRepository {
     async updateTag(id: number, data: Partial<Omit<Tag, 'id' | 'createdAt'>>): Promise<void> {
         return runAsync(() => {
             const updates: string[] = [];
-            const values: any[] = [];
+            const values: unknown[] = [];
 
             if (data.name !== undefined) {
                 updates.push('name = ?');

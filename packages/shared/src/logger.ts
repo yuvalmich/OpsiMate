@@ -1,6 +1,3 @@
-// logger.ts
-import chalk from 'chalk';
-
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
 interface LogOptions {
@@ -9,21 +6,14 @@ interface LogOptions {
 
 const getTimestamp = (): string => new Date().toISOString();
 
-const levelColor = {
-    info: chalk.blue,
-    warn: chalk.yellow,
-    error: chalk.red,
-    debug: chalk.magenta,
-};
-
 export class Logger {
     constructor(private context: string) {}
 
     private formatMessage(level: LogLevel, message: string): string {
         const parts = [
-            chalk.gray(`[${getTimestamp()}]`),
-            levelColor[level](`[${level.toUpperCase()}]`),
-            chalk.cyan(`[${this.context}]`),
+            `[${getTimestamp()}]`,
+            `[${level.toUpperCase()}]`,
+            `[${this.context}]`,
             message,
         ];
         return parts.join(' ');
@@ -34,25 +24,20 @@ export class Logger {
 
         switch (level) {
             case 'info':
-                // eslint-disable-next-line no-console
                 console.log(formatted);
                 break;
             case 'warn':
-                // eslint-disable-next-line no-console
                 console.warn(formatted);
                 break;
             case 'error':
-                // eslint-disable-next-line no-console
                 console.error(formatted);
                 break;
             case 'debug':
-                // eslint-disable-next-line no-console
                 console.debug(formatted);
                 break;
         }
 
         if (options?.extraArgs) {
-            // eslint-disable-next-line no-console
             console.dir({ extraArgs: options.extraArgs }, { depth: null, colors: true });
         }
     }

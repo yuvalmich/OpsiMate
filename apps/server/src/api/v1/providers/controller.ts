@@ -24,7 +24,7 @@ export class ProviderController {
     async createProvider(req: Request, res: Response) {
         try {
             const providerToCreate = CreateProviderSchema.parse(req.body);
-            const createdProvider = await this.providerBL.createProvider({ ...providerToCreate, createdAt: Date.now() });
+            const createdProvider = await this.providerBL.createProvider({ ...providerToCreate, createdAt: (Date.now()).toString() });
             res.status(201).json({ success: true, data: createdProvider });
         } catch (error) {
             if (error instanceof z.ZodError) {
