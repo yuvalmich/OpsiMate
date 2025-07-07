@@ -1,12 +1,13 @@
 import Database from "better-sqlite3";
 import { runAsync } from "./db";
+import {ViewRow} from "./models";
 
 export interface SavedView {
   id: string;
   name: string;
   description?: string;
   createdAt: string;
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   visibleColumns: Record<string, boolean>;
   searchTerm: string;
   isDefault?: number;
@@ -17,23 +18,23 @@ export class ViewRepository {
 
   async getAllViews(): Promise<SavedView[]> {
     return runAsync(() => {
-      const rows = this.db.prepare(`SELECT * FROM views`).all();
-      return rows.map((view: any) => ({
+      const rows = this.db.prepare(`SELECT * FROM views`).all() as ViewRow[];
+      return rows.map((view: ViewRow) => ({
         ...view,
-        filters: JSON.parse(view.filters),
-        visibleColumns: JSON.parse(view.visibleColumns),
+        filters: JSON.parse(view.filters) as Record<string, unknown>,
+        visibleColumns: JSON.parse(view.visibleColumns) as Record<string, boolean>,
       }));
     });
   }
 
   async getViewById(id: string): Promise<SavedView | null> {
     return runAsync(() => {
-      const row: any = this.db.prepare(`SELECT * FROM views WHERE id = ?`).get(id);
+      const row: ViewRow = this.db.prepare(`SELECT * FROM views WHERE id = ?`).get(id) as ViewRow;
       if (!row) return null;
       return {
         ...row,
-        filters: JSON.parse(row.filters),
-        visibleColumns: JSON.parse(row.visibleColumns),
+        filters: JSON.parse(row.filters) as Record<string, unknown>,
+        visibleColumns: JSON.parse(row.visibleColumns) as Record<string, boolean>,
       };
     });
   }
@@ -78,7 +79,7 @@ export class ViewRepository {
 
   async deleteView(id: string): Promise<boolean> {
     return runAsync(() => {
-      const isDefaultView: any = this.db.prepare(`SELECT isDefault FROM views WHERE id = ?`).get(id);
+      const isDefaultView: { isDefault: number } = this.db.prepare(`SELECT isDefault FROM views WHERE id = ?`).get(id) as { isDefault: number };
       if (isDefaultView?.isDefault === 1) return false;
 
       const result = this.db.prepare(`DELETE FROM views WHERE id = ?`).run(id);
@@ -100,7 +101,7 @@ export class ViewRepository {
 
   async getActiveViewId(): Promise<string | null> {
     return runAsync(() => {
-      const prefs: any = this.db.prepare(`SELECT activeViewId FROM view_preferences WHERE id = 1`).get();
+      const prefs: { activeViewId: string } = this.db.prepare(`SELECT activeViewId FROM view_preferences WHERE id = 1`).get() as { activeViewId: string };
       return prefs?.activeViewId || null;
     });
   }

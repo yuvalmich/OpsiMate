@@ -160,7 +160,7 @@ export class ServiceRepository {
     }
 
     async getServiceWithProvider(id: number): Promise<ServiceWithProvider | null> {
-        return runAsync(async () => {
+        return runAsync(() => {
             const query = `
                 SELECT s.id as service_id, s.provider_id, s.service_name, s.service_ip,
                        s.service_status, s.service_type, s.created_at as service_created_at,

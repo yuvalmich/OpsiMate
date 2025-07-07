@@ -84,9 +84,10 @@ export class ViewController {
             }
 
             res.json({ success: true, message: 'Active view set successfully' });
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Error setting active view:', error);
-            res.status(500).json({ success: false, error: error.message || 'Failed to set active view' });
+            const message = error instanceof Error ? error.message : String(error);
+            res.status(500).json({ success: false, error: message || 'Failed to set active view' });
         }
     };
 
@@ -94,7 +95,7 @@ export class ViewController {
         try {
             const activeViewId = await this.viewBL.getActiveViewId();
             res.json({ success: true, data: { activeViewId } });
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Error getting active view ID:', error);
             res.status(500).json({ success: false, error: 'Failed to get active view ID' });
         }

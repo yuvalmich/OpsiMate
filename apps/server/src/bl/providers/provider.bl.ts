@@ -1,7 +1,6 @@
 import { DiscoveredService, Provider, Service, Logger } from "@service-peek/shared";
 import { ProviderNotFound } from "./ProviderNotFound";
 import { providerConnectorFactory } from "./provider-connector/providerConnectorFactory";
-import * as serviceRepo from "../../dal/serviceRepository";
 import {ProviderRepository} from "../../dal/providerRepository";
 import {ServiceRepository} from "../../dal/serviceRepository";
 
@@ -34,7 +33,7 @@ export class ProviderBL {
 
             return createdProvider;
         } catch (error) {
-            logger.error(`Error creating provider: ${error}`);
+            logger.error(`Error creating provider`, error);
             throw error;
         }
     }
@@ -48,7 +47,7 @@ export class ProviderBL {
             logger.info(`Updated provider with ID: ${providerId}`);
             return await this.providerRepo.getProviderById(providerId);
         } catch (error) {
-            logger.error(`Error updating provider: ${error}`);
+            logger.error(`Error updating provider`, error);
             throw error;
         }
     }
@@ -60,7 +59,7 @@ export class ProviderBL {
         try {
             await this.providerRepo.deleteProvider(providerId);
         } catch (error) {
-            logger.error(`Error deleting provider [${providerId}]: ${error}`);
+            logger.error(`Error deleting provider [${providerId}]`, error);
             throw error;
         }
     }
@@ -73,7 +72,7 @@ export class ProviderBL {
             const providerConnector = providerConnectorFactory(provider.providerType);
             return await providerConnector.discoverServices(provider);
         } catch (error) {
-            logger.error(`Error discovering services in provider: ${error}`);
+            logger.error(`Error discovering services in provider`, error);
             throw new Error(`Failed to discover services for provider ${providerId}`);
         }
     }
@@ -92,7 +91,7 @@ export class ProviderBL {
             logger.info(`Validating Provider Exists: ${providerId}`);
             await this.providerRepo.getProviderById(providerId);
         } catch (error) {
-            logger.error(`Error fetching provider for validation: ${error}`);
+            logger.error(`Error fetching provider for validation`, error);
             throw new ProviderNotFound(providerId);
         }
     }
