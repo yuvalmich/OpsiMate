@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
 import { ViewBL } from '../../../bl/custom-views/custom-view.bl';
+import { Logger } from '@service-peek/shared';
+
+const logger = new Logger('api/v1/views/controller');
 
 export class ViewController {
     constructor(private viewBL: ViewBL) {}
@@ -9,7 +12,7 @@ export class ViewController {
             const views = await this.viewBL.getAllViews();
             res.json({ success: true, data: views });
         } catch (error: any) {
-            console.error('Error getting views:', error);
+            logger.error('Error getting views:', error);
             res.status(500).json({ success: false, error: 'Failed to get views' });
         }
     };
@@ -25,7 +28,7 @@ export class ViewController {
 
             res.json({ success: true, data: view });
         } catch (error: any) {
-            console.error('Error getting view:', error);
+            logger.error('Error getting view:', error);
             res.status(500).json({ success: false, error: 'Failed to get view' });
         }
     };
@@ -46,7 +49,7 @@ export class ViewController {
 
             res.json({ success: true, data: savedView });
         } catch (error: any) {
-            console.error('Error saving view:', error);
+            logger.error('Error saving view:', error);
             res.status(500).json({ success: false, error: error.message || 'Failed to save view' });
         }
     };
@@ -64,7 +67,7 @@ export class ViewController {
 
             res.json({ success: true, message: 'View deleted successfully' });
         } catch (error: any) {
-            console.error('Error deleting view:', error);
+            logger.error('Error deleting view:', error);
             res.status(500).json({ success: false, error: error.message || 'Failed to delete view' });
         }
     };
@@ -82,7 +85,7 @@ export class ViewController {
 
             res.json({ success: true, message: 'Active view set successfully' });
         } catch (error: any) {
-            console.error('Error setting active view:', error);
+            logger.error('Error setting active view:', error);
             res.status(500).json({ success: false, error: error.message || 'Failed to set active view' });
         }
     };
@@ -92,7 +95,7 @@ export class ViewController {
             const activeViewId = await this.viewBL.getActiveViewId();
             res.json({ success: true, data: { activeViewId } });
         } catch (error: any) {
-            console.error('Error getting active view ID:', error);
+            logger.error('Error getting active view ID:', error);
             res.status(500).json({ success: false, error: 'Failed to get active view ID' });
         }
     };

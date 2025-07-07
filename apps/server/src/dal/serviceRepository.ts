@@ -1,8 +1,10 @@
 import Database from 'better-sqlite3';
-import {Service, Provider, Tag} from '@service-peek/shared';
+import {Service, Provider, Tag, Logger} from '@service-peek/shared';
 import { runAsync } from './db';
 
 type ServiceWithProvider = Service & { provider: Provider } & { tags: Tag[] };
+
+const logger = new Logger('dal/serviceRepository');
 
 export class ServiceRepository {
     constructor(private db: Database.Database) {}
@@ -49,7 +51,7 @@ export class ServiceRepository {
                 try {
                     containerDetails = JSON.parse(row.container_details);
                 } catch (e) {
-                    console.error('Error parsing container_details JSON:', e);
+                    logger.error('Error parsing container_details JSON:', e);
                 }
             }
 
@@ -118,7 +120,7 @@ export class ServiceRepository {
                     try {
                         containerDetails = JSON.parse(row.container_details);
                     } catch (e) {
-                        console.error('Error parsing container_details JSON:', e);
+                        logger.error('Error parsing container_details JSON:', e);
                     }
                 }
 
@@ -178,7 +180,7 @@ export class ServiceRepository {
                 try {
                     containerDetails = JSON.parse(row.container_details);
                 } catch (e) {
-                    console.error('Error parsing container_details JSON:', e);
+                    logger.error('Error parsing container_details JSON:', e);
                 }
             }
 
@@ -232,7 +234,7 @@ export class ServiceRepository {
                     try {
                         containerDetails = JSON.parse(row.container_details);
                     } catch (e) {
-                        console.error('Error parsing container_details JSON:', e);
+                        logger.error('Error parsing container_details JSON:', e);
                     }
                 }
 

@@ -1,7 +1,9 @@
 import { NodeSSH } from 'node-ssh';
 import path from 'path';
 import fs from 'fs';
-import {Provider} from "@service-peek/shared";
+import {Provider, Logger} from "@service-peek/shared";
+
+const logger = new Logger('dal/sshClient');
 
 const PRIVATE_KEYS_DIR = path.join(__dirname, '../../data/private-keys');
 
@@ -151,7 +153,7 @@ export async function testConnection(provider: Provider): Promise<boolean> {
 
     return result.code === 0 && result.stdout.trim() === 'Connection test';
   } catch (error) {
-    console.error(`Connection test failed for provider ${provider.providerIP}:`, error);
+    logger.error(`Connection test failed for provider ${provider.providerIP}:`, error);
     return false;
   } finally {
     ssh.dispose();

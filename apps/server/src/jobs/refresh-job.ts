@@ -1,9 +1,10 @@
 import { ProviderBL } from '../bl/providers/provider.bl';
 import { providerConnectorFactory } from '../bl/providers/provider-connector/providerConnectorFactory';
-import { DiscoveredService, Provider } from '@service-peek/shared';
+import {DiscoveredService, Logger, Provider} from '@service-peek/shared';
 import { ServiceRepository } from "../dal/serviceRepository";
 
 const BATCH_SIZE = 10;
+const logger = new Logger('refresh-job');
 
 export class RefreshJob {
     constructor(
@@ -12,20 +13,20 @@ export class RefreshJob {
     ) {}
 
     startRefreshJob = () => {
-        console.log('[Job] Starting refreshAllProvidersServices job (every 10 minutes)');
+        logger.info('[Job] Starting refreshAllProvidersServices job (every 10 minutes)');
 
         // Run immediately on startup (optional)
         this.refreshAllProvidersServices().catch((err) =>
-            console.error('[Job] Initial run failed:', err)
+            logger.error('[Job] Initial run failed:', err)
         );
 
         // Then run every 10 minutes
         setInterval(async () => {
-            console.log('[Job] Running refreshAllProvidersServices');
+            logger.info('[Job] Running refreshAllProvidersServices');
             try {
                 await this.refreshAllProvidersServices();
             } catch (err) {
-                console.error('[Job] Failed to refresh services:', err);
+                logger.error('[Job] Failed to refresh services:', err);
             }
         }, 10 * 1000);
     };
@@ -43,7 +44,7 @@ export class RefreshJob {
         try {
             await this.refreshProviderServices(provider);
         } catch (err) {
-            console.error(`Failed to refresh services for provider ${provider.id}:`, err);
+            logger.error(`Failed to refresh services for provider ${provider.id}:`, err);
         }
     };
 

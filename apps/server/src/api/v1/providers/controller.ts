@@ -1,19 +1,22 @@
 import { Request, Response } from "express";
-import { AddBulkServiceSchema, CreateProviderSchema, Provider } from "@service-peek/shared";
+import {AddBulkServiceSchema, CreateProviderSchema, Logger, Provider} from "@service-peek/shared";
 import { z } from "zod";
 import { providerConnectorFactory } from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import { ProviderNotFound } from "../../../bl/providers/ProviderNotFound";
 import {ProviderBL} from "../../../bl/providers/provider.bl";
 
+const logger: Logger = new Logger('server');
+
 export class ProviderController {
-    constructor(private providerBL: ProviderBL) {}
+    constructor(private providerBL: ProviderBL) {
+    }
 
     async getProviders(req: Request, res: Response) {
         try {
             const providers = await this.providerBL.getAllProviders();
             res.json({ success: true, data: { providers } });
         } catch (error) {
-            console.error('Error getting providers:', error);
+            logger.error('Error getting providers:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }
@@ -27,7 +30,7 @@ export class ProviderController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error creating provider:', error);
+                logger.error('Error creating provider:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -43,7 +46,7 @@ export class ProviderController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error testing provider connection:', error);
+                logger.error('Error testing provider connection:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -66,7 +69,7 @@ export class ProviderController {
             } else if (error instanceof ProviderNotFound) {
                 res.status(404).json({ success: false, error: `Provider ${error.provider} not found` });
             } else {
-                console.error('Error updating provider:', error);
+                logger.error('Error updating provider:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -85,7 +88,7 @@ export class ProviderController {
             if (error instanceof ProviderNotFound) {
                 res.status(404).json({ success: false, error: `Provider ${error.provider} not found` });
             }
-            console.error('Error deleting provider:', error);
+            logger.error('Error deleting provider:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }
@@ -107,7 +110,7 @@ export class ProviderController {
             } else if (error instanceof ProviderNotFound) {
                 res.status(404).json({ success: false, error: `Provider ${error.provider} not found` });
             } else {
-                console.error('Error storing services:', error);
+                logger.error('Error storing services:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -123,7 +126,7 @@ export class ProviderController {
             const discoversServices = await this.providerBL.discoverServicesInProvider(providerId);
             res.json({ success: true, data: discoversServices });
         } catch (error) {
-            console.error('Error discovering services:', error);
+            logger.error('Error discovering services:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }
