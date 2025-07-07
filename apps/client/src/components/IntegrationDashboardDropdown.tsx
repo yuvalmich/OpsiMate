@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import { KibanaIcon } from './icons/KibanaIcon';
 import { GrafanaIcon } from './icons/GrafanaIcon';
 import { ChevronDown, ExternalLink, Loader2 } from 'lucide-react';
 import { integrationApi } from '@/lib/api';
@@ -15,48 +16,57 @@ import { Tag } from '@service-peek/shared';
 import { useToast } from '@/hooks/use-toast';
 import { removeDuplicates } from '@/lib/utils';
 
-interface GrafanaDashboard {
+interface Dashboard {
   name: string;
   url: string;
 }
 
-interface GrafanaDashboardDropdownProps {
+interface IntegrationDashboardDropdownProps {
   tags: Tag[];
+  integrationType: 'Kibana' | 'Grafana';
   className?: string;
 }
 
-export function GrafanaDashboardDropdown({ tags, className }: GrafanaDashboardDropdownProps) {
-  const [dashboards, setDashboards] = useState<GrafanaDashboard[]>([]);
+export function IntegrationDashboardDropdown({ 
+  tags, 
+  integrationType,
+  className 
+}: IntegrationDashboardDropdownProps) {
+  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [grafanaIntegrationId, setGrafanaIntegrationId] = useState<number | null>(null);
-  const [grafanaUrl, setGrafanaUrl] = useState<string>('');
+  const [integrationId, setIntegrationId] = useState<number | null>(null);
+  const [integrationUrl, setIntegrationUrl] = useState<string>('');
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchGrafanaIntegration();
-  }, []);
+  // Display properties based on integration type
+  const displayName = `${integrationType} Dashboards`;
+  const IconComponent = integrationType === 'Kibana' ? KibanaIcon : GrafanaIcon;
 
   useEffect(() => {
-    if (tags.length > 0 && grafanaIntegrationId) {
-      fetchGrafanaDashboards();
+    fetchIntegration();
+  }, [integrationType]);
+
+  useEffect(() => {
+    if (tags.length > 0 && integrationId) {
+      fetchDashboards();
     }
-  }, [tags, grafanaIntegrationId]);
+  }, [tags, integrationId]);
 
-  const fetchGrafanaIntegration = async () => {
+  const fetchIntegration = async () => {
     try {
       const response = await integrationApi.getIntegrations();
       if (response.success && response.data) {
-        // Find Grafana integration
-        const grafanaIntegration = response.data.integrations.find(
-          (integration: any) => integration.type === 'Grafana'
+        // Find the specific integration
+        const integration = response.data.integrations.find(
+          (integration: any) => integration.type === integrationType
         );
-        if (grafanaIntegration) {
-          setGrafanaIntegrationId(grafanaIntegration.id);
-          // Store the Grafana URL for the "Open Grafana" link
-          setGrafanaUrl(grafanaIntegration.externalUrl || 'https://grafana.com');
+        if (integration) {
+          setIntegrationId(integration.id);
+          // Store the integration URL for the "Open" link
+          setIntegrationUrl(integration.externalUrl || '');
         } else {
-          setError('No Grafana integration found');
+          setError(`No ${integrationType} integration found`);
         }
       } else {
         setError('Failed to fetch integrations');
@@ -67,22 +77,20 @@ export function GrafanaDashboardDropdown({ tags, className }: GrafanaDashboardDr
     }
   };
 
-
-
-  const fetchGrafanaDashboards = async () => {
+  const fetchDashboards = async () => {
     setLoading(true);
     setError(null);
     setDashboards([]);
     
     try {
       const tagNames = tags.map(tag => tag.name);
-      let allDashboards: GrafanaDashboard[] = [];
+      let allDashboards: Dashboard[] = [];
       let hasError = false;
       
       // Make separate API calls for each tag
       const dashboardPromises = tagNames.map(async (tagName) => {
         try {
-          const response = await integrationApi.getIntegrationUrls(grafanaIntegrationId!, [tagName]);
+          const response = await integrationApi.getIntegrationUrls(integrationId!, [tagName]);
           
           if (response.success && response.data) {
             return response.data;
@@ -118,7 +126,7 @@ export function GrafanaDashboardDropdown({ tags, className }: GrafanaDashboardDr
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
-      console.error('Error fetching Grafana dashboards:', err);
+      console.error(`Error fetching ${integrationType} dashboards:`, err);
     } finally {
       setLoading(false);
     }
@@ -128,12 +136,12 @@ export function GrafanaDashboardDropdown({ tags, className }: GrafanaDashboardDr
     window.open(url, '_blank', 'noopener,noreferrer');
     toast({
       title: 'Opening Dashboard',
-      description: `Opening "${name}" in Grafana`,
+      description: `Opening "${name}" in ${integrationType}`,
     });
   };
 
-  // Don't render anything if there are no tags or no Grafana integration
-  if (tags.length === 0 || !grafanaIntegrationId) {
+  // Don't render anything if there are no tags or no integration
+  if (tags.length === 0 || !integrationId) {
     return null;
   }
 
@@ -147,8 +155,8 @@ export function GrafanaDashboardDropdown({ tags, className }: GrafanaDashboardDr
           disabled={loading}
         >
           <div className="flex items-center gap-2">
-            <GrafanaIcon className="h-3 w-3" />
-            <span>Grafana Dashboards</span>
+            <IconComponent className="h-3 w-3" />
+            <span>{displayName}</span>
           </div>
           {loading ? (
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -199,10 +207,10 @@ export function GrafanaDashboardDropdown({ tags, className }: GrafanaDashboardDr
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-xs text-muted-foreground"
-              onClick={() => window.open(grafanaUrl, '_blank')}
+              onClick={() => window.open(integrationUrl, '_blank')}
             >
-              <GrafanaIcon className="h-3 w-3 mr-2" />
-              Open Grafana
+              <IconComponent className="h-3 w-3 mr-2" />
+              Open {integrationType}
             </DropdownMenuItem>
           </>
         )}

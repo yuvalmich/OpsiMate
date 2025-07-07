@@ -3,6 +3,7 @@ import { LeftSidebar } from "@/components/LeftSidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -46,7 +47,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <span className="sr-only">Toggle Menu</span>
         </Button>
         <h1 className="text-lg font-semibold">Service Peek</h1>
-        <div className="w-9" />
       </div>
 
       {/* Mobile Sidebar (Overlay) */}
