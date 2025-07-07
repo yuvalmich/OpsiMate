@@ -76,7 +76,6 @@ export class IntegrationController {
     getIntegrationUrls = async (req: Request, res: Response): Promise<void> => {
         try {
             const integrationId = parseInt(req.params.integrationId);
-            const tagsParam = req.query.tags;
             const parsed = IntegrationTagsquerySchema.parse(req.query);
             const tags: string[] = Array.isArray(parsed.tags) ? parsed.tags : [parsed.tags];
             const response = await this.integrationBL.getIntegrationUrls(integrationId, tags)

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { ProviderBL } from '../bl/providers/provider.bl';
 import { providerConnectorFactory } from '../bl/providers/provider-connector/providerConnectorFactory';
 import {DiscoveredService, Logger, Provider} from '@service-peek/shared';
