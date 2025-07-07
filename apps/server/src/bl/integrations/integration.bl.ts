@@ -30,7 +30,7 @@ export class IntegrationBL {
 
             return createdIntegration;
         } catch (error) {
-            logger.error(`Error creating integration: ${error}`);
+            logger.error(`Error creating integration`, error);
             throw error;
         }
     }
@@ -44,7 +44,7 @@ export class IntegrationBL {
             logger.info(`Updated integration with ID: ${integrationId}`);
             return await this.integrationRepo.getIntegrationById(integrationId);
         } catch (error) {
-            logger.error(`Error updating integration: ${error}`);
+            logger.error(`Error updating integration`, error);
             throw error;
         }
     }
@@ -56,7 +56,7 @@ export class IntegrationBL {
         try {
             await this.integrationRepo.deleteIntegration(integrationId);
         } catch (error) {
-            logger.error(`Error deleting integration [${integrationId}]: ${error}`);
+            logger.error(`Error deleting integration [${integrationId}]`, error);
             throw error;
         }
     }

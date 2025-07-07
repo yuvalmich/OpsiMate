@@ -146,7 +146,8 @@ export class ServiceController {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
                 logger.error('Error starting service:', error);
-                res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+                const message = error instanceof Error ? error.message : String(error);
+                res.status(500).json({ success: false, error: 'Internal server error', details: message });
             }
         }
     };
@@ -176,7 +177,8 @@ export class ServiceController {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
                 logger.error('Error stopping service:', error);
-                res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+                const message = error instanceof Error ? error.message : String(error);
+                res.status(500).json({ success: false, error: 'Internal server error', details: message });
             }
         }
     };
@@ -204,7 +206,8 @@ export class ServiceController {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
                 logger.error('Error getting logs:', error);
-                res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+                const message = error instanceof Error ? error.message : String(error);
+                res.status(500).json({ success: false, error: 'Internal server error', details: message });
             }
         }
     };

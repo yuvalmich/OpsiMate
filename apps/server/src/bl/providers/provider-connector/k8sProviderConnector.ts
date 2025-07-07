@@ -1,6 +1,8 @@
 import {ProviderConnector} from "./providerConnector";
 import {DiscoveredService, Provider} from "@service-peek/shared";
 
+// todo: remove when implementing
+/* eslint-disable */
 export class K8SProviderConnector implements ProviderConnector {
     getServiceLogs(provider: Provider, serviceName: string): Promise<string[]> {
         throw new Error("Method not implemented.");

@@ -48,3 +48,14 @@ export type ServiceRowWithProviderRow = {
     provider_created_at: string; // DATETIME
     provider_type: string;
 }
+
+export interface ViewRow {
+    id: string;
+    name: string;
+    description?: string;
+    createdAt: string;
+    filters: string;
+    visibleColumns: string;
+    searchTerm: string;
+    isDefault?: number;
+}
