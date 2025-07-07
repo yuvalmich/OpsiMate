@@ -8,7 +8,7 @@ const mapRowToIntegration = (row: IntegrationRow): Integration => ({
     name: row.name,
     type: row.type,
     externalUrl: row.external_url,
-    credentials: JSON.parse(row.credentials),
+    credentials: JSON.parse(row.credentials) as Record<string, unknown>,
     createdAt: row.created_at,
 });
 

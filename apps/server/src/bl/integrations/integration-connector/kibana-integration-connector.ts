@@ -1,4 +1,4 @@
-import { Integration, IntegrationUrls } from "@service-peek/shared";
+import { Integration, IntegrationUrls, Logger } from "@service-peek/shared";
 import { IntegrationConnector } from "./integration-connector";
 import { KibanaClient } from "../../../dal/external-client/kibana-client";
 
@@ -8,11 +8,12 @@ interface KibanaDashboard {
 }
 
 export class KibanaIntegrationConnector implements IntegrationConnector {
+    private logger = new Logger('bl/integrations/kibana-integration-connector');
     async getUrls(integration: Integration, tags: string[]): Promise<IntegrationUrls[]> {
         try {
             // Check if credentials exist and have the token field
             if (!integration.credentials || !integration.credentials["token"]) {
-                console.error('Missing Kibana API token in credentials');
+                this.logger.error('Missing Kibana API token in credentials');
                 return [];
             }
             
@@ -22,7 +23,7 @@ export class KibanaIntegrationConnector implements IntegrationConnector {
             const dashboardPromises = tags.map(async (tag: string) => {
                 try {
                     const dashboards = await kibanaClient.searchDashboardsByTag(tag);
-                    console.log(`Found ${dashboards.length} dashboards with tag '${tag}'`);
+                    this.logger.info(`Found ${dashboards.length} dashboards with tag '${tag}'`);
                     
                     // Transform dashboards to KibanaDashboard format
                     return dashboards.map((dash: any) => ({
@@ -30,7 +31,7 @@ export class KibanaIntegrationConnector implements IntegrationConnector {
                         url: `${integration.externalUrl.replace(/\/$/, '')}${dash.url}`,
                     }));
                 } catch (error: any) {
-                    console.error(`Error fetching Kibana dashboards for tag ${tag}:`, error);
+                    this.logger.error(`Error fetching Kibana dashboards for tag ${tag}:`, error);
                     return []; // Return empty array for failed tags
                 }
             });
@@ -50,7 +51,7 @@ export class KibanaIntegrationConnector implements IntegrationConnector {
                 url: dash.url,
             }));
         } catch (error: any) {
-            console.error('Error in KibanaIntegrationConnector.getUrls:', error);
+            this.logger.error('Error in KibanaIntegrationConnector.getUrls:', error);
             return [];
         }
     }

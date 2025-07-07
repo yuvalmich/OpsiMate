@@ -2,10 +2,12 @@ import { Request, Response } from "express";
 import {
     CreateIntegrationSchema,
     Integration,
-    IntegrationTagsquerySchema
+    IntegrationTagsquerySchema, Logger
 } from "@service-peek/shared";
 import { z } from "zod";
 import { IntegrationBL } from "../../../bl/integrations/integration.bl";
+
+const logger = new Logger("v1/integrations/controller");
 
 export class IntegrationController {
     constructor(private integrationBL: IntegrationBL) {}
@@ -15,7 +17,7 @@ export class IntegrationController {
             const integrations = await this.integrationBL.getAllIntegrations();
             res.json({ success: true, data: { integrations } });
         } catch (error) {
-            console.error('Error getting integrations:', error);
+            logger.error('Error getting integrations:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     };
@@ -29,7 +31,7 @@ export class IntegrationController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error creating integration:', error);
+                logger.error('Error creating integration:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -50,7 +52,7 @@ export class IntegrationController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error updating integration:', error);
+                logger.error('Error updating integration:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -66,7 +68,7 @@ export class IntegrationController {
             await this.integrationBL.deleteIntegration(integrationId);
             res.json({ success: true, message: 'Integration and associated services deleted successfully' });
         } catch (error) {
-            console.error('Error deleting integration:', error);
+            logger.error('Error deleting integration:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     };
@@ -74,7 +76,6 @@ export class IntegrationController {
     getIntegrationUrls = async (req: Request, res: Response): Promise<void> => {
         try {
             const integrationId = parseInt(req.params.integrationId);
-            const tagsParam = req.query.tags;
             const parsed = IntegrationTagsquerySchema.parse(req.query);
             const tags: string[] = Array.isArray(parsed.tags) ? parsed.tags : [parsed.tags];
             const response = await this.integrationBL.getIntegrationUrls(integrationId, tags)
@@ -88,7 +89,7 @@ export class IntegrationController {
                     details: error.errors
                 });
             } else {
-                console.error('Error in refreshServicesByTags:', error);
+                logger.error('Error in refreshServicesByTags:', error);
                 res.status(500).json({
                     success: false,
                     error: 'Internal server error'

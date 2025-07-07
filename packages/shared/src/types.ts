@@ -26,7 +26,7 @@ export interface Provider {
   username: string;
   privateKeyFilename: string;
   SSHPort: number;
-  createdAt: number;
+  createdAt: string;
   providerType: ProviderType;
 }
 
@@ -73,9 +73,8 @@ export interface DiscoveredService {
   serviceIP: string;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
-  details?: any;
 }

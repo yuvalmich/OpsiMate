@@ -1,60 +1,62 @@
 import { IntegrationRepository } from "../../dal/integrationRepository";
-import { Integration } from "@service-peek/shared";
+import { Integration, Logger } from "@service-peek/shared";
 import {integrationConnectorFactory} from "./integration-connector/integration-connector-factory";
+
+const logger = new Logger('bl/integrations/integration.bl');
 
 export class IntegrationBL {
     constructor(private integrationRepo: IntegrationRepository) {}
 
     async getAllIntegrations(): Promise<Integration[]> {
         try {
-            console.log("Starting to fetch all integrations...");
+            logger.info("Starting to fetch all integrations...");
             const integrations = await this.integrationRepo.getAllIntegrations();
-            console.log(`Fetched ${integrations.length} integrations.`);
+            logger.info(`Fetched ${integrations.length} integrations.`);
             return integrations;
         } catch (error) {
-            console.log("Unable to fetch integrations");
+            logger.info("Unable to fetch integrations");
             throw error;
         }
     }
 
     async createIntegration(integrationToCreate: Omit<Integration, 'id' | 'createdAt'>): Promise<Integration> {
         try {
-            console.log("Starting to create integration:", integrationToCreate);
+            logger.info(`Starting to create integration: ${JSON.stringify(integrationToCreate)}`);
             const { lastID } = await this.integrationRepo.createIntegration(integrationToCreate);
-            console.log("Integration created with ID:", lastID);
+            logger.info(`Integration created with ID: ${lastID}`);
 
             const createdIntegration = await this.integrationRepo.getIntegrationById(lastID);
-            console.log("Fetched created integration:", createdIntegration);
+            logger.info(`Fetched created integration: ${JSON.stringify(createdIntegration)}`);
 
             return createdIntegration;
         } catch (error) {
-            console.error("Error creating integration:", error);
+            logger.error(`Error creating integration: ${error}`);
             throw error;
         }
     }
 
     async updateIntegration(integrationId: number, integrationToUpdate: Omit<Integration, 'id' | 'createdAt'>): Promise<Integration> {
-        console.log("Starting to update integration:", integrationId);
+        logger.info(`Starting to update integration: ${integrationId}`);
         await this.validateIntegrationExists(integrationId);
 
         try {
             await this.integrationRepo.updateIntegration(integrationId, integrationToUpdate);
-            console.log("Updated integration with ID:", integrationId);
+            logger.info(`Updated integration with ID: ${integrationId}`);
             return await this.integrationRepo.getIntegrationById(integrationId);
         } catch (error) {
-            console.error("Error updating integration:", error);
+            logger.error(`Error updating integration: ${error}`);
             throw error;
         }
     }
 
     async deleteIntegration(integrationId: number): Promise<void> {
-        console.log("Starting to delete integration:", integrationId);
+        logger.info(`Starting to delete integration: ${integrationId}`);
         await this.validateIntegrationExists(integrationId);
 
         try {
             await this.integrationRepo.deleteIntegration(integrationId);
         } catch (error) {
-            console.error(`Error deleting integration [${integrationId}]:`, error);
+            logger.error(`Error deleting integration [${integrationId}]: ${error}`);
             throw error;
         }
     }
