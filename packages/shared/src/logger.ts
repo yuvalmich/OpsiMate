@@ -24,20 +24,25 @@ export class Logger {
 
         switch (level) {
             case 'info':
+                // eslint-disable-next-line no-console
                 console.log(formatted);
                 break;
             case 'warn':
+                // eslint-disable-next-line no-console
                 console.warn(formatted);
                 break;
             case 'error':
+                // eslint-disable-next-line no-console
                 console.error(formatted);
                 break;
             case 'debug':
+                // eslint-disable-next-line no-console
                 console.debug(formatted);
                 break;
         }
 
         if (options?.extraArgs) {
+            // eslint-disable-next-line no-console
             console.dir({ extraArgs: options.extraArgs }, { depth: null, colors: true });
         }
     }
