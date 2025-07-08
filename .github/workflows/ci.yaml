@@ -24,9 +24,16 @@ jobs:
       - name: Build project
         run: npm run build
 
-      # todo: should run also on client app
-      - name: Run linter
-        run: npm run lint -- --workspace=apps/server --workspace=packages/shared
+      - name: Lint apps/server
+        run: |
+          cd apps/server
+          npm run lint
+
+      - name: Lint packages/shared
+        run: |
+          cd packages/shared
+          npm run lint
+
 
       # Uncomment when ready
       # - name: Run tests
