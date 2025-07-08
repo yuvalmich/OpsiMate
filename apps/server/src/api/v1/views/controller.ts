@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ViewBL } from '../../../bl/custom-views/custom-view.bl';
 import { Logger } from '@service-peek/shared';
+import {SavedView} from "../../../dal/viewRepository";
 
 const logger = new Logger('api/v1/views/controller');
 
@@ -11,7 +12,7 @@ export class ViewController {
         try {
             const views = await this.viewBL.getAllViews();
             res.json({ success: true, data: views });
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Error getting views:', error);
             res.status(500).json({ success: false, error: 'Failed to get views' });
         }
@@ -27,7 +28,7 @@ export class ViewController {
             }
 
             res.json({ success: true, data: view });
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Error getting view:', error);
             res.status(500).json({ success: false, error: 'Failed to get view' });
         }
@@ -35,7 +36,8 @@ export class ViewController {
 
     createViewHandler = async (req: Request, res: Response) => {
         try {
-            const view = req.body;
+            // todo: should use zod schema
+            const view = req.body as SavedView;
 
             if (!view || !view.id || !view.name) {
                 return res.status(400).json({ success: false, error: 'Invalid view data' });
@@ -48,9 +50,10 @@ export class ViewController {
             }
 
             res.json({ success: true, data: savedView });
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Error saving view:', error);
-            res.status(500).json({ success: false, error: error.message || 'Failed to save view' });
+            const message = error instanceof Error ? error.message : String(error);
+            res.status(500).json({ success: false, error: message || 'Failed to save view' });
         }
     };
 
@@ -66,9 +69,10 @@ export class ViewController {
             }
 
             res.json({ success: true, message: 'View deleted successfully' });
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Error deleting view:', error);
-            res.status(500).json({ success: false, error: error.message || 'Failed to delete view' });
+            const message = error instanceof Error ? error.message : String(error);
+            res.status(500).json({ success: false, error: message || 'Failed to delete view' });
         }
     };
 

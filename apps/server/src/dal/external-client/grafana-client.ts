@@ -1,7 +1,13 @@
+// In grafana-client.ts
+export interface GrafanaDashboardSummary {
+    title: string;
+    url: string;
+}
+
 export class GrafanaClient {
     constructor(private url: string, private token: string) {}
 
-    async searchByTags(tags: string[]) {
+    async searchByTags(tags: string[]): Promise<GrafanaDashboardSummary[]> {
         const query = new URLSearchParams();
         query.append('type', 'dash-db');
         tags.forEach(tag => query.append('tag', tag));
@@ -17,6 +23,6 @@ export class GrafanaClient {
             throw new Error(`Grafana API error: ${res.status}`);
         }
 
-        return res.json();
+        return await res.json() as GrafanaDashboardSummary[];
     }
 }

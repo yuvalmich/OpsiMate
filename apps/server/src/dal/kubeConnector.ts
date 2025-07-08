@@ -14,8 +14,8 @@ function getKeyPath(filename: string) {
 }
 
 
-const executeCommandOnKubernetes = async (provider: Provider): Promise<DiscoveredService[]> => {
-    const kc = new k8s.KubeConfig();
+const executeCommandOnKubernetes = async (_provider: Provider): Promise<DiscoveredService[]> => {
+    const kc: k8s.KubeConfig = new k8s.KubeConfig();
     // TODO - change to use config provider.
     const privateKeyPath = getKeyPath("kubeconfig");
 

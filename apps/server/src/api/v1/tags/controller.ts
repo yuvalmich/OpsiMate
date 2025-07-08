@@ -102,7 +102,7 @@ export class TagController {
         try {
             // Get serviceId from params, tagId from body
             const { serviceId } = req.params;
-            const { tagId } = req.body;
+            const { tagId } = req.body as { tagId: string };
             const parsed = ServiceTagSchema.parse({
                 serviceId: Number(serviceId),
                 tagId: Number(tagId)
