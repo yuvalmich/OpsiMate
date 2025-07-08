@@ -3,6 +3,7 @@ import { Settings, Layers, LayoutDashboard, Database, Puzzle } from "lucide-reac
 import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
 import { AppIcon } from "./icons/AppIcon"
+import { ThemeToggle } from "./ThemeToggle"
 
 interface LeftSidebarProps {
   collapsed: boolean
@@ -79,8 +80,11 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
         </Button>
       </div>
       
-      <div className={cn("p-4 mt-auto text-xs text-muted-foreground", collapsed && "sr-only")}>
-        <p>© 2024 Service Peek</p>
+      <div className={cn("p-4 mt-auto flex flex-col gap-3", collapsed && "items-center")}>
+        <div className={collapsed ? "" : "self-start"}>
+          <ThemeToggle />
+        </div>
+        <p className={cn("text-xs text-muted-foreground", collapsed && "sr-only")}>© 2024 Service Peek</p>
       </div>
     </div>
   )

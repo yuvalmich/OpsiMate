@@ -10,8 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TagBadge } from "./ui/tag-badge";
 import { TagSelector } from "./TagSelector";
 import { Tag } from "@service-peek/shared";
-import { GrafanaDashboardDropdown } from "./GrafanaDashboardDropdown";
-import { KibanaDashboardDropdown } from "./KibanaDashboardDropdown";
+import { IntegrationDashboardDropdown } from "./IntegrationDashboardDropdown";
 
 interface RightSidebarProps {
   service: Service | null;
@@ -168,12 +167,14 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
         <div>
           <h4 className="font-medium text-foreground text-xs mb-2">External Links</h4>
           <div className="flex flex-col gap-2">
-            <GrafanaDashboardDropdown 
+            <IntegrationDashboardDropdown 
               tags={serviceTags} 
+              integrationType="Grafana"
               className="w-full"
             />
-            <KibanaDashboardDropdown 
+            <IntegrationDashboardDropdown 
               tags={serviceTags} 
+              integrationType="Kibana"
               className="w-full"
             />
           </div>
