@@ -25,7 +25,7 @@ export function runAsync<T = unknown>(fn: () => T): Promise<T> {
       const result = fn();
       resolve(result);
     } catch (err) {
-      reject(err);
+      reject(err instanceof Error ? err : new Error(String(err)));
     }
   });
 }

@@ -2,14 +2,14 @@ import { Logger } from '@service-peek/shared';
 
 const logger = new Logger('dal/external-client/kibana-client');
 
-interface KibanaSavedObject<T = any> {
+interface KibanaSavedObject<T> {
     id: string;
     type: string;
     attributes: T;
     references?: Array<{ id: string; type: string; name: string }>;
 }
 
-interface KibanaFindResponse<T = any> {
+interface KibanaFindResponse<T> {
     saved_objects: KibanaSavedObject<T>[];
     total: number;
     page: number;
@@ -24,10 +24,10 @@ interface KibanaTagAttributes {
 
 interface KibanaDashboardAttributes {
     title: string;
-    [key: string]: any; // if there are more unknown fields
+    [key: string]: unknown; // if there are more unknown fields
 }
 
-interface DashboardResult {
+export interface DashboardResult {
     title: string;
     url: string;
 }
