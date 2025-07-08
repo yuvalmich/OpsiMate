@@ -109,10 +109,10 @@ export class ProviderRepository {
                 (
                     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
                     provider_name        TEXT NOT NULL,
-                    provider_ip          TEXT NOT NULL,
-                    username             TEXT NOT NULL,
+                    provider_ip          TEXT DEFAULT NULL,
+                    username             TEXT DEFAULT NULL,
                     private_key_filename TEXT NOT NULL,
-                    ssh_port             INTEGER  DEFAULT 22,
+                    ssh_port             INTEGER DEFAULT 22,
                     created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
                     provider_type        TEXT NOT NULL
                 )

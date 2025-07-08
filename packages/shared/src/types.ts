@@ -22,10 +22,10 @@ export interface IntegrationUrls {
 export interface Provider {
   id: number;
   name: string;
-  providerIP: string;
-  username: string;
+  providerIP?: string;
+  username?: string;
   privateKeyFilename: string;
-  SSHPort: number;
+  SSHPort?: number;
   createdAt: string;
   providerType: ProviderType;
 }
