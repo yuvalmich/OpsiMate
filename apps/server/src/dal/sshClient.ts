@@ -2,8 +2,9 @@ import {NodeSSH} from 'node-ssh';
 import path from 'path';
 import fs from 'fs';
 
-const logger = new Logger('dal/sshClient');
 import {DiscoveredService, Provider, Logger} from "@service-peek/shared";
+
+const logger = new Logger('dal/sshClient');
 
 const PRIVATE_KEYS_DIR = path.join(__dirname, '../../data/private-keys');
 
