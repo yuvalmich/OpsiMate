@@ -8,3 +8,54 @@ export type IntegrationRow = {
     credentials: string; // stored as JSON string in DB
     created_at: string; // SQLite returns DATETIME as string
 };
+
+export type ProviderRow = {
+    id: number;
+    name: string; // provider_name in DB
+    provider_ip: string;
+    username: string;
+    private_key_filename: string;
+    ssh_port: number;
+    created_at: string; // DATETIME
+    provider_type: string;
+};
+
+export type ServiceRow = {
+    id: number;
+    provider_id: number;
+    service_name: string; // service_name in DB
+    service_ip: string;
+    service_status: string;
+    service_type: string;
+    created_at: string; // DATETIME
+    container_details: string; // stored as JSON string in DB
+};
+
+export type ServiceRowWithProviderRow = {
+    service_id: number;
+    service_name: string; // service_name in DB
+    service_ip: string;
+    service_status: string;
+    service_type: string;
+    service_created_at: string; // DATETIME
+    container_details: string; // stored as JSON string in DB
+    provider_id: number;
+    provider_name: string; // provider_name in DB
+    provider_ip: string;
+    username: string;
+    private_key_filename: string;
+    ssh_port: number;
+    provider_created_at: string; // DATETIME
+    provider_type: string;
+}
+
+export interface ViewRow {
+    id: string;
+    name: string;
+    description?: string;
+    createdAt: string;
+    filters: string;
+    visibleColumns: string;
+    searchTerm: string;
+    isDefault?: number;
+}

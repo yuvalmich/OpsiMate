@@ -1,17 +1,20 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import { Logger } from '@service-peek/shared';
+
+const logger = new Logger('dal/db');
 
 export function initializeDb(): Database.Database {
   const dbPath = path.resolve(__dirname, '../../service_peek.db');
-  console.log(`SQLite database is connecting to ${dbPath}`);
+  logger.info(`SQLite database is connecting to ${dbPath}`);
 
   try {
     const db = new Database(dbPath);
-    console.log(`SQLite database connected at ${dbPath}`);
+    logger.info(`SQLite database connected at ${dbPath}`);
     
     return db;
   } catch (error) {
-    console.error('Database connection error:', error);
+    logger.error('Database connection error:', error);
     throw error;
   }
 }

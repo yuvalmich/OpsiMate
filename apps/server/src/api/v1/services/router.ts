@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import PromiseRouter from 'express-promise-router';
 import { ServiceController } from './controller';
 import {TagController} from "../tags/controller";

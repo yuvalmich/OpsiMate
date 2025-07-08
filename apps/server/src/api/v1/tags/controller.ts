@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { CreateTagSchema, UpdateTagSchema, TagIdSchema, ServiceTagSchema } from '@service-peek/shared';
+import { CreateTagSchema, UpdateTagSchema, TagIdSchema, ServiceTagSchema, Logger } from '@service-peek/shared';
 import { TagRepository } from '../../../dal/tagRepository';
 import {ServiceRepository} from "../../../dal/serviceRepository"; // can be refactored to use DI as well
+
+const logger = new Logger('api/v1/tags/controller');
 
 export class TagController {
     constructor(private tagRepo: TagRepository, private serviceRepo: ServiceRepository) {}
@@ -12,7 +14,7 @@ export class TagController {
             const tags = await this.tagRepo.getAllTags();
             res.json({ success: true, data: tags });
         } catch (error) {
-            console.error('Error getting all tags:', error);
+            logger.error('Error getting all tags:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     };
@@ -29,7 +31,7 @@ export class TagController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error getting tag by ID:', error);
+                logger.error('Error getting tag by ID:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -45,7 +47,7 @@ export class TagController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error creating tag:', error);
+                logger.error('Error creating tag:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -69,7 +71,7 @@ export class TagController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error updating tag:', error);
+                logger.error('Error updating tag:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -90,7 +92,7 @@ export class TagController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error deleting tag:', error);
+                logger.error('Error deleting tag:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -122,7 +124,7 @@ export class TagController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error adding tag to service:', error);
+                logger.error('Error adding tag to service:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -143,7 +145,7 @@ export class TagController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error removing tag from service:', error);
+                logger.error('Error removing tag from service:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -165,7 +167,7 @@ export class TagController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error getting service tags:', error);
+                logger.error('Error getting service tags:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }

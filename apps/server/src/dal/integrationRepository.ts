@@ -8,7 +8,7 @@ const mapRowToIntegration = (row: IntegrationRow): Integration => ({
     name: row.name,
     type: row.type,
     externalUrl: row.external_url,
-    credentials: JSON.parse(row.credentials),
+    credentials: JSON.parse(row.credentials) as Record<string, unknown>,
     createdAt: row.created_at,
 });
 
@@ -85,12 +85,13 @@ export class IntegrationRepository {
 
     async initIntegrationsTable(): Promise<void> {
         return runAsync(() => {
+            // Create table with Kibana support directly - no need for backward compatibility
             this.db.prepare(`
                 CREATE TABLE IF NOT EXISTS integrations
                 (
                     id           INTEGER PRIMARY KEY AUTOINCREMENT,
                     name         TEXT NOT NULL,
-                    type         TEXT NOT NULL CHECK (type IN ('Grafana', 'Prometheus', 'Coralogix')),
+                    type         TEXT NOT NULL CHECK (type IN ('Grafana', 'Prometheus', 'Coralogix', 'Kibana')),
                     external_url TEXT NOT NULL,
                     credentials  JSON NOT NULL,
                     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP

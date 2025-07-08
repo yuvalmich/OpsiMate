@@ -17,7 +17,9 @@ import {TagController} from "./api/v1/tags/controller";
 import {IntegrationController} from "./api/v1/integrations/controller";
 import {IntegrationRepository} from "./dal/integrationRepository";
 import {IntegrationBL} from "./bl/integrations/integration.bl";
+import {Logger} from "@service-peek/shared";
 
+const logger: Logger = new Logger('server');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -59,47 +61,47 @@ app.use('/api/v1', createV1Router(providerController, serviceController, viewCon
 // todo: move it from here.
 providerRepo.initProvidersTable()
   .then(() => {
-    console.log('Providers table initialized');
+    logger.info('Providers table initialized');
   })
   .catch(err => {
-    console.error('Failed to initialize providers table:', err);
+    logger.error('Failed to initialize providers table:', err);
   });
 
 serviceRepo.initServicesTable()
   .then(() => {
-    console.log('Services table initialized');
+    logger.info('Services table initialized');
   })
   .catch(err => {
-    console.error('Failed to initialize services table:', err);
+    logger.error('Failed to initialize services table:', err);
   });
 
 viewRepo.initViewsTable()
   .then(() => {
-    console.log('Views tables initialized');
+    logger.info('Views tables initialized');
   })
   .catch(err => {
-    console.error('Failed to initialize views tables:', err);
+    logger.error('Failed to initialize views tables:', err);
   });
 
 tagRepo.initTagsTables()
     .then(() => {
-        console.log('Tags tables initialized');
+        logger.info('Tags tables initialized');
     })
     .catch(err => {
-        console.error('Failed to initialize tags tables:', err);
+        logger.error('Failed to initialize tags tables:', err);
     });
 
 integrationRepo.initIntegrationsTable()
     .then(() => {
-        console.log('Tags tables initialized');
+        logger.info('Tags tables initialized');
     })
     .catch(err => {
-        console.error('Failed to initialize tags tables:', err);
+        logger.error('Failed to initialize tags tables:', err);
     });
 
 // this job refreshes the services status periodically.
 (new RefreshJob(providerBL, serviceRepo)).startRefreshJob()
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });

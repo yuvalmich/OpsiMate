@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import { CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema } from "@service-peek/shared";
+import { CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema, Logger } from "@service-peek/shared";
 import { providerConnectorFactory } from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import { ProviderNotFound } from "../../../bl/providers/ProviderNotFound";
 import { ServiceNotFound } from "../../../bl/services/ServiceNotFound";
 import {ProviderRepository} from "../../../dal/providerRepository";
 import {ServiceRepository} from "../../../dal/serviceRepository";
+
+const logger = new Logger('api/v1/services/controller');
 
 export class ServiceController {
     constructor(private providerRepo: ProviderRepository, private serviceRepo: ServiceRepository) {}
@@ -17,17 +19,17 @@ export class ServiceController {
             const provider = await this.providerRepo.getProviderById(validatedData.providerId);
 
             if (!provider) {
-                console.error("No provider found with id " + validatedData.providerId);
+                logger.error(`No provider found with id ${validatedData.providerId}`);
                 throw new ProviderNotFound(validatedData.providerId);
             }
 
             const {lastID} = await this.serviceRepo.createService(validatedData);
-            console.log("service created", lastID);
+            logger.info(`service created with id ${lastID}`);
 
             const service = await this.serviceRepo.getServiceById(lastID)
 
             if (!service) {
-                console.error("No service found with id " + lastID);
+                logger.error(`No service found with id ${lastID}`);
                 throw new ProviderNotFound(validatedData.providerId);
             }
 
@@ -40,7 +42,7 @@ export class ServiceController {
             } else if (error instanceof ServiceNotFound) {
                 res.status(404).json({ success: false, error: `Service with ID ${error.serviceId} not found` });
             } else {
-                console.error('Error creating service:', error);
+                logger.error('Error creating service:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -51,7 +53,7 @@ export class ServiceController {
             const services = await this.serviceRepo.getServicesWithProvider();
             res.json({ success: true, data: services });
         } catch (error) {
-            console.error('Error getting services:', error);
+            logger.error('Error getting services:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     };
@@ -68,7 +70,7 @@ export class ServiceController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error getting service:', error);
+                logger.error('Error getting service:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -92,7 +94,7 @@ export class ServiceController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error updating service:', error);
+                logger.error('Error updating service:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -113,7 +115,7 @@ export class ServiceController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error deleting service:', error);
+                logger.error('Error deleting service:', error);
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }
         }
@@ -143,8 +145,9 @@ export class ServiceController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error starting service:', error);
-                res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+                logger.error('Error starting service:', error);
+                const message = error instanceof Error ? error.message : String(error);
+                res.status(500).json({ success: false, error: 'Internal server error', details: message });
             }
         }
     };
@@ -173,8 +176,9 @@ export class ServiceController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error stopping service:', error);
-                res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+                logger.error('Error stopping service:', error);
+                const message = error instanceof Error ? error.message : String(error);
+                res.status(500).json({ success: false, error: 'Internal server error', details: message });
             }
         }
     };
@@ -201,8 +205,9 @@ export class ServiceController {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
-                console.error('Error getting logs:', error);
-                res.status(500).json({ success: false, error: 'Internal server error', details: (error as any).message });
+                logger.error('Error getting logs:', error);
+                const message = error instanceof Error ? error.message : String(error);
+                res.status(500).json({ success: false, error: 'Internal server error', details: message });
             }
         }
     };
