@@ -177,6 +177,11 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
               integrationType="Kibana"
               className="w-full"
             />
+            <IntegrationDashboardDropdown 
+              tags={serviceTags} 
+              integrationType="Datadog"
+              className="w-full"
+            />
           </div>
         </div>
 
