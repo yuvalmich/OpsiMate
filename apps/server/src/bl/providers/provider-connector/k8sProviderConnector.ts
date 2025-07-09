@@ -4,7 +4,6 @@ import {getK8RLogs, getK8SServices} from "../../../dal/kubeConnector";
 
 export class K8SProviderConnector implements ProviderConnector {
     async getServiceLogs(provider: Provider, service: Service): Promise<string[]> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return [await getK8RLogs(provider, service.name, service.containerDetails?.namespace || 'default')];
     }
 
