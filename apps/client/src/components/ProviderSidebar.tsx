@@ -339,7 +339,40 @@ export function ProviderSidebar({provider, onClose}: ProviderSidebarProps) {
 
     const handleFormSubmit: SubmitHandler<AnyFormData> = async (data) => {
         switch (provider.type) {
-            case "kubernetes":
+            case "kubernetes": {
+                try {
+                    const serverData = data as KubernetesFormData;
+
+                    const providerData = {
+                        name: serverData.name,
+                        privateKeyFilename: serverData.kubeconfigPath,
+                        providerType: 'K8S'
+                    };
+
+                    // Call the API to create a new provider
+                    const response = await providerApi.createProvider(providerData);
+
+                    if (response.success && response.data) {
+                        toast({
+                            title: "Provider added",
+                            description: `Successfully added ${serverData.name} server provider`
+                        });
+                        onClose();
+                        // Redirect to My Providers page
+                        navigate('/my-providers');
+                    } else {
+                        throw new Error(response.error || 'Failed to create provider');
+                    }
+                } catch (error) {
+                    console.error("Error creating server provider:", error);
+                    toast({
+                        title: "Error adding provider",
+                        description: error instanceof Error ? error.message : "There was a problem creating your provider",
+                        variant: "destructive"
+                    });
+                }
+                break;
+            }
             case "server": {
                 try {
                     // Map form data to API request format
