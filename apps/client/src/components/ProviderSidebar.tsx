@@ -389,41 +389,7 @@ export function ProviderSidebar({provider, onClose}: ProviderSidebarProps) {
                 break;
             }
             default: {
-                // For non-server providers, use the old localStorage approach
-                const newProvider = {
-                    id: `${provider.type}-${Date.now()}`,
-                    name: data.name,
-                    type: provider.type,
-                    status: "online",
-                    details: {...data},
-                    lastConnected: new Date().toISOString(),
-                    createdAt: new Date().toISOString()
-                };
-
-                try {
-                    const existingProvidersJson = localStorage.getItem('providers');
-                    const existingProviders = existingProvidersJson ? JSON.parse(existingProvidersJson) : [];
-                    const updatedProviders = [...existingProviders, newProvider];
-                    localStorage.setItem('providers', JSON.stringify(updatedProviders));
-
-                    toast({
-                        title: "Provider added",
-                        description: `Successfully added ${provider.name} provider`
-                    });
-                    onClose();
-                    // Redirect to My Providers page
-                    navigate('/my-providers');
-                } catch (error) {
-                    console.error("Error saving provider:", error);
-                    toast({
-                        title: "Error adding provider",
-                        description: "There was a problem saving your provider",
-                        variant: "destructive"
-                    });
-                }
-                return;
-
-
+                alert("This provider type is not yet supported with the new form.");
             }
         }
     };
