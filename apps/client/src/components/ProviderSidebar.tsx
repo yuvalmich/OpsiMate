@@ -365,7 +365,6 @@ export function ProviderSidebar({provider, onClose}: ProviderSidebarProps) {
                         providerType: providerType
                     };
 
-                    debugger;
                     // Call the API to create a new provider
                     const response = await providerApi.createProvider(providerData);
 
