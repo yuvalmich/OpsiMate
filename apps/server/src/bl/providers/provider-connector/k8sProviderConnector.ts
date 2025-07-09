@@ -1,23 +1,26 @@
 import {ProviderConnector} from "./providerConnector";
-import {DiscoveredService, Provider} from "@service-peek/shared";
-import {executeCommandOnKubernetes} from "../../../dal/kubeConnector";
+import {DiscoveredService, Provider, Service} from "@service-peek/shared";
+import {getK8RLogs, getK8SServices} from "../../../dal/kubeConnector";
 
-// todo: remove when implementing
-/* eslint-disable */
 export class K8SProviderConnector implements ProviderConnector {
-    getServiceLogs(provider: Provider, serviceName: string): Promise<string[]> {
+    async getServiceLogs(provider: Provider, service: Service): Promise<string[]> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        return [await getK8RLogs(provider, service.name, service.containerDetails?.namespace || 'default')];
+    }
+
+    startService(_: Provider, _2: string): Promise<void> {
         throw new Error("Method not implemented.");
     }
-    startService(provider: Provider, serviceName: string): Promise<void> {
+
+    stopService(_: Provider, _2: string): Promise<void> {
         throw new Error("Method not implemented.");
     }
-    stopService(provider: Provider, serviceName: string): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
+
     async discoverServices(provider: Provider): Promise<DiscoveredService[]> {
-        return executeCommandOnKubernetes(provider);
+        return getK8SServices(provider);
     }
-    async testConnection(provider: Provider): Promise<boolean> {
+
+    testConnection(_: Provider): Promise<boolean> {
         throw new Error("Method not implemented.");
     }
 }

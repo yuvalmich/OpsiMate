@@ -1,4 +1,4 @@
-import {DiscoveredService, Provider} from "@service-peek/shared";
+import {DiscoveredService, Provider, Service} from "@service-peek/shared";
 import * as sshClient from "../../../dal/sshClient";
 import {ProviderConnector} from "./providerConnector";
 
@@ -14,8 +14,9 @@ export class VMProviderConnector implements ProviderConnector {
     async stopService(provider: Provider, serviceName: string): Promise<void> {
         return sshClient.stopService(provider, serviceName);
     }
-    async getServiceLogs(provider: Provider, serviceName: string): Promise<string[]> {
-        return sshClient.getServiceLogs(provider, serviceName);
+
+    async getServiceLogs(provider: Provider, service: Service): Promise<string[]> {
+        return sshClient.getServiceLogs(provider, service.name);
     }
     async testConnection(provider: Provider): Promise<boolean> {
         return sshClient.testConnection(provider);
