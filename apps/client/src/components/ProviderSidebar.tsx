@@ -336,7 +336,6 @@ interface ProviderSidebarProps {
 export function ProviderSidebar({provider, onClose}: ProviderSidebarProps) {
     const {toast} = useToast();
     const navigate = useNavigate();
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleFormSubmit: SubmitHandler<AnyFormData> = async (data) => {
         switch (provider.type) {
@@ -386,8 +385,6 @@ export function ProviderSidebar({provider, onClose}: ProviderSidebarProps) {
                         description: error instanceof Error ? error.message : "There was a problem creating your provider",
                         variant: "destructive"
                     });
-                } finally {
-                    setIsSubmitting(false);
                 }
                 break;
             }
