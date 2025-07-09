@@ -32,7 +32,13 @@ const executeCommandOnKubernetes = async (_provider: Provider): Promise<Discover
         );
 
         // TODO - should fetch the status of the service
-        return {name, serviceIP, port: ports[0] ?? '', serviceStatus: "running"};
+        return {
+            name,
+            serviceIP,
+            port: ports[0] ?? '',
+            serviceStatus: "running",
+            namespace: svc.metadata?.namespace || 'default'
+        };
     });
 }
 
