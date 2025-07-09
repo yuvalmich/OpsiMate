@@ -14,7 +14,7 @@ function getKeyPath(filename: string) {
     return filePath;
 }
 
-const createClient = async (_provider: Provider): Promise<ObjectCoreV1Api> => {
+const createClient = (_provider: Provider): ObjectCoreV1Api => {
     const kc: k8s.KubeConfig = new k8s.KubeConfig();
     const privateKeyPath = getKeyPath(_provider.privateKeyFilename);
 
@@ -24,18 +24,18 @@ const createClient = async (_provider: Provider): Promise<ObjectCoreV1Api> => {
 }
 
 const getK8RLogs = async (_provider: Provider, serviceName: string, namespace: string) => {
-    const k8sApi = await createClient(_provider)
+    const k8sApi = createClient(_provider)
     return k8sApi.readNamespacedPodLog(
         {
-        name: serviceName,
-        namespace: namespace,
-        pretty: 'true'
-    })
+            name: serviceName,
+            namespace: namespace,
+            pretty: 'true'
+        })
 }
 
 
 const getK8SServices = async (_provider: Provider): Promise<DiscoveredService[]> => {
-    const k8sApi = await createClient(_provider)
+    const k8sApi = createClient(_provider)
     const servicesResp = await k8sApi.listServiceForAllNamespaces();
 
     return servicesResp.items.map(svc => {
