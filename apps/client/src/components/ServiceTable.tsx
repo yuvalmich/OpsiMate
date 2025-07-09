@@ -29,6 +29,7 @@ export interface Service {
     id?: string
     image?: string
     created?: string
+    namespace?: string
   }
   tags?: Tag[]
 }
