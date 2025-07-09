@@ -341,8 +341,6 @@ export function ProviderSidebar({provider, onClose}: ProviderSidebarProps) {
         switch (provider.type) {
             case "kubernetes":
             case "server": {
-                // For server provider, use the API
-                setIsSubmitting(true);
                 try {
                     // Map form data to API request format
                     const serverData = data as ServerFormData;
