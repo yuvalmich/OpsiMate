@@ -36,12 +36,15 @@ interface Container {
 interface AddServiceDialogProps {
   serverId: string;
   serverName: string;
+  providerType?: string;
   open: boolean;
   onClose: () => void;
   onServiceAdded: (service: ServiceConfig) => void;
 }
 
-export function AddServiceDialog({ serverId, serverName, open, onClose, onServiceAdded }: AddServiceDialogProps) {
+export function AddServiceDialog({ serverId, serverName, providerType, open, onClose, onServiceAdded }: AddServiceDialogProps) {
+  // Check if this is a Kubernetes provider by checking the provider type
+  const isKubernetes = providerType === 'kubernetes' || providerType === 'K8S';
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"manual" | "container">("manual");
   const [serviceName, setServiceName] = useState("");
@@ -83,11 +86,10 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     }
   };
 
-  // Function to fetch containers from the API
+  // Function to fetch containers or pods from the API
   const fetchContainers = async () => {
     setLoadingContainers(true);
-    setError(null);
-    setSelectedContainer(null); // Reset selected container when fetching new ones
+    setError("");
 
     try {
       // First, fetch existing services to check for duplicates
@@ -98,8 +100,8 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
       if (response.success && response.data) {
         // Transform API discovered service data to match our UI format
         const containerData = response.data.map((service: DiscoveredService, index) => {
-          // Check if this container is already added as a service by matching name
-          // We need to compare the container name with existing service names
+          // Check if this container/pod is already added as a service by matching name
+          // We need to compare the name with existing service names
           const isAlreadyAdded = existingServices.some(existingService => 
             existingService.serviceType === 'DOCKER' && 
             existingService.name === service.name
@@ -124,8 +126,8 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
         setContainers([]);
       }
     } catch (err) {
-      console.error('Error fetching containers:', err);
-      setError('Error loading containers. Please try again.');
+      console.error(`Error fetching ${isKubernetes ? 'pods' : 'containers'}:`, err);
+      setError(`Error loading ${isKubernetes ? 'pods' : 'containers'}. Please try again.`);
       setContainers([]);
     } finally {
       setLoadingContainers(false);
@@ -194,7 +196,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
 
         toast({
           title: "Service added",
-          description: `${serviceName} has been added to ${serverName}`
+          description: `${serviceName} has been added to ${isKubernetes ? 'Kubernetes cluster' : 'server'} ${serverName}`
         });
       } else {
         toast({
@@ -215,13 +217,13 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
     }
   };
 
-  const handleAddContainers = async () => {
+  const handleAddContainersOrPods = async () => {
     const selectedContainers = containers.filter(container => container.selected);
 
     if (selectedContainers.length === 0) {
       toast({
-        title: "No containers selected",
-        description: "Please select at least one container",
+        title: `No ${isKubernetes ? 'pods' : 'containers'} selected`,
+        description: `Please select at least one ${isKubernetes ? 'pod' : 'container'}`,
         variant: "destructive"
       });
       return;
@@ -283,8 +285,8 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
       // Show appropriate toast message
       if (createdServices.length > 0) {
         toast({
-          title: `${createdServices.length} container${createdServices.length > 1 ? 's' : ''} added`,
-          description: `Added to ${serverName}${failedContainers.length > 0 ? '. Some containers failed.' : ''}`
+          title: `${createdServices.length} ${isKubernetes ? 'pod' : 'container'}${createdServices.length > 1 ? 's' : ''} added`,
+          description: `Added to ${isKubernetes ? 'Kubernetes cluster' : 'server'} ${serverName}${failedContainers.length > 0 ? '. Some failed.' : ''}`
         });
 
         // Reset and close if at least one service was created
@@ -293,8 +295,8 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
         onClose();
       } else {
         toast({
-          title: "Failed to add containers",
-          description: "None of the selected containers could be added",
+          title: `Failed to add ${isKubernetes ? 'pods' : 'containers'}`,
+          description: `None of the selected ${isKubernetes ? 'pods' : 'containers'} could be added`,
           variant: "destructive"
         });
       }
@@ -386,14 +388,15 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
         <DialogHeader>
           <DialogTitle>Add Service to {serverName}</DialogTitle>
           <DialogDescription>
-            Add a service to monitor on this server
+            Add a new service to monitor on this {isKubernetes ? 'Kubernetes cluster' : 'server'}. 
+            You can add a service manually or select from running {isKubernetes ? 'pods' : 'containers'}.
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "manual" | "container")} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="manual">Manual Service</TabsTrigger>
-            <TabsTrigger value="container">Containers</TabsTrigger>
+            <TabsTrigger value="container">{isKubernetes ? 'Pods' : 'Containers'}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="manual" className="space-y-4 py-4">
@@ -402,13 +405,13 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
                 <Label htmlFor="service-name">Service Name</Label>
                 <Input
                   id="service-name"
-                  placeholder="e.g., nginx, postgres, redis"
+                  placeholder={isKubernetes ? "e.g., api-gateway, database" : "e.g., nginx, postgres, redis"}
                   value={serviceName}
                   onChange={(e) => setServiceName(e.target.value)}
                 />
               </div>
               <div className="col-span-1 space-y-2">
-                <Label htmlFor="service-port">Port (optional)</Label>
+                <Label htmlFor="service-port">{isKubernetes ? 'Service Port' : 'Port'} (optional)</Label>
                 <Input
                   id="service-port"
                   placeholder="e.g., 80"
@@ -420,11 +423,26 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
           </TabsContent>
 
           <TabsContent value="container" className="py-4">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-medium">
+                Available {isKubernetes ? 'Pods' : 'Containers'}
+              </h4>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchContainers}
+                disabled={loadingContainers}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${loadingContainers ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
+            
             <div className="space-y-4 mt-4">
               {loadingContainers ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  <span className="ml-2 text-muted-foreground">Loading containers...</span>
+                  <span className="ml-2 text-muted-foreground">Loading {isKubernetes ? 'pods' : 'containers'}...</span>
                 </div>
               ) : error ? (
                 <div className="text-center py-8">
@@ -436,7 +454,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
                 </div>
               ) : containers.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">No containers found</p>
+                  <p className="text-muted-foreground">No {isKubernetes ? 'pods' : 'containers'} found</p>
                   <Button variant="outline" onClick={fetchContainers} className="mt-4">
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Refresh
@@ -451,7 +469,7 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
                       onCheckedChange={toggleAllContainersSelection}
                     />
                     <Label htmlFor="select-all-containers" className="font-medium cursor-pointer">
-                      Monitor all Docker containers
+                      Monitor all {isKubernetes ? 'pods' : 'Docker containers'}
                     </Label>
                   </div>
                   <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -507,9 +525,9 @@ export function AddServiceDialog({ serverId, serverName, open, onClose, onServic
               Add Service
             </Button>
           ) : (
-            <Button onClick={handleAddContainers} disabled={loading || loadingContainers || !selectedContainer}>
+            <Button onClick={handleAddContainersOrPods} disabled={loading || loadingContainers || !containers.some(c => c.selected)}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Add Selected
+              Add Selected {isKubernetes ? 'Pods' : 'Containers'}
             </Button>
           )}
         </DialogFooter>

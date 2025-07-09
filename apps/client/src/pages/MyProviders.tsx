@@ -138,7 +138,7 @@ const getProviderIcon = (type: ProviderType) => {
         case "server":
             return <Server className="h-5 w-5"/>;
         case "kubernetes":
-            return <Globe className="h-5 w-5"/>;
+            return <Container className="h-5 w-5"/>;
         case "aws-ec2":
         case "aws-eks":
         case "gcp-compute":
@@ -867,7 +867,7 @@ export function MyProviders() {
                                                             <Edit className="mr-2 h-4 w-4"/>
                                                             Edit
                                                         </DropdownMenuItem>
-                                                        {provider.type === 'server' && (
+                                                        {(provider.type === 'server' || provider.type === 'kubernetes') && (
                                                             <DropdownMenuItem onClick={() => {
                                                                 setSelectedServerForService(provider);
                                                                 setIsAddServiceDialogOpen(true);
@@ -917,12 +917,12 @@ export function MyProviders() {
                                                 {provider.type === "kubernetes" &&
                                                     <>
                                                         <div>
-                                                            <p className="text-xs text-muted-foreground">kubeconfig</p>
-                                                            <p className="font-medium">{provider.details.Private_key_filename}</p>
+                                                            <p className="text-xs text-muted-foreground">API Server</p>
+                                                            <p className="font-medium">{provider.details.Hostname}</p>
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs text-muted-foreground">Context</p>
-                                                            <p className="font-medium">-</p>
+                                                            <p className="text-xs text-muted-foreground">Kubeconfig</p>
+                                                            <p className="font-medium">{provider.details.Private_key_filename}</p>
                                                         </div>
                                                     </>
                                                 }
@@ -1201,6 +1201,7 @@ export function MyProviders() {
                 <AddServiceDialog
                     serverId={selectedServerForService.id}
                     serverName={selectedServerForService.name}
+                    providerType={selectedServerForService.type}
                     open={isAddServiceDialogOpen}
                     onClose={() => setIsAddServiceDialogOpen(false)}
                     onServiceAdded={(service) => handleAddService(selectedServerForService.id, service)}
