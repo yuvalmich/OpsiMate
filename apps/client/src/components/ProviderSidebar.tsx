@@ -336,36 +336,19 @@ interface ProviderSidebarProps {
 export function ProviderSidebar({provider, onClose}: ProviderSidebarProps) {
     const {toast} = useToast();
     const navigate = useNavigate();
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleFormSubmit: SubmitHandler<AnyFormData> = async (data) => {
         switch (provider.type) {
-            case "kubernetes":
-            case "server": {
-                // For server provider, use the API
-                setIsSubmitting(true);
+            case "kubernetes": {
                 try {
-                    // Map form data to API request format
-                    const serverData = data as ServerFormData;
-                    // Determine provider_type based on provider.type
-                    let providerType = 'VM'; // Default to VM
-
-                    // Map provider types to provider types
-                    // Using type assertion to handle the comparison
-                    if (provider.type.includes('kubernetes')) {
-                        providerType = 'K8S';
-                    }
+                    const serverData = data as KubernetesFormData;
 
                     const providerData = {
                         name: serverData.name,
-                        providerIP: serverData.hostname,
-                        username: serverData.username,
-                        privateKeyFilename: serverData.authType === 'key' ? serverData.sshKey || 'id_rsa' : 'none',
-                        SSHPort: serverData.port,
-                        providerType: providerType
+                        privateKeyFilename: serverData.kubeconfigPath,
+                        providerType: 'K8S'
                     };
 
-                    debugger;
                     // Call the API to create a new provider
                     const response = await providerApi.createProvider(providerData);
 
@@ -387,47 +370,57 @@ export function ProviderSidebar({provider, onClose}: ProviderSidebarProps) {
                         description: error instanceof Error ? error.message : "There was a problem creating your provider",
                         variant: "destructive"
                     });
-                } finally {
-                    setIsSubmitting(false);
+                }
+                break;
+            }
+            case "server": {
+                try {
+                    // Map form data to API request format
+                    const serverData = data as ServerFormData;
+                    // Determine provider_type based on provider.type
+                    let providerType = 'VM'; // Default to VM
+
+                    // Map provider types to provider types
+                    // Using type assertion to handle the comparison
+                    if (provider.type.includes('kubernetes')) {
+                        providerType = 'K8S';
+                    }
+
+                    const providerData = {
+                        name: serverData.name,
+                        providerIP: serverData.hostname,
+                        username: serverData.username,
+                        privateKeyFilename: serverData.authType === 'key' ? serverData.sshKey || 'id_rsa' : 'none',
+                        SSHPort: serverData.port,
+                        providerType: providerType
+                    };
+
+                    // Call the API to create a new provider
+                    const response = await providerApi.createProvider(providerData);
+
+                    if (response.success && response.data) {
+                        toast({
+                            title: "Provider added",
+                            description: `Successfully added ${serverData.name} server provider`
+                        });
+                        onClose();
+                        // Redirect to My Providers page
+                        navigate('/my-providers');
+                    } else {
+                        throw new Error(response.error || 'Failed to create provider');
+                    }
+                } catch (error) {
+                    console.error("Error creating server provider:", error);
+                    toast({
+                        title: "Error adding provider",
+                        description: error instanceof Error ? error.message : "There was a problem creating your provider",
+                        variant: "destructive"
+                    });
                 }
                 break;
             }
             default: {
-                // For non-server providers, use the old localStorage approach
-                const newProvider = {
-                    id: `${provider.type}-${Date.now()}`,
-                    name: data.name,
-                    type: provider.type,
-                    status: "online",
-                    details: {...data},
-                    lastConnected: new Date().toISOString(),
-                    createdAt: new Date().toISOString()
-                };
-
-                try {
-                    const existingProvidersJson = localStorage.getItem('providers');
-                    const existingProviders = existingProvidersJson ? JSON.parse(existingProvidersJson) : [];
-                    const updatedProviders = [...existingProviders, newProvider];
-                    localStorage.setItem('providers', JSON.stringify(updatedProviders));
-
-                    toast({
-                        title: "Provider added",
-                        description: `Successfully added ${provider.name} provider`
-                    });
-                    onClose();
-                    // Redirect to My Providers page
-                    navigate('/my-providers');
-                } catch (error) {
-                    console.error("Error saving provider:", error);
-                    toast({
-                        title: "Error adding provider",
-                        description: "There was a problem saving your provider",
-                        variant: "destructive"
-                    });
-                }
-                return;
-
-
+                alert("This provider type is not yet supported with the new form.");
             }
         }
     };
