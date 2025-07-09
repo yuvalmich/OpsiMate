@@ -2,6 +2,7 @@ import * as k8s from '@kubernetes/client-node';
 import {DiscoveredService, Provider} from "@service-peek/shared";
 import path from "path";
 import fs from "fs";
+import {ObjectCoreV1Api} from "@kubernetes/client-node/dist/gen/types/ObjectParamAPI";
 
 const PRIVATE_KEYS_DIR = path.join(__dirname, '../../data/private-keys');
 
