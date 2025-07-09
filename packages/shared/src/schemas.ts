@@ -54,8 +54,9 @@ export const ServiceSchema = z.object({
     containerDetails: z.object({
         id: z.string().optional(),
         image: z.string().optional(),
-        created: z.string().optional()
-    }).optional()
+        created: z.string().optional(),
+        namespace: z.string().optional(),
+    }).optional(),
 });
 
 export const CreateServiceSchema = ServiceSchema;

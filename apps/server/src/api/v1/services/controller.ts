@@ -198,7 +198,7 @@ export class ServiceController {
             }
 
             const providerConnector = providerConnectorFactory(provider.providerType);
-            const logs = await providerConnector.getServiceLogs(provider, service.name);
+            const logs = await providerConnector.getServiceLogs(provider, service);
 
             res.json({ success: true, data: logs, message: 'Service logs retrieved successfully' });
         } catch (error) {

@@ -43,12 +43,15 @@ export class Logger {
 
         if (options?.extraArgs) {
             // eslint-disable-next-line no-console
-            console.dir({ extraArgs: options.extraArgs }, { depth: null, colors: true });
+            console.dir({extraArgs: options.extraArgs}, {depth: null, colors: true});
         }
     }
 
     info = (msg: string, options?: LogOptions) => this.log('info', msg, options);
     warn = (msg: string, options?: LogOptions) => this.log('warn', msg, options);
-    error = (msg: string, error?: unknown, options?: LogOptions) => this.log('error', msg, options);
+    error = (msg: string, error?: unknown, options?: LogOptions) => this.log('error', msg, {
+        ...options,
+        extraArgs: {...options?.extraArgs, err: error}
+    });
     debug = (msg: string, options?: LogOptions) => this.log('debug', msg, options);
 }

@@ -34,6 +34,7 @@ export interface ContainerDetails {
   id?: string;
   image?: string;
   created?: string;
+  namespace?: string;
 }
 
 export interface Tag {
@@ -71,6 +72,7 @@ export interface DiscoveredService {
   name: string;
   serviceStatus: string;
   serviceIP: string;
+  namespace?: string;
 }
 
 export interface ApiResponse<T> {
