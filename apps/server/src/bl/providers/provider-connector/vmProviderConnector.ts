@@ -13,10 +13,10 @@ export class VMProviderConnector implements ProviderConnector {
             
             // Return only Docker services
             return dockerServices;
-        } catch (error: any) {
+        } catch (error: unknown) {
             logger.error('Error discovering services:', error);
             // If Docker discovery fails, return empty array
-            if (error.message?.includes('Docker is not installed')) {
+            if (error instanceof Error && error.message.includes('Docker is not installed')) {
                 logger.info('Docker is not installed, returning empty service list');
                 return [];
             }

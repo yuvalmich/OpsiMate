@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import { CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema, Logger } from "@service-peek/shared";
+import { CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema, Logger, ServiceType } from "@service-peek/shared";
 import { providerConnectorFactory } from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import { ProviderNotFound } from "../../../bl/providers/ProviderNotFound";
 import { ServiceNotFound } from "../../../bl/services/ServiceNotFound";
@@ -34,7 +34,7 @@ export class ServiceController {
             }
             
             // If it's a systemd service, check its actual status
-            if (service.serviceType === 'SYSTEMD') {
+            if (service.serviceType === ServiceType.SYSTEMD) {
                 try {
                     const sshClient = await import('../../../dal/sshClient');
                     const actualStatus = await sshClient.checkSystemServiceStatus(provider, service.name);
@@ -46,7 +46,7 @@ export class ServiceController {
                     service.serviceStatus = actualStatus;
                     logger.info(`Updated systemd service ${service.name} status to ${actualStatus}`);
                 } catch (error) {
-                    logger.error(`Failed to check systemd service status: ${error}`);
+                    logger.error('Failed to check systemd service status:', error);
                     // Continue with unknown status if check fails
                 }
             }
