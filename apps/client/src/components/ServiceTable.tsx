@@ -269,7 +269,15 @@ export function ServiceTable({
                     </TableCell>
                   )}
                   {visibleColumns.provider && <TableCell>{service.provider.name}</TableCell>}
-                  {visibleColumns.containerDetails && <TableCell>{service.containerDetails?.image || '-'}</TableCell>}
+                  {visibleColumns.containerDetails && <TableCell>
+                    {service.serviceType === 'DOCKER' ? (
+                      service.containerDetails?.image || '-'
+                    ) : service.serviceType === 'SYSTEMD' ? (
+                      <span className="text-green-600 font-medium">Systemd Service</span>
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>}
                 </TableRow>
               ))
             )}

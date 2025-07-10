@@ -132,6 +132,137 @@ export async function getServiceLogs(provider: Provider, serviceName: string): P
     }
 }
 
+/**
+ * Discovers system services running on the provider
+ */
+export async function discoverSystemServices(provider: Provider): Promise<DiscoveredService[]> {
+    const ssh = new NodeSSH();
+    try {
+        await ssh.connect({
+            host: provider.providerIP,
+            username: provider.username,
+            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            port: provider.SSHPort,
+        });
+
+        // List active system services
+        const result = await ssh.execCommand('systemctl list-units --type=service --state=running --no-legend');
+        if (result.code !== 0) {
+            throw new Error(`Failed to list system services: ${result.stderr}`);
+        }
+
+        // Parse the output
+        const services: DiscoveredService[] = [];
+        const lines = result.stdout.split('\n').filter(line => line.trim().length > 0);
+        
+        for (const line of lines) {
+            // Format is typically: "service.service  loaded active running Description"
+            const parts = line.trim().split(/\s+/);
+            if (parts.length >= 4) {
+                const serviceName = parts[0].replace(/\.service$/, '');
+                const status = parts[2]; // active, inactive, etc.
+                
+                services.push({
+                    name: serviceName,
+                    serviceStatus: status === 'running' ? 'running' : 'stopped',
+                    serviceIP: provider.providerIP || ''
+                });
+            }
+        }
+
+        return services;
+    } catch (error) {
+        logger.error('Error discovering system services:', error);
+        throw error;
+    } finally {
+        ssh.dispose();
+    }
+}
+
+/**
+ * Starts a system service
+ */
+export async function startSystemService(
+    provider: Provider,
+    serviceName: string
+): Promise<void> {
+    const ssh = new NodeSSH();
+    try {
+        await ssh.connect({
+            host: provider.providerIP,
+            username: provider.username,
+            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            port: provider.SSHPort,
+        });
+
+        const result = await ssh.execCommand(`sudo systemctl start ${serviceName}`);
+        if (result.code !== 0) {
+            throw new Error(`Failed to start ${serviceName}: ${result.stderr}`);
+        }
+    } finally {
+        ssh.dispose();
+    }
+}
+
+/**
+ * Stops a system service
+ */
+export async function stopSystemService(
+    provider: Provider,
+    serviceName: string
+): Promise<void> {
+    const ssh = new NodeSSH();
+    try {
+        await ssh.connect({
+            host: provider.providerIP,
+            username: provider.username,
+            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            port: provider.SSHPort,
+        });
+
+        const result = await ssh.execCommand(`sudo systemctl stop ${serviceName}`);
+        if (result.code !== 0) {
+            throw new Error(`Failed to stop ${serviceName}: ${result.stderr}`);
+        }
+    } finally {
+        ssh.dispose();
+    }
+}
+
+/**
+ * Gets logs for a system service
+ */
+export async function getSystemServiceLogs(provider: Provider, serviceName: string): Promise<string[]> {
+    const ssh = new NodeSSH();
+    try {
+        await ssh.connect({
+            host: provider.providerIP,
+            username: provider.username,
+            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            port: provider.SSHPort,
+        });
+
+        // Get logs using journalctl
+        const result = await ssh.execCommand(`sudo journalctl -u ${serviceName} --since "24 hours ago" --no-pager`);
+        if (result.code !== 0) {
+            throw new Error(`Failed to get logs for ${serviceName}: ${result.stderr}`);
+        }
+
+        // Split logs into an array, filter out empty lines
+        const logs = result.stdout
+            .split('\n')
+            .filter(line => line.trim().length > 0);
+
+        return logs.length > 0 ? logs : ['No logs found in the last 24 hours'];
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        throw new Error(`Failed to get logs for system service ${serviceName}: ${errorMessage}`);
+    } finally {
+        ssh.dispose();
+    }
+}
+
 export async function testConnection(provider: Provider): Promise<boolean> {
     const ssh = new NodeSSH();
 

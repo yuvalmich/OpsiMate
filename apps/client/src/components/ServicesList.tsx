@@ -64,6 +64,8 @@ export function ServicesList({ services, onStatusChange, onServiceClick, onDelet
             >
               {service.type === "DOCKER" ? (
                 <Container className="h-4 w-4 text-blue-500" />
+              ) : service.type === "SYSTEMD" ? (
+                <Terminal className="h-4 w-4 text-green-500" />
               ) : (
                 <Server className="h-4 w-4 text-purple-500" />
               )}
