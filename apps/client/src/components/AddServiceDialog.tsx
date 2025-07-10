@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Loader2, RefreshCw, AlertCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { providerApi } from "@/lib/api";
 import { DiscoveredService, ServiceWithProvider } from "@service-peek/shared";
@@ -185,6 +185,8 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
           type: "SYSTEMD", // Match the API service_type
           status: response.data.serviceStatus as "running" | "stopped" | "error" | "unknown"
         };
+        
+        console.log('Service status from server:', response.data.serviceStatus);
 
         onServiceAdded(newService);
         setServiceName("");
@@ -488,7 +490,7 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
           </div>
         </TabsContent>
         
-        <TabsContent value="systemd" className="space-y-4">
+        <TabsContent value="systemd" className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="systemdServiceName">Systemd Service Name</Label>
             <Input
@@ -501,6 +503,17 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
           <div className="text-sm text-muted-foreground mt-2">
             <p>Enter the exact name of the systemd service as it appears in the system.</p>
             <p className="mt-1">Example: nginx.service, docker.service, etc.</p>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mt-4">
+            <div className="flex items-start">
+              <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-amber-800">Manual Entry Only</h4>
+                <p className="text-sm text-amber-700 mt-1">
+                  Systemd services must be added manually. Auto-discovery has been disabled for systemd services.
+                </p>
+              </div>
+            </div>
           </div>
         </TabsContent>
 

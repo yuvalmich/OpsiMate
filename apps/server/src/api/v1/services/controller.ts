@@ -32,6 +32,24 @@ export class ServiceController {
                 logger.error(`No service found with id ${lastID}`);
                 throw new ProviderNotFound(validatedData.providerId);
             }
+            
+            // If it's a systemd service, check its actual status
+            if (service.serviceType === 'SYSTEMD') {
+                try {
+                    const sshClient = await import('../../../dal/sshClient');
+                    const actualStatus = await sshClient.checkSystemServiceStatus(provider, service.name);
+                    
+                    // Update the service status in the database
+                    await this.serviceRepo.updateService(lastID, { serviceStatus: actualStatus });
+                    
+                    // Update the service object for the response
+                    service.serviceStatus = actualStatus;
+                    logger.info(`Updated systemd service ${service.name} status to ${actualStatus}`);
+                } catch (error) {
+                    logger.error(`Failed to check systemd service status: ${error}`);
+                    // Continue with unknown status if check fails
+                }
+            }
 
             res.status(201).json({ success: true, data: { ...service, provider }, message: 'Service created successfully' });
         } catch (error) {

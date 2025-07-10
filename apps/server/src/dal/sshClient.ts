@@ -145,8 +145,8 @@ export async function discoverSystemServices(provider: Provider): Promise<Discov
             port: provider.SSHPort,
         });
 
-        // List active system services
-        const result = await ssh.execCommand('systemctl list-units --type=service --state=running --no-legend');
+        // List all system services (not just running ones)
+        const result = await ssh.execCommand('systemctl list-units --type=service --all --no-legend');
         if (result.code !== 0) {
             throw new Error(`Failed to list system services: ${result.stderr}`);
         }
@@ -160,11 +160,18 @@ export async function discoverSystemServices(provider: Provider): Promise<Discov
             const parts = line.trim().split(/\s+/);
             if (parts.length >= 4) {
                 const serviceName = parts[0].replace(/\.service$/, '');
-                const status = parts[2]; // active, inactive, etc.
+                
+                // Check both the load state (parts[1]) and active state (parts[2])
+                // A service is running if it's both loaded and active
+                const loadState = parts[1]; // loaded, not-found, etc.
+                const activeState = parts[2]; // active, inactive, etc.
+                
+                // For a service to be considered running, it must be loaded and active
+                const isRunning = loadState === 'loaded' && activeState === 'active';
                 
                 services.push({
                     name: serviceName,
-                    serviceStatus: status === 'running' ? 'running' : 'stopped',
+                    serviceStatus: isRunning ? 'running' : 'stopped',
                     serviceIP: provider.providerIP || ''
                 });
             }
@@ -293,6 +300,53 @@ export async function testConnection(provider: Provider): Promise<boolean> {
     }
 }
 
+
+/**
+ * Checks if a systemd service is running
+ */
+export async function checkSystemServiceStatus(
+    provider: Provider,
+    serviceName: string
+): Promise<'running' | 'stopped' | 'unknown'> {
+    const ssh = new NodeSSH();
+    try {
+        await ssh.connect({
+            host: provider.providerIP,
+            username: provider.username,
+            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            port: provider.SSHPort,
+        });
+
+        // Check service status using systemctl is-active (most reliable for running status)
+        const isActiveResult = await ssh.execCommand(`sudo systemctl is-active ${serviceName}`);
+        const isActive = isActiveResult.stdout.trim() === 'active';
+        
+        logger.info(`[DEBUG] Service ${serviceName} is-active result: '${isActiveResult.stdout.trim()}', code: ${isActiveResult.code}`);
+        
+        // If the service is active, it's running regardless of loaded state
+        if (isActive) {
+            return 'running';
+        }
+        
+        // Double-check with systemctl status for more detailed information
+        const statusResult = await ssh.execCommand(`sudo systemctl status ${serviceName} --no-pager -l`);
+        const statusOutput = statusResult.stdout.toLowerCase();
+        
+        logger.info(`[DEBUG] Service ${serviceName} status: '${statusResult.stdout.split('\n')[2] || statusResult.stdout.split('\n')[1] || 'No status line found'}'`);
+        
+        // Check if the status output indicates the service is running
+        if (statusOutput.includes('active (running)') || statusOutput.includes('active (exited)')) {
+            return 'running';
+        }
+        
+        return 'stopped';
+    } catch (error) {
+        logger.error(`Failed to check status for ${serviceName}:`, error);
+        return 'unknown';
+    } finally {
+        ssh.dispose();
+    }
+}
 
 // todo: add timeouts in this section when necessary
 function timeoutPromise<T>(promise: Promise<T>, ms: number, errorMsg = 'Operation timed out'): Promise<T> {

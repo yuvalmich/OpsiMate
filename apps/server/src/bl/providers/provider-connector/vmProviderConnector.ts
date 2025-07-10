@@ -8,19 +8,17 @@ const logger = new Logger('VMProviderConnector');
 export class VMProviderConnector implements ProviderConnector {
     async discoverServices(provider: Provider): Promise<DiscoveredService[]> {
         try {
-            // First discover Docker containers
+            // Only discover Docker containers, systemd services are added manually
             const dockerServices = await sshClient.connectAndListContainers(provider);
             
-            // Then discover systemd services
-            const systemdServices = await sshClient.discoverSystemServices(provider);
-            
-            // Combine both service types
-            return [...dockerServices, ...systemdServices];
+            // Return only Docker services
+            return dockerServices;
         } catch (error: any) {
             logger.error('Error discovering services:', error);
-            // If Docker discovery fails but systemd might still work, try to return systemd services
+            // If Docker discovery fails, return empty array
             if (error.message?.includes('Docker is not installed')) {
-                return sshClient.discoverSystemServices(provider);
+                logger.info('Docker is not installed, returning empty service list');
+                return [];
             }
             throw error;
         }

@@ -260,7 +260,9 @@ export function ServiceTable({
                     />
                   </TableCell>
                   {visibleColumns.name && <TableCell className="font-medium">{service.name}</TableCell>}
-                  {visibleColumns.serviceIP && <TableCell>{service.serviceIP || '-'}</TableCell>}
+                  {visibleColumns.serviceIP && <TableCell>
+                    {service.serviceType === 'SYSTEMD' ? service.provider.providerIP : service.serviceIP || '-'}
+                  </TableCell>}
                   {visibleColumns.serviceStatus && (
                     <TableCell className="text-center">
                       <Badge className={cn(getStatusColor(service.serviceStatus), "font-medium")}>
