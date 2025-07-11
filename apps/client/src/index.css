@@ -104,4 +104,43 @@
   *:focus-visible {
     @apply ring-0 ring-offset-0 outline-none;
   }
+
+  /* Custom scrollbar styles for services section */
+  .services-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(209 213 219) transparent;
+    overflow-y: scroll !important;
+  }
+
+  .services-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    -webkit-appearance: none;
+  }
+
+  .services-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .services-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(209 213 219);
+    border-radius: 3px;
+    min-height: 20px;
+  }
+
+  .services-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(156 163 175);
+  }
+
+  /* Dark mode scrollbar */
+  .dark .services-scrollbar {
+    scrollbar-color: rgb(75 85 99) transparent;
+  }
+
+  .dark .services-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(75 85 99);
+  }
+
+  .dark .services-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(107 114 128);
+  }
 }
