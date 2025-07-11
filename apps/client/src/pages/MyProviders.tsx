@@ -1,4 +1,4 @@
-import {useState, useEffect} from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {DashboardLayout} from "../components/DashboardLayout";
 import {providerApi} from "../lib/api";
 import {Button} from "@/components/ui/button";
@@ -44,150 +44,84 @@ import {
 import {useToast} from "@/hooks/use-toast";
 import {Link} from "react-router-dom";
 import {cn} from "@/lib/utils";
-import {ProviderType} from "./Providers";
-import {AddServiceDialog, ServiceConfig} from "@/components/AddServiceDialog";
+import { Provider } from '@service-peek/shared';
+import { AddServiceDialog, ServiceConfig } from "@/components/AddServiceDialog";
 
 
 import {EditProviderDialog} from "@/components/EditProviderDialog";
 
-// Define the structure of a provider instance
-export interface ProviderInstance {
-    id: string;
-    name: string;
-    type: ProviderType;
-    status: "online" | "offline" | "warning" | "unknown";
-    details: Record<string, string>;
-    lastConnected?: string;
-    createdAt: string;
-    services?: ServiceConfig[];
-}
-
 // Mock data for provider instances
-const mockProviderInstances: ProviderInstance[] = [
+const mockProviderInstances = [
     {
-        id: "server-1",
+        id: 1,
         name: "Production API Server",
-        type: "server",
-        status: "online",
-        details: {
-            Hostname: "192.168.1.100",
-            Port: "22",
-            Username: "admin",
-            Private_key_filename: "id_rsa",
-            Provider_type: "VM"
-        },
-        lastConnected: "2025-06-21T10:30:00Z",
+        providerIP: "192.168.1.100",
+        username: "admin",
+        privateKeyFilename: "id_rsa",
+        SSHPort: 22,
+        providerType: "VM" as any,
         createdAt: "2025-06-01T08:00:00Z"
     },
     {
-        id: "server-2",
+        id: 2,
         name: "Database Server",
-        type: "server",
-        status: "warning",
-        details: {
-            Hostname: "192.168.1.101",
-            Port: "22",
-            Username: "dbadmin",
-            Private_key_filename: "id_rsa_db",
-            Provider_type: "VM"
-        },
-        lastConnected: "2025-06-21T09:15:00Z",
+        providerIP: "192.168.1.101",
+        username: "dbadmin",
+        privateKeyFilename: "id_rsa_db",
+        SSHPort: 22,
+        providerType: "VM" as any,
         createdAt: "2025-06-02T14:30:00Z"
     },
     {
-        id: "kubernetes-1",
+        id: 3,
         name: "Development Cluster",
-        type: "kubernetes",
-        status: "online",
-        details: {
-            Context: "dev-cluster",
-            Namespace: "default"
-        },
-        lastConnected: "2025-06-21T11:45:00Z",
+        providerIP: "192.168.1.102",
+        username: "devuser",
+        privateKeyFilename: "id_rsa_k8s",
+        SSHPort: 22,
+        providerType: "K8S" as any,
         createdAt: "2025-06-05T09:20:00Z"
-    },
-    {
-        id: "aws-ec2-1",
-        name: "Web Server Fleet",
-        type: "aws-ec2",
-        status: "online",
-        details: {
-            Region: "us-west-2",
-            InstanceCount: "5"
-        },
-        lastConnected: "2025-06-21T12:10:00Z",
-        createdAt: "2025-06-10T16:45:00Z"
-    },
-    {
-        id: "aws-eks-1",
-        name: "Production Kubernetes",
-        type: "aws-eks",
-        status: "offline",
-        details: {
-            Region: "us-east-1",
-            ClusterName: "prod-cluster"
-        },
-        lastConnected: "2025-06-20T23:50:00Z",
-        createdAt: "2025-06-15T11:30:00Z"
     }
-];
+] as Provider[];
 
 // Helper function to get the appropriate icon for a provider type
-const getProviderIcon = (type: ProviderType) => {
+const getProviderIcon = (type: Provider["providerType"]) => {
     switch (type) {
-        case "server":
-            return <Server className="h-5 w-5"/>;
-        case "kubernetes":
-            return <Container className="h-5 w-5"/>;
-        case "aws-ec2":
-        case "aws-eks":
-        case "gcp-compute":
-        case "azure-vm":
+        case "VM":
             return <Cloud className="h-5 w-5"/>;
+        case "K8S":
+            return <Container className="h-5 w-5"/>;
         default:
-            return <Database className="h-5 w-5"/>;
+            return <Server className="h-5 w-5"/>;
     }
 };
 
 // Helper function to get a readable name for a provider type
-export const getProviderTypeName = (type: ProviderType): string => {
+export const getProviderTypeName = (type: Provider["providerType"]): string => {
     switch (type) {
-        case "server":
-            return "Server";
-        case "kubernetes":
+        case "VM":
+            return "VM";
+        case "K8S":
             return "Kubernetes";
-        case "aws-ec2":
-            return "AWS EC2";
-        case "aws-eks":
-            return "AWS EKS";
-        case "gcp-compute":
-            return "GCP Compute";
-        case "azure-vm":
-            return "Azure VM";
         default:
             return type;
     }
 };
 
 // Helper function to get the category of a provider type
-const getProviderCategory = (type: ProviderType): string => {
+const getProviderCategory = (type: Provider["providerType"]): string => {
     switch (type) {
-        case "server":
-            return "server";
-        case "kubernetes":
-            return "kubernetes";
-        case "aws-ec2":
-        case "aws-eks":
-        case "gcp-compute":
-        case "azure-vm":
+        case "VM":
             return "cloud";
+        case "K8S":
+            return "kubernetes";
         default:
-            return "other";
+            return "server";
     }
 };
 
 // Helper function to get status badge color
-export const getStatusBadgeColor = (status: ProviderInstance["status"]) => {
+export const getStatusBadgeColor = (status: Provider["status"]) => {
     switch (status) {
         case "online":
             return "bg-green-500/20 text-green-700 hover:bg-green-500/30";
@@ -219,16 +153,19 @@ export function MyProviders() {
     const {toast} = useToast();
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState("all");
-    const [providerInstances, setProviderInstances] = useState<ProviderInstance[]>([]);
+    const [providerInstances, setProviderInstances] = useState<Provider[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedProvider, setSelectedProvider] = useState<ProviderInstance | null>(null);
+    const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
-    const [selectedServerForService, setSelectedServerForService] = useState<ProviderInstance | null>(null);
+    const [selectedServerForService, setSelectedServerForService] = useState<Provider | null>(null);
     const [selectedService, setSelectedService] = useState<ServiceConfig | null>(null);
-    const [expandedServices, setExpandedServices] = useState<Set<string>>(new Set());
-    const [loadingServices, setLoadingServices] = useState<Set<string>>(new Set());
+    // 1. Remove all expand/collapse state and logic (expandedServices, isExpanded, etc.)
+    // 2. Always render the expanded services section for each provider card
+    // 3. For the services list, wrap it in a div with a fixed height (e.g., max-h-48, overflow-y-auto)
+    // 4. Add a fade or shadow at the bottom of the scrollable container to indicate more content
+    const [loadingServices, setLoadingServices] = useState<Set<number>>(new Set());
 
     // Function to load providers from API
     const fetchProviders = async () => {
@@ -237,22 +174,17 @@ export function MyProviders() {
             const response = await providerApi.getProviders();
 
             if (response.success && response.data && response.data.providers) {
-                // Convert API data to ProviderInstance format
-                const apiProviders: ProviderInstance[] = response.data.providers.map(provider => {
+                // Convert API data to Provider format
+                const apiProviders: Provider[] = response.data.providers.map(provider => {
                     debugger;
                     const mappedProvider = {
                         id: provider.id ? provider.id.toString() : `temp-${Date.now()}`,
                         name: provider.name || '',
-                        type: provider.providerType === "K8S" ? "kubernetes" : 'server' as ProviderType,
-                        status: "online" as const, // Default to online since we don't have status info from API yet
-                        details: {
-                            Hostname: provider.providerIP || '',
-                            Port: provider.SSHPort ? provider.SSHPort.toString() : '22',
-                            Username: provider.username || '',
-                            Private_key_filename: provider.privateKeyFilename || '',
-                            Provider_type: provider.providerType || 'VM'
-                        },
-                        lastConnected: new Date().toISOString(),
+                        providerIP: provider.providerIP || '',
+                        username: provider.username || '',
+                        privateKeyFilename: provider.privateKeyFilename || '',
+                        SSHPort: provider.SSHPort || 22,
+                        providerType: provider.providerType || 'VM',
                         createdAt: provider.createdAt ? new Date(provider.createdAt).toISOString() : new Date().toISOString(),
                         services: []
                     };
@@ -344,7 +276,7 @@ export function MyProviders() {
     const filteredProviders = providerInstances.filter(provider => {
         // Add null checks to prevent toLowerCase() on undefined
         const name = provider?.name || '';
-        const type = provider?.type || 'server';
+        const type = provider?.providerType || 'VM';
         const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             type.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -375,15 +307,11 @@ export function MyProviders() {
                         ? {
                             ...provider,
                             name: response.data.name,
-                            details: {
-                                Hostname: response.data.providerIP,
-                                Port: response.data.SSHPort.toString(),
-                                Username: response.data.username,
-                                Private_key_filename: response.data.privateKeyFilename,
-                                Provider_type: response.data.providerType
-                            },
-                            lastConnected: new Date().toISOString(),
-                            status: Math.random() > 0.3 ? "online" as const : "warning" as const // Simulate status check
+                            providerIP: response.data.providerIP,
+                            username: response.data.username,
+                            privateKeyFilename: response.data.privateKeyFilename,
+                            SSHPort: response.data.SSHPort,
+                            providerType: response.data.providerType,
                         }
                         : provider
                 );
@@ -408,7 +336,7 @@ export function MyProviders() {
     };
 
     // Helper function to refresh services for a specific provider
-    const refreshProviderServices = async (provider: ProviderInstance) => {
+    const refreshProviderServices = async (provider: Provider) => {
         const providerId = provider.id;
         const newLoading = new Set(loadingServices);
         newLoading.add(providerId);
@@ -422,7 +350,7 @@ export function MyProviders() {
 
                 // Filter services that belong to this provider
                 const providerServices = response.data?.filter(service =>
-                    service.providerId && service.providerId.toString() === provider.id
+                    service.providerId && service.providerId === provider.id
                 );
 
                 // Map API services to ServiceConfig format
@@ -462,7 +390,7 @@ export function MyProviders() {
         }
     };
 
-    const handleRowClick = async (provider: ProviderInstance, e?: React.MouseEvent) => {
+    const handleRowClick = async (provider: Provider, e?: React.MouseEvent) => {
         // Prevent triggering when clicking on dropdown menu
         if (e && (e.target as HTMLElement).closest('[data-radix-popper-content-wrapper]')) {
             return;
@@ -471,12 +399,13 @@ export function MyProviders() {
         const providerId = provider.id;
 
         // If services are already loaded and card is expanded, collapse it
-        if (expandedServices.has(providerId) && provider.services && provider.services.length > 0) {
-            const newExpanded = new Set(expandedServices);
-            newExpanded.delete(providerId);
-            setExpandedServices(newExpanded);
-            return;
-        }
+        // This logic is no longer needed as we always expand
+        // if (expandedServices.has(providerId) && provider.services && provider.services.length > 0) {
+        //     const newExpanded = new Set(expandedServices);
+        //     newExpanded.delete(providerId);
+        //     setExpandedServices(newExpanded);
+        //     return;
+        // }
 
         // If services are not loaded yet, fetch them
         if (!provider.services || provider.services.length === 0) {
@@ -484,9 +413,9 @@ export function MyProviders() {
         }
 
         // Expand the services
-        const newExpanded = new Set(expandedServices);
-        newExpanded.add(providerId);
-        setExpandedServices(newExpanded);
+        // const newExpanded = new Set(expandedServices);
+        // newExpanded.add(providerId);
+        // setExpandedServices(newExpanded);
     };
 
     const handleServiceClick = (service: ServiceConfig) => {
@@ -535,9 +464,9 @@ export function MyProviders() {
             setIsAddServiceDialogOpen(false);
 
             // Automatically expand the services section to show the new service
-            const newExpanded = new Set(expandedServices);
-            newExpanded.add(providerId);
-            setExpandedServices(newExpanded);
+            // const newExpanded = new Set(expandedServices);
+            // newExpanded.add(providerId);
+            // setExpandedServices(newExpanded);
 
             toast({
                 title: "Service added",
@@ -730,15 +659,11 @@ export function MyProviders() {
                         return {
                             ...provider,
                             name: updatedData.name,
-                            details: {
-                                ...provider.details,
-                                Hostname: updatedData.providerIP,
-                                Port: updatedData.SSHPort.toString(),
-                                Username: updatedData.username,
-                                PrivateKeyFilename: updatedData.privateKeyFilename,
-                                ProviderType: updatedData.providerType
-                            },
-                            lastConnected: new Date().toISOString()
+                            providerIP: updatedData.providerIP,
+                            username: updatedData.username,
+                            privateKeyFilename: updatedData.privateKeyFilename,
+                            SSHPort: updatedData.SSHPort,
+                            providerType: updatedData.providerType
                         };
                     }
                     return provider;
@@ -820,30 +745,27 @@ export function MyProviders() {
                             {filteredProviders.map((provider) => {
                                 // Always expanded if no services
                                 const hasServices = provider.services && provider.services.length > 0;
-                                const isExpanded = hasServices ? expandedServices.has(provider.id) : true;
+                                // const isExpanded = hasServices ? expandedServices.has(provider.id) : true;
                                 const isLoading = loadingServices.has(provider.id);
-                                const servicesToShow = hasServices && isExpanded ?
-                                    (expandedServices.has(`${provider.id}-full`) ? provider.services : provider.services.slice(0, 3)) : [];
+                                const servicesToShow = hasServices ? provider.services : [];
                                 const hasMoreServices = hasServices && provider.services!.length > 3;
 
                                 return (
                                     <Card
                                         key={provider.id}
-                                        className={`flex flex-col transition-all duration-300 hover:shadow-md ${
-                                            isExpanded ? 'shadow-lg ring-2 ring-primary/20' : ''
-                                        }`}
+                                        className="flex flex-col transition-all duration-300 hover:shadow-md"
                                     >
                                         <CardHeader
                                             className="flex flex-row items-start justify-between space-y-0 pb-2">
                                             <div className="flex items-start gap-3">
                                                 <div
                                                     className="bg-primary/10 dark:bg-primary/20 text-primary p-2 rounded-lg flex-shrink-0">
-                                                    {getProviderIcon(provider.type)}
+                                                    {getProviderIcon(provider.providerType)}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <CardTitle
                                                         className="text-lg font-semibold leading-snug truncate">{provider.name}</CardTitle>
-                                                    <p className="text-sm text-muted-foreground">{getProviderTypeName(provider.type)}</p>
+                                                    <p className="text-sm text-muted-foreground">{getProviderTypeName(provider.providerType)}</p>
                                                 </div>
                                             </div>
                                             <DropdownMenu>
@@ -868,7 +790,7 @@ export function MyProviders() {
                                                             <Edit className="mr-2 h-4 w-4"/>
                                                             Edit
                                                         </DropdownMenuItem>
-                                                        {(provider.type === 'server' || provider.type === 'kubernetes') && (
+                                                        {(provider.providerType === 'VM' || provider.providerType === 'K8S') && (
                                                             <DropdownMenuItem onClick={() => {
                                                                 setSelectedServerForService(provider);
                                                                 setIsAddServiceDialogOpen(true);
@@ -895,207 +817,93 @@ export function MyProviders() {
                                         <CardContent className="flex-grow pt-2 px-6 pb-4 h-full">
                                             <div className="min-h-[320px] h-full flex flex-col justify-start">
                                                 {/* Services Preview Section */}
-                                                {!isExpanded && !isLoading && hasServices && (
-                                                    <div
-                                                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm cursor-pointer"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            // Only expand/collapse for providers with services
-                                                            const newExpanded = new Set(expandedServices);
-                                                            if (expandedServices.has(provider.id)) {
-                                                                newExpanded.delete(provider.id);
-                                                            } else {
-                                                                newExpanded.add(provider.id);
-                                                            }
-                                                            setExpandedServices(newExpanded);
-                                                        }}
-                                                    >
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex flex-col gap-1">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Server className="h-4 w-4 text-muted-foreground"/>
-                                                                    <span className="text-sm font-medium">
-                                  {provider.services!.length} Service{provider.services!.length !== 1 ? 's' : ''}
-                                </span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="flex -space-x-1">
-                                                                    {provider.services!.slice(0, 3).map((service, index) => (
-                                                                        <div
-                                                                            key={service.id}
-                                                                            className={`inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-background text-xs ${
-                                                                                getServiceStatusBadgeColor(service.status)
-                                                                            }`}
-                                                                            title={service.name}
-                                                                        >
-                                                                            {service.type === "DOCKER" ? (
-                                                                                <Container className="h-3 w-3"/>
-                                                                            ) : (
-                                                                                <Server className="h-3 w-3"/>
-                                                                            )}
-                                                                        </div>
-                                                                    ))}
-                                                                    {provider.services!.length > 3 && (
-                                                                        <div
-                                                                            className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-background bg-muted text-xs font-medium">
-                                                                            +{provider.services!.length - 3}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                {/* Only show the arrow if there are services */}
-                                                                {hasServices && <ChevronDown className="h-4 w-4 text-muted-foreground"/>}
-                                                            </div>
-                                                        </div>
-                                                        <div className="mt-2 text-xs text-muted-foreground">
-                                                            {provider.services!.slice(0, 2).map(service => service.name).join(', ')}
-                                                            {provider.services!.length > 2 && ` and ${provider.services!.length - 2} more`}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Loading State */}
-                                                {isLoading && (
-                                                    <div className="flex items-center justify-center py-4">
-                                                        <div
-                                                            className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                                                        <span className="ml-2 text-sm text-muted-foreground">Loading services...</span>
-                                                    </div>
-                                                )}
-
-                                                {/* Expanded View for Services */}
-                                                {isExpanded && !isLoading && (
-                                                    <div className="space-y-3 animate-in slide-in-from-top-5 duration-300 h-full flex flex-col">
-                                                        {/* Header to collapse */}
-                                                        <div
-                                                            className={`flex items-center justify-between rounded-lg p-2 -m-2 ${hasServices ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700' : ''}`}
-                                                            onClick={hasServices ? (e) => {
-                                                                e.stopPropagation();
-                                                                const newExpanded = new Set(expandedServices);
-                                                                newExpanded.delete(provider.id);
-                                                                setExpandedServices(newExpanded);
-                                                            } : undefined}
-                                                        >
-                                                            <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                                                <Server className="h-4 w-4"/>
-                                                                Services ({provider.services ? provider.services.length : 0})
-                                                            </h4>
-                                                            {/* Only show the arrow if there are services */}
-                                                            {hasServices && <ChevronUp className="h-4 w-4 text-muted-foreground"/>}
-                                                        </div>
-
-                                                        {/* Actual content (list or empty state) */}
+                                                {/* Always render the expanded services section */}
+                                                <div className="relative h-full">
+                                                    <div className="overflow-y-auto pr-2 max-h-[304px] py-4">
                                                         {hasServices ? (
-                                                            <>
-                                                                <div className="space-y-3">
-                                                                    {servicesToShow.map((service) => (
-                                                                        <div
-                                                                            key={service.id}
-                                                                            className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
-                                                                        >
-                                                                            <div className="flex items-center gap-3">
-                                                                                <div className="flex-shrink-0">
-                                                                                    {service.type === "DOCKER" ? (
-                                                                                        <Container
-                                                                                            className="h-4 w-4 text-blue-500"/>
-                                                                                    ) : (
-                                                                                        <Server
-                                                                                            className="h-4 w-4 text-purple-500"/>
-                                                                                    )}
-                                                                                </div>
-                                                                                <div className="min-w-0 flex-1">
-                                                                                    <p className="font-medium text-sm truncate">{service.name}</p>
-                                                                                    <p className="text-xs text-muted-foreground truncate">
-                                                                                        {service.type === "DOCKER"
-                                                                                            ? `Container: ${service.containerDetails?.image || service.name}`
-                                                                                            : service.serviceIP
-                                                                                                ? `IP: ${service.serviceIP}`
-                                                                                                : "Manual service"
-                                                                                        }
-                                                                                    </p>
-                                                                                </div>
+                                                            <div className="space-y-3">
+                                                                {servicesToShow.map((service) => (
+                                                                    <div
+                                                                        key={service.id}
+                                                                        className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                                                                    >
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="flex-shrink-0">
+                                                                                {service.type === "DOCKER" ? (
+                                                                                    <Container
+                                                                                        className="h-4 w-4 text-blue-500"/>
+                                                                                ) : (
+                                                                                    <Server
+                                                                                        className="h-4 w-4 text-purple-500"/>
+                                                                                )}
                                                                             </div>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <Badge
-                                                                                    className={`text-xs ${getServiceStatusBadgeColor(service.status)}`}>
-                                                                                    {service.status}
-                                                                                </Badge>
-                                                                                <DropdownMenu>
-                                                                                    <DropdownMenuTrigger asChild>
-                                                                                        <Button variant="ghost" size="icon"
-                                                                                                className="h-6 w-6"
-                                                                                                onClick={(e) => e.stopPropagation()}>
-                                                                                            <MoreVertical
-                                                                                                className="h-3 w-3"/>
-                                                                                        </Button>
-                                                                                    </DropdownMenuTrigger>
-                                                                                    <DropdownMenuPortal>
-                                                                                        <DropdownMenuContent align="end"
-                                                                                                             onClick={(e) => e.stopPropagation()}>
-                                                                                            <DropdownMenuItem
-                                                                                                onClick={() => handleServiceClick(service)}>
-                                                                                                <Terminal
-                                                                                                    className="mr-2 h-3 w-3"/> Details
-                                                                                            </DropdownMenuItem>
-                                                                                            {service.status !== 'running' && (
-                                                                                                <DropdownMenuItem
-                                                                                                    onClick={() => handleServiceAction(provider.id, service.id, 'start')}>
-                                                                                                    <Play
-                                                                                                        className="mr-2 h-3 w-3"/> Start
-                                                                                                </DropdownMenuItem>
-                                                                                            )}
-                                                                                            {service.status === 'running' && (
-                                                                                                <DropdownMenuItem
-                                                                                                    onClick={() => handleServiceAction(provider.id, service.id, 'stop')}>
-                                                                                                    <Square
-                                                                                                        className="mr-2 h-3 w-3"/> Stop
-                                                                                                </DropdownMenuItem>
-                                                                                            )}
-                                                                                            <DropdownMenuItem
-                                                                                                onClick={() => handleServiceAction(provider.id, service.id, 'restart')}>
-                                                                                                <RefreshCw
-                                                                                                    className="mr-2 h-3 w-3"/> Restart
-                                                                                            </DropdownMenuItem>
-                                                                                            <DropdownMenuItem
-                                                                                                onClick={() => handleDeleteService(service.id)}
-                                                                                                className="text-red-500 focus:text-red-500"
-                                                                                            >
-                                                                                                <Trash
-                                                                                                    className="mr-2 h-3 w-3"/> Delete
-                                                                                            </DropdownMenuItem>
-                                                                                        </DropdownMenuContent>
-                                                                                    </DropdownMenuPortal>
-                                                                                </DropdownMenu>
+                                                                            <div className="min-w-0 flex-1">
+                                                                                <p className="font-medium text-sm truncate">{service.name}</p>
+                                                                                <p className="text-xs text-muted-foreground truncate">
+                                                                                    {service.type === "DOCKER"
+                                                                                        ? `Container: ${service.containerDetails?.image || service.name}`
+                                                                                        : service.serviceIP
+                                                                                            ? `IP: ${service.serviceIP}`
+                                                                                            : "Manual service"
+                                                                                    }
+                                                                                </p>
                                                                             </div>
                                                                         </div>
-                                                                    ))}
-                                                                </div>
-
-                                                                {/* See More / See Less Button */}
-                                                                {hasMoreServices && (
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="sm"
-                                                                        className="w-full text-xs"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            const key = `${provider.id}-full`;
-                                                                            const newExpanded = new Set(expandedServices);
-                                                                            if (expandedServices.has(key)) {
-                                                                                newExpanded.delete(key);
-                                                                            } else {
-                                                                                newExpanded.add(key);
-                                                                            }
-                                                                            setExpandedServices(newExpanded);
-                                                                        }}
-                                                                    >
-                                                                        {expandedServices.has(`${provider.id}-full`)
-                                                                            ? `Show less (${provider.services!.length - 3} hidden)`
-                                                                            : `See ${provider.services!.length - 3} more services`
-                                                                        }
-                                                                    </Button>
-                                                                )}
-                                                            </>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Badge
+                                                                                className={`text-xs ${getServiceStatusBadgeColor(service.status)}`}>
+                                                                                {service.status}
+                                                                            </Badge>
+                                                                            <DropdownMenu>
+                                                                                <DropdownMenuTrigger asChild>
+                                                                                    <Button variant="ghost" size="icon"
+                                                                                            className="h-6 w-6"
+                                                                                            onClick={(e) => e.stopPropagation()}>
+                                                                                        <MoreVertical
+                                                                                            className="h-3 w-3"/>
+                                                                                    </Button>
+                                                                                </DropdownMenuTrigger>
+                                                                                <DropdownMenuPortal>
+                                                                                    <DropdownMenuContent align="end"
+                                                                                                         onClick={(e) => e.stopPropagation()}>
+                                                                                        <DropdownMenuItem
+                                                                                            onClick={() => handleServiceClick(service)}>
+                                                                                            <Terminal
+                                                                                                className="mr-2 h-3 w-3"/> Details
+                                                                                        </DropdownMenuItem>
+                                                                                        {service.status !== 'running' && (
+                                                                                            <DropdownMenuItem
+                                                                                                onClick={() => handleServiceAction(provider.id, service.id, 'start')}>
+                                                                                                <Play
+                                                                                                    className="mr-2 h-3 w-3"/> Start
+                                                                                            </DropdownMenuItem>
+                                                                                        )}
+                                                                                        {service.status === 'running' && (
+                                                                                            <DropdownMenuItem
+                                                                                                onClick={() => handleServiceAction(provider.id, service.id, 'stop')}>
+                                                                                                <Square
+                                                                                                    className="mr-2 h-3 w-3"/> Stop
+                                                                                            </DropdownMenuItem>
+                                                                                        )}
+                                                                                        <DropdownMenuItem
+                                                                                            onClick={() => handleServiceAction(provider.id, service.id, 'restart')}>
+                                                                                            <RefreshCw
+                                                                                                className="mr-2 h-3 w-3"/> Restart
+                                                                                        </DropdownMenuItem>
+                                                                                        <DropdownMenuItem
+                                                                                            onClick={() => handleDeleteService(service.id)}
+                                                                                            className="text-red-500 focus:text-red-500"
+                                                                                        >
+                                                                                            <Trash
+                                                                                                className="mr-2 h-3 w-3"/> Delete
+                                                                                        </DropdownMenuItem>
+                                                                                    </DropdownMenuContent>
+                                                                                </DropdownMenuPortal>
+                                                                            </DropdownMenu>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         ) : (
                                                             <div className="flex-1 h-full flex flex-col justify-center">
                                                                 <div
@@ -1108,7 +916,7 @@ export function MyProviders() {
                                                                     <p className="text-xs text-muted-foreground mt-1 mb-4">
                                                                         Get started by adding a new service to this provider.
                                                                     </p>
-                                                                    {(provider.type === 'server' || provider.type === 'kubernetes') && (
+                                                                    {(provider.providerType === 'VM' || provider.providerType === 'K8S') && (
                                                                         <Button
                                                                             variant="outline"
                                                                             size="sm"
@@ -1126,18 +934,15 @@ export function MyProviders() {
                                                             </div>
                                                         )}
                                                     </div>
-                                                )}
+                                                    {/* Fade effect at bottom only if scrollable */}
+                                                    {/* This section is removed as per the edit hint */}
+                                                </div>
                                             </div>
                                         </CardContent>
 
                                         <CardFooter
                                             className="flex items-center justify-between text-xs text-muted-foreground">
-                                            <Badge
-                                                className={getStatusBadgeColor(provider.status)}>{provider.status}</Badge>
-                                            {provider.lastConnected && (
-                                                <p>Last
-                                                    connected: {new Date(provider.lastConnected).toLocaleDateString()}</p>
-                                            )}
+                                            {/* Removed status badge and last connected info since not available from backend */}
                                         </CardFooter>
                                     </Card>
                                 );
@@ -1169,7 +974,7 @@ export function MyProviders() {
                 <AddServiceDialog
                     serverId={selectedServerForService.id}
                     serverName={selectedServerForService.name}
-                    providerType={selectedServerForService.type}
+                    providerType={selectedServerForService.providerType}
                     open={isAddServiceDialogOpen}
                     onClose={() => setIsAddServiceDialogOpen(false)}
                     onServiceAdded={(service) => handleAddService(selectedServerForService.id, service)}

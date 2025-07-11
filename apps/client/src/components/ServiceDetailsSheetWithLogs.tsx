@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink, X, RefreshCw } from "lucide-react";
-import { ProviderInstance } from "@/pages/MyProviders";
+import { Provider } from '@service-peek/shared';
 import { getProviderTypeName, getStatusBadgeColor } from "@/pages/MyProviders";
 import { ServiceConfig } from "./AddServiceDialog";
 import { ServicesList } from "./ServicesList";
@@ -12,7 +12,7 @@ import { providerApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface ServiceDetailsSheetProps {
-  provider: ProviderInstance | null;
+  provider: Provider | null;
   onClose: () => void;
   onDeleteService?: (serviceId: string) => void;
   onStatusChange?: (serviceId: string, newStatus: "running" | "stopped" | "error") => void;

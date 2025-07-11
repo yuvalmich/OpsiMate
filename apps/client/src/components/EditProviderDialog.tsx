@@ -11,11 +11,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ProviderInstance, getProviderTypeName } from "@/pages/MyProviders";
+import { Provider } from "@service-peek/shared";
 import { Container, Server } from "lucide-react";
 
 interface EditProviderDialogProps {
-  provider: ProviderInstance | null;
+  provider: Provider | null;
   open: boolean;
   onClose: () => void;
   onSave: (providerId: string, updatedData: {
@@ -47,24 +47,13 @@ export function EditProviderDialog({
   // Update form data when provider changes or dialog opens
   useEffect(() => {
     if (provider && open) {
-      // Get the private key filename from the provider details
-      console.log('Provider details:', provider.details);
-
-      // Determine provider_type based on provider.type
-      let providerType = 'VM'; // Default to VM
-
-      // Map provider types to provider types
-      if (provider.type.includes('kubernetes')) {
-        providerType = 'K8S';
-      }
-
       setFormData({
         name: provider.name,
-        providerIP: provider.details?.Hostname || "",
-        username: provider.details?.Username || "",
-        privateKeyFilename: provider.details?.Private_key_filename || "",
-        SSHPort: parseInt(provider.details?.Port || "22"),
-        providerType: providerType
+        providerIP: provider.providerIP || "",
+        username: provider.username || "",
+        privateKeyFilename: provider.privateKeyFilename || "",
+        SSHPort: provider.SSHPort || 22,
+        providerType: provider.providerType || 'VM',
       });
     }
   }, [provider, open]);
@@ -90,7 +79,7 @@ export function EditProviderDialog({
 
     setIsLoading(true);
     try {
-      await onSave(provider.id, formData);
+      await onSave(provider.id.toString(), formData);
       onClose();
     } catch (error) {
       console.error("Error updating provider:", error);
@@ -99,7 +88,7 @@ export function EditProviderDialog({
     }
   };
 
-  const isKubernetes = provider?.type === 'kubernetes' || formData.providerType === 'K8S';
+  const isKubernetes = provider?.providerType === 'K8S' || formData.providerType === 'K8S';
   
   return (
     <Dialog open={open} onOpenChange={onClose}>
