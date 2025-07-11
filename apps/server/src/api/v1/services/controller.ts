@@ -4,8 +4,9 @@ import { CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema, Logger, Serv
 import { providerConnectorFactory } from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import { ProviderNotFound } from "../../../bl/providers/ProviderNotFound";
 import { ServiceNotFound } from "../../../bl/services/ServiceNotFound";
-import {ProviderRepository} from "../../../dal/providerRepository";
-import {ServiceRepository} from "../../../dal/serviceRepository";
+import { ProviderRepository } from "../../../dal/providerRepository";
+import { ServiceRepository } from "../../../dal/serviceRepository";
+import { checkSystemServiceStatus } from "../../../dal/sshClient";
 
 const logger = new Logger('api/v1/services/controller');
 
@@ -36,8 +37,7 @@ export class ServiceController {
             // If it's a systemd service, check its actual status
             if (service.serviceType === ServiceType.SYSTEMD) {
                 try {
-                    const sshClient = await import('../../../dal/sshClient');
-                    const actualStatus = await sshClient.checkSystemServiceStatus(provider, service.name);
+                    const actualStatus = await checkSystemServiceStatus(provider, service.name);
                     
                     // Update the service status in the database
                     await this.serviceRepo.updateService(lastID, { serviceStatus: actualStatus });

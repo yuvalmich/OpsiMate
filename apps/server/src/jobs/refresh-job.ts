@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import { ProviderBL } from '../bl/providers/provider.bl';
 import { providerConnectorFactory } from '../bl/providers/provider-connector/providerConnectorFactory';
-import {DiscoveredService, Logger, Provider, ServiceType} from '@service-peek/shared';
+import { DiscoveredService, Logger, Provider, ServiceType } from '@service-peek/shared';
 import { ServiceRepository } from "../dal/serviceRepository";
+import { checkSystemServiceStatus } from "../dal/sshClient";
 
 const BATCH_SIZE = 10;
 const logger = new Logger('refresh-job');
@@ -58,8 +59,7 @@ export class RefreshJob {
             // For systemd services, we need to check them individually to ensure accurate status
             if (dbService.serviceType === ServiceType.SYSTEMD) {
                 try {
-                    const sshClient = await import('../dal/sshClient');
-                    const actualStatus = await sshClient.checkSystemServiceStatus(provider, dbService.name);
+                    const actualStatus = await checkSystemServiceStatus(provider, dbService.name);
                     
                     // Update service status only if it is different to reduce db calls
                     if (actualStatus !== dbService.serviceStatus) {
