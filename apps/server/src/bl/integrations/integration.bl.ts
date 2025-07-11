@@ -1,5 +1,5 @@
 import { IntegrationRepository } from "../../dal/integrationRepository";
-import { Integration, Logger } from "@service-peek/shared";
+import {Integration, IntegrationType, Logger} from "@service-peek/shared";
 import {integrationConnectorFactory} from "./integration-connector/integration-connector-factory";
 
 const logger = new Logger('bl/integrations/integration.bl');
@@ -33,6 +33,10 @@ export class IntegrationBL {
             logger.error(`Error creating integration`, error);
             throw error;
         }
+    }
+
+    async getIntegrationByType(type: IntegrationType): Promise<Integration | undefined> {
+        return await this.integrationRepo.getIntegrationByType(type);
     }
 
     async updateIntegration(integrationId: number, integrationToUpdate: Omit<Integration, 'id' | 'createdAt'>): Promise<Integration> {

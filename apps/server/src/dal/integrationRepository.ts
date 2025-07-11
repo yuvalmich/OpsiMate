@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
-import { Integration } from '@service-peek/shared';
+import {Integration, IntegrationType} from '@service-peek/shared';
 import { IntegrationRow } from './models';
 
 const mapRowToIntegration = (row: IntegrationRow): Integration => ({
@@ -44,6 +44,19 @@ export class IntegrationRepository {
             `);
             const row = stmt.get(id) as IntegrationRow;
             return mapRowToIntegration(row);
+        });
+    }
+
+    async getIntegrationByType(type: IntegrationType): Promise<Integration | undefined> {
+        return runAsync(() => {
+            const stmt = this.db.prepare(`
+                SELECT id, name, type, external_url, credentials, created_at
+                FROM integrations
+                WHERE type = ?
+                LIMIT 1
+            `);
+            const row = stmt.get(type) as IntegrationRow | undefined;
+            return row ? mapRowToIntegration(row) : undefined;
         });
     }
 
