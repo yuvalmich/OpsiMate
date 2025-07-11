@@ -18,6 +18,9 @@ import {IntegrationController} from "./api/v1/integrations/controller";
 import {IntegrationRepository} from "./dal/integrationRepository";
 import {IntegrationBL} from "./bl/integrations/integration.bl";
 import {Logger} from "@service-peek/shared";
+import {AlertRepository} from "./dal/alertRepository";
+import {AlertBL} from "./bl/alerts/alert.bl";
+import {PullGrafanaAlertsJob} from "./jobs/pull-grafana-alerts-job";
 
 const logger: Logger = new Logger('server');
 const app = express();
@@ -41,10 +44,12 @@ const serviceRepo = new ServiceRepository(dbInstance)
 const viewRepo = new ViewRepository(dbInstance)
 const tagRepo = new TagRepository(dbInstance)
 const integrationRepo = new IntegrationRepository(dbInstance)
+const alertRepo = new AlertRepository(dbInstance)
 
 // BL
 const providerBL = new ProviderBL(providerRepo, serviceRepo)
 const integrationBL = new IntegrationBL(integrationRepo)
+const alertBL = new AlertBL(alertRepo)
 
 // Controllers
 const providerController = new ProviderController(providerBL)
@@ -59,6 +64,12 @@ app.use('/api/v1', createV1Router(providerController, serviceController, viewCon
 
 // Initialize database tables
 // todo: move it from here.
+alertRepo.initAlertsTable().then(() => {
+    logger.info('Providers table initialized');
+}).catch(err => {
+    logger.error('Failed to initialize providers table:', err);
+});
+
 providerRepo.initProvidersTable()
   .then(() => {
     logger.info('Providers table initialized');
@@ -100,7 +111,8 @@ integrationRepo.initIntegrationsTable()
     });
 
 // this job refreshes the services status periodically.
-(new RefreshJob(providerBL, serviceRepo)).startRefreshJob()
+(new RefreshJob(providerBL, serviceRepo)).startRefreshJob();
+(new PullGrafanaAlertsJob(alertBL, integrationBL, tagRepo)).startPullGrafanaAlertsJob()
 
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);

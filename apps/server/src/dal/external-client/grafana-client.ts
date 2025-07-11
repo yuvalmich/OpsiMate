@@ -4,6 +4,23 @@ export interface GrafanaDashboardSummary {
     url: string;
 }
 
+type GrafanaAlert = {
+    annotations: Record<string, string>;
+    endsAt: string;
+    fingerprint: string;
+    receivers: { name: string }[];
+    startsAt: string;
+    status: {
+        inhibitedBy: string[];
+        silencedBy: string[];
+        state: 'active' | 'suppressed' | 'unprocessed';
+    };
+    updatedAt: string;
+    generatorURL: string;
+    labels: Record<string, string>;
+};
+
+
 export class GrafanaClient {
     constructor(private url: string, private apiKey: string) {}
 
@@ -24,5 +41,24 @@ export class GrafanaClient {
         }
 
         return await res.json() as GrafanaDashboardSummary[];
+    }
+
+    async getAlerts(tags: string[]): Promise<GrafanaAlert[]> {
+        const res = await fetch(`${this.url}/api/alertmanager/grafana/api/v2/alerts`, {
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (!res.ok) {
+            throw new Error(`Grafana API error: ${res.status}`);
+        }
+
+        const alerts: GrafanaAlert[] = await res.json() as GrafanaAlert[];
+
+        return alerts.filter((alert) => {
+            const alertTag = alert.labels?.tag;
+            return alertTag && tags.includes(alertTag);
+        });
     }
 }

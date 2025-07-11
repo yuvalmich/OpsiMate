@@ -59,3 +59,14 @@ export interface ViewRow {
     searchTerm: string;
     isDefault?: number;
 }
+
+export type AlertRow = {
+    id: string;
+    status: string;
+    tag: string;
+    starts_at: string;
+    updated_at: string;
+    alert_url: string;
+    created_at: string;
+    is_dismissed: boolean;
+};
