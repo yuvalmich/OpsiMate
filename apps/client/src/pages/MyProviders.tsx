@@ -818,9 +818,10 @@ export function MyProviders() {
                     ) : filteredProviders.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                             {filteredProviders.map((provider) => {
-                                const isExpanded = expandedServices.has(provider.id);
-                                const isLoading = loadingServices.has(provider.id);
+                                // Always expanded if no services
                                 const hasServices = provider.services && provider.services.length > 0;
+                                const isExpanded = hasServices ? expandedServices.has(provider.id) : true;
+                                const isLoading = loadingServices.has(provider.id);
                                 const servicesToShow = hasServices && isExpanded ?
                                     (expandedServices.has(`${provider.id}-full`) ? provider.services : provider.services.slice(0, 3)) : [];
                                 const hasMoreServices = hasServices && provider.services!.length > 3;
@@ -891,71 +892,34 @@ export function MyProviders() {
                                             </DropdownMenu>
                                         </CardHeader>
 
-                                        <CardContent className="flex-grow pt-2 px-6 pb-4">
-                                            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
-
-                                                {provider.type === "server" &&
-                                                    <>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground">Hostname</p>
-                                                            <p className="font-medium">{provider.details.Hostname}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground">Port</p>
-                                                            <p className="font-medium">{provider.details.Port}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground">Username</p>
-                                                            <p className="font-medium">{provider.details.Username}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground">SSH Key</p>
-                                                            <p className="font-medium">{provider.details.Private_key_filename}</p>
-                                                        </div>
-                                                    </>
-                                                }
-                                                {provider.type === "kubernetes" &&
-                                                    <>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground">API Server</p>
-                                                            <p className="font-medium">{provider.details.Hostname}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground">Kubeconfig</p>
-                                                            <p className="font-medium">{provider.details.Private_key_filename}</p>
-                                                        </div>
-                                                    </>
-                                                }
-
-
-                                            </div>
-
-                                            {/* Services Preview Section */}
-                                            {!isExpanded && !isLoading && (
-                                                <div
-                                                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer shadow-sm"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleRowClick(provider, e);
-                                                    }}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex flex-col gap-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <Server className="h-4 w-4 text-muted-foreground"/>
-                                                                <span className="text-sm font-medium">
-                                  {hasServices
-                                      ? `${provider.services!.length} Service${provider.services!.length !== 1 ? 's' : ''}`
-                                      : 'Services'
-                                  }
+                                        <CardContent className="flex-grow pt-2 px-6 pb-4 h-full">
+                                            <div className="min-h-[320px] h-full flex flex-col justify-start">
+                                                {/* Services Preview Section */}
+                                                {!isExpanded && !isLoading && hasServices && (
+                                                    <div
+                                                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm cursor-pointer"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            // Only expand/collapse for providers with services
+                                                            const newExpanded = new Set(expandedServices);
+                                                            if (expandedServices.has(provider.id)) {
+                                                                newExpanded.delete(provider.id);
+                                                            } else {
+                                                                newExpanded.add(provider.id);
+                                                            }
+                                                            setExpandedServices(newExpanded);
+                                                        }}
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex flex-col gap-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Server className="h-4 w-4 text-muted-foreground"/>
+                                                                    <span className="text-sm font-medium">
+                                  {provider.services!.length} Service{provider.services!.length !== 1 ? 's' : ''}
                                 </span>
+                                                                </div>
                                                             </div>
-                                                            {!hasServices && !isLoading && (
-                                                                <span className="text-xs text-muted-foreground/70 ml-6">Click to load and view</span>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            {hasServices && (
+                                                            <div className="flex items-center gap-2">
                                                                 <div className="flex -space-x-1">
                                                                     {provider.services!.slice(0, 3).map((service, index) => (
                                                                         <div
@@ -979,187 +943,191 @@ export function MyProviders() {
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                            )}
-                                                            <ChevronDown className="h-4 w-4 text-muted-foreground"/>
+                                                                {/* Only show the arrow if there are services */}
+                                                                {hasServices && <ChevronDown className="h-4 w-4 text-muted-foreground"/>}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    {hasServices && (
                                                         <div className="mt-2 text-xs text-muted-foreground">
                                                             {provider.services!.slice(0, 2).map(service => service.name).join(', ')}
                                                             {provider.services!.length > 2 && ` and ${provider.services!.length - 2} more`}
                                                         </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {/* Loading State */}
-                                            {isLoading && (
-                                                <div className="flex items-center justify-center py-4">
-                                                    <div
-                                                        className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                                                    <span className="ml-2 text-sm text-muted-foreground">Loading services...</span>
-                                                </div>
-                                            )}
-
-                                            {/* Expanded View for Services */}
-                                            {isExpanded && !isLoading && (
-                                                <div className="space-y-3 animate-in slide-in-from-top-5 duration-300">
-                                                    {/* Header to collapse */}
-                                                    <div
-                                                        className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 -m-2"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const newExpanded = new Set(expandedServices);
-                                                            newExpanded.delete(provider.id);
-                                                            setExpandedServices(newExpanded);
-                                                        }}
-                                                    >
-                                                        <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                                                            <Server className="h-4 w-4"/>
-                                                            Services ({provider.services ? provider.services.length : 0})
-                                                        </h4>
-                                                        <ChevronUp className="h-4 w-4 text-muted-foreground"/>
                                                     </div>
+                                                )}
 
-                                                    {/* Actual content (list or empty state) */}
-                                                    {hasServices ? (
-                                                        <>
-                                                            <div className="space-y-3">
-                                                                {servicesToShow.map((service) => (
-                                                                    <div
-                                                                        key={service.id}
-                                                                        className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
-                                                                    >
-                                                                        <div className="flex items-center gap-3">
-                                                                            <div className="flex-shrink-0">
-                                                                                {service.type === "DOCKER" ? (
-                                                                                    <Container
-                                                                                        className="h-4 w-4 text-blue-500"/>
-                                                                                ) : (
-                                                                                    <Server
-                                                                                        className="h-4 w-4 text-purple-500"/>
-                                                                                )}
-                                                                            </div>
-                                                                            <div className="min-w-0 flex-1">
-                                                                                <p className="font-medium text-sm truncate">{service.name}</p>
-                                                                                <p className="text-xs text-muted-foreground truncate">
-                                                                                    {service.type === "DOCKER"
-                                                                                        ? `Container: ${service.containerDetails?.image || service.name}`
-                                                                                        : service.serviceIP
-                                                                                            ? `IP: ${service.serviceIP}`
-                                                                                            : "Manual service"
-                                                                                    }
-                                                                                </p>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <Badge
-                                                                                className={`text-xs ${getServiceStatusBadgeColor(service.status)}`}>
-                                                                                {service.status}
-                                                                            </Badge>
-                                                                            <DropdownMenu>
-                                                                                <DropdownMenuTrigger asChild>
-                                                                                    <Button variant="ghost" size="icon"
-                                                                                            className="h-6 w-6"
-                                                                                            onClick={(e) => e.stopPropagation()}>
-                                                                                        <MoreVertical
-                                                                                            className="h-3 w-3"/>
-                                                                                    </Button>
-                                                                                </DropdownMenuTrigger>
-                                                                                <DropdownMenuPortal>
-                                                                                    <DropdownMenuContent align="end"
-                                                                                                         onClick={(e) => e.stopPropagation()}>
-                                                                                        <DropdownMenuItem
-                                                                                            onClick={() => handleServiceClick(service)}>
-                                                                                            <Terminal
-                                                                                                className="mr-2 h-3 w-3"/> Details
-                                                                                        </DropdownMenuItem>
-                                                                                        {service.status !== 'running' && (
-                                                                                            <DropdownMenuItem
-                                                                                                onClick={() => handleServiceAction(provider.id, service.id, 'start')}>
-                                                                                                <Play
-                                                                                                    className="mr-2 h-3 w-3"/> Start
-                                                                                            </DropdownMenuItem>
-                                                                                        )}
-                                                                                        {service.status === 'running' && (
-                                                                                            <DropdownMenuItem
-                                                                                                onClick={() => handleServiceAction(provider.id, service.id, 'stop')}>
-                                                                                                <Square
-                                                                                                    className="mr-2 h-3 w-3"/> Stop
-                                                                                            </DropdownMenuItem>
-                                                                                        )}
-                                                                                        <DropdownMenuItem
-                                                                                            onClick={() => handleServiceAction(provider.id, service.id, 'restart')}>
-                                                                                            <RefreshCw
-                                                                                                className="mr-2 h-3 w-3"/> Restart
-                                                                                        </DropdownMenuItem>
-                                                                                        <DropdownMenuItem
-                                                                                            onClick={() => handleDeleteService(service.id)}
-                                                                                            className="text-red-500 focus:text-red-500"
-                                                                                        >
-                                                                                            <Trash
-                                                                                                className="mr-2 h-3 w-3"/> Delete
-                                                                                        </DropdownMenuItem>
-                                                                                    </DropdownMenuContent>
-                                                                                </DropdownMenuPortal>
-                                                                            </DropdownMenu>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-
-                                                            {/* See More / See Less Button */}
-                                                            {hasMoreServices && (
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    className="w-full text-xs"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        const key = `${provider.id}-full`;
-                                                                        const newExpanded = new Set(expandedServices);
-                                                                        if (expandedServices.has(key)) {
-                                                                            newExpanded.delete(key);
-                                                                        } else {
-                                                                            newExpanded.add(key);
-                                                                        }
-                                                                        setExpandedServices(newExpanded);
-                                                                    }}
-                                                                >
-                                                                    {expandedServices.has(`${provider.id}-full`)
-                                                                        ? `Show less (${provider.services!.length - 3} hidden)`
-                                                                        : `See ${provider.services!.length - 3} more services`
-                                                                    }
-                                                                </Button>
-                                                            )}
-                                                        </>
-                                                    ) : (
+                                                {/* Loading State */}
+                                                {isLoading && (
+                                                    <div className="flex items-center justify-center py-4">
                                                         <div
-                                                            className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-800/50 flex flex-col items-center">
-                                                            <Server className="h-8 w-8 text-muted-foreground mb-2"/>
-                                                            <h4 className="font-semibold text-sm text-foreground">No
-                                                                Services Configured</h4>
-                                                            <p className="text-xs text-muted-foreground mt-1 mb-4">
-                                                                Get started by adding a new service to this provider.
-                                                            </p>
-                                                            {(provider.type === 'server' || provider.type === 'kubernetes') && (
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setSelectedServerForService(provider);
-                                                                        setIsAddServiceDialogOpen(true);
-                                                                    }}
-                                                                >
-                                                                    <ListPlus className="mr-2 h-4 w-4"/>
-                                                                    Add New Service
-                                                                </Button>
-                                                            )}
+                                                            className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                                        <span className="ml-2 text-sm text-muted-foreground">Loading services...</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Expanded View for Services */}
+                                                {isExpanded && !isLoading && (
+                                                    <div className="space-y-3 animate-in slide-in-from-top-5 duration-300 h-full flex flex-col">
+                                                        {/* Header to collapse */}
+                                                        <div
+                                                            className={`flex items-center justify-between rounded-lg p-2 -m-2 ${hasServices ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700' : ''}`}
+                                                            onClick={hasServices ? (e) => {
+                                                                e.stopPropagation();
+                                                                const newExpanded = new Set(expandedServices);
+                                                                newExpanded.delete(provider.id);
+                                                                setExpandedServices(newExpanded);
+                                                            } : undefined}
+                                                        >
+                                                            <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                                                                <Server className="h-4 w-4"/>
+                                                                Services ({provider.services ? provider.services.length : 0})
+                                                            </h4>
+                                                            {/* Only show the arrow if there are services */}
+                                                            {hasServices && <ChevronUp className="h-4 w-4 text-muted-foreground"/>}
                                                         </div>
-                                                    )}
-                                                </div>
-                                            )}
+
+                                                        {/* Actual content (list or empty state) */}
+                                                        {hasServices ? (
+                                                            <>
+                                                                <div className="space-y-3">
+                                                                    {servicesToShow.map((service) => (
+                                                                        <div
+                                                                            key={service.id}
+                                                                            className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                                                                        >
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className="flex-shrink-0">
+                                                                                    {service.type === "DOCKER" ? (
+                                                                                        <Container
+                                                                                            className="h-4 w-4 text-blue-500"/>
+                                                                                    ) : (
+                                                                                        <Server
+                                                                                            className="h-4 w-4 text-purple-500"/>
+                                                                                    )}
+                                                                                </div>
+                                                                                <div className="min-w-0 flex-1">
+                                                                                    <p className="font-medium text-sm truncate">{service.name}</p>
+                                                                                    <p className="text-xs text-muted-foreground truncate">
+                                                                                        {service.type === "DOCKER"
+                                                                                            ? `Container: ${service.containerDetails?.image || service.name}`
+                                                                                            : service.serviceIP
+                                                                                                ? `IP: ${service.serviceIP}`
+                                                                                                : "Manual service"
+                                                                                        }
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <Badge
+                                                                                    className={`text-xs ${getServiceStatusBadgeColor(service.status)}`}>
+                                                                                    {service.status}
+                                                                                </Badge>
+                                                                                <DropdownMenu>
+                                                                                    <DropdownMenuTrigger asChild>
+                                                                                        <Button variant="ghost" size="icon"
+                                                                                                className="h-6 w-6"
+                                                                                                onClick={(e) => e.stopPropagation()}>
+                                                                                            <MoreVertical
+                                                                                                className="h-3 w-3"/>
+                                                                                        </Button>
+                                                                                    </DropdownMenuTrigger>
+                                                                                    <DropdownMenuPortal>
+                                                                                        <DropdownMenuContent align="end"
+                                                                                                             onClick={(e) => e.stopPropagation()}>
+                                                                                            <DropdownMenuItem
+                                                                                                onClick={() => handleServiceClick(service)}>
+                                                                                                <Terminal
+                                                                                                    className="mr-2 h-3 w-3"/> Details
+                                                                                            </DropdownMenuItem>
+                                                                                            {service.status !== 'running' && (
+                                                                                                <DropdownMenuItem
+                                                                                                    onClick={() => handleServiceAction(provider.id, service.id, 'start')}>
+                                                                                                    <Play
+                                                                                                        className="mr-2 h-3 w-3"/> Start
+                                                                                                </DropdownMenuItem>
+                                                                                            )}
+                                                                                            {service.status === 'running' && (
+                                                                                                <DropdownMenuItem
+                                                                                                    onClick={() => handleServiceAction(provider.id, service.id, 'stop')}>
+                                                                                                    <Square
+                                                                                                        className="mr-2 h-3 w-3"/> Stop
+                                                                                                </DropdownMenuItem>
+                                                                                            )}
+                                                                                            <DropdownMenuItem
+                                                                                                onClick={() => handleServiceAction(provider.id, service.id, 'restart')}>
+                                                                                                <RefreshCw
+                                                                                                    className="mr-2 h-3 w-3"/> Restart
+                                                                                            </DropdownMenuItem>
+                                                                                            <DropdownMenuItem
+                                                                                                onClick={() => handleDeleteService(service.id)}
+                                                                                                className="text-red-500 focus:text-red-500"
+                                                                                            >
+                                                                                                <Trash
+                                                                                                    className="mr-2 h-3 w-3"/> Delete
+                                                                                            </DropdownMenuItem>
+                                                                                        </DropdownMenuContent>
+                                                                                    </DropdownMenuPortal>
+                                                                                </DropdownMenu>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+
+                                                                {/* See More / See Less Button */}
+                                                                {hasMoreServices && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="w-full text-xs"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            const key = `${provider.id}-full`;
+                                                                            const newExpanded = new Set(expandedServices);
+                                                                            if (expandedServices.has(key)) {
+                                                                                newExpanded.delete(key);
+                                                                            } else {
+                                                                                newExpanded.add(key);
+                                                                            }
+                                                                            setExpandedServices(newExpanded);
+                                                                        }}
+                                                                    >
+                                                                        {expandedServices.has(`${provider.id}-full`)
+                                                                            ? `Show less (${provider.services!.length - 3} hidden)`
+                                                                            : `See ${provider.services!.length - 3} more services`
+                                                                        }
+                                                                    </Button>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <div className="flex-1 h-full flex flex-col justify-center">
+                                                                <div
+                                                                    className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-800/50 flex flex-col items-center"
+                                                                    style={{ height: '100%', alignItems: 'center', justifyContent: 'center' }}
+                                                                >
+                                                                    <Server className="h-8 w-8 text-muted-foreground mb-2"/>
+                                                                    <h4 className="font-semibold text-sm text-foreground">No
+                                                                        Services Configured</h4>
+                                                                    <p className="text-xs text-muted-foreground mt-1 mb-4">
+                                                                        Get started by adding a new service to this provider.
+                                                                    </p>
+                                                                    {(provider.type === 'server' || provider.type === 'kubernetes') && (
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setSelectedServerForService(provider);
+                                                                                setIsAddServiceDialogOpen(true);
+                                                                            }}
+                                                                        >
+                                                                            <ListPlus className="mr-2 h-4 w-4"/>
+                                                                            Add New Service
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </CardContent>
 
                                         <CardFooter
