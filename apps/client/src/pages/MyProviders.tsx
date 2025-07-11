@@ -46,6 +46,8 @@ import {Link} from "react-router-dom";
 import {cn} from "@/lib/utils";
 import { Provider as SharedProvider } from '@service-peek/shared';
 import { AddServiceDialog, ServiceConfig } from "@/components/AddServiceDialog";
+import { RightSidebarWithLogs } from "@/components/RightSidebarWithLogs";
+import type { Service } from "@/components/ServiceTable";
 
 // Local Provider type that extends the shared one with services
 interface Provider extends SharedProvider {
@@ -174,6 +176,9 @@ export function MyProviders() {
     // 3. For the services list, wrap it in a div with a fixed height (e.g., max-h-48, overflow-y-auto)
     // 4. Add a fade or shadow at the bottom of the scrollable container to indicate more content
     const [loadingServices, setLoadingServices] = useState<Set<number>>(new Set());
+    // Add state for the drawer
+    const [selectedServiceForDrawer, setSelectedServiceForDrawer] = useState<Service | null>(null);
+    const [isServiceDrawerOpen, setIsServiceDrawerOpen] = useState(false);
 
     // Function to load providers from API
     const fetchProviders = async () => {
@@ -876,7 +881,33 @@ export function MyProviders() {
                                                                                     <DropdownMenuContent align="end"
                                                                                                          onClick={(e) => e.stopPropagation()}>
                                                                                         <DropdownMenuItem
-                                                                                            onClick={() => handleServiceClick(service)}>
+                                                                                            onClick={() => {
+                                                                                                // Find the parent provider for this service
+                                                                                                const parentProvider = providerInstances.find(p => p.services && p.services.some(s => s.id === service.id));
+                                                                                                // Compose a Service object for the drawer
+                                                                                                const mappedService: Service = {
+                                                                                                    id: service.id,
+                                                                                                    name: service.name,
+                                                                                                    serviceStatus: (service as any).status || (service as any).serviceStatus || 'unknown',
+                                                                                                    serviceType: (service as any).type || (service as any).serviceType || 'MANUAL',
+                                                                                                    createdAt: (service as any).createdAt || new Date().toISOString(),
+                                                                                                    provider: parentProvider || {
+                                                                                                        id: -1,
+                                                                                                        name: 'Unknown',
+                                                                                                        providerIP: '',
+                                                                                                        username: '',
+                                                                                                        privateKeyFilename: '',
+                                                                                                        SSHPort: 22,
+                                                                                                        createdAt: '',
+                                                                                                        providerType: 'VM'
+                                                                                                    },
+                                                                                                    serviceIP: service.serviceIP || '',
+                                                                                                    containerDetails: service.containerDetails || {},
+                                                                                                    tags: (service as any).tags || []
+                                                                                                };
+                                                                                                setSelectedServiceForDrawer(mappedService);
+                                                                                                setIsServiceDrawerOpen(true);
+                                                                                            }}>
                                                                                             <Terminal
                                                                                                 className="mr-2 h-3 w-3"/> Details
                                                                                         </DropdownMenuItem>
@@ -1015,6 +1046,46 @@ export function MyProviders() {
                 onClose={() => setIsEditDialogOpen(false)}
                 onSave={handleUpdateProvider}
             />
+
+            {isServiceDrawerOpen && selectedServiceForDrawer && (
+                <>
+                    {/* Backdrop */}
+                    <div
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            background: 'rgba(0,0,0,0.2)',
+                            zIndex: 1000,
+                        }}
+                        onClick={() => setIsServiceDrawerOpen(false)}
+                    />
+                    {/* Drawer */}
+                    <div
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            right: 0,
+                            height: '100vh',
+                            width: 400,
+                            zIndex: 1001,
+                            background: 'white',
+                            boxShadow: '-2px 0 8px rgba(0,0,0,0.08)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <RightSidebarWithLogs
+                            service={selectedServiceForDrawer}
+                            onClose={() => setIsServiceDrawerOpen(false)}
+                            collapsed={false}
+                        />
+                    </div>
+                </>
+            )}
         </DashboardLayout>
     );
 }
