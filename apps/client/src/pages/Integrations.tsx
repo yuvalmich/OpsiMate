@@ -463,7 +463,7 @@ export default function Integrations() {
                         // Default for other integrations like Grafana and Kibana
                         setFormData({
                           url: existingIntegration.externalUrl || '',
-                          apiKey: existingIntegration.credentials?.token || ''
+                          apiKey: existingIntegration.credentials?.apiKey || ''
                         });
                       }
                     } else {
@@ -600,8 +600,7 @@ export default function Integrations() {
                       } else {
                         // Default for other integrations like Grafana and Kibana
                         credentials = {
-                          // Use 'token' instead of 'apiKey' to match what IntegrationConnector expects
-                          token: formData.apiKey || ''
+                          apiKey: formData.apiKey || ''
                         };
                       }
                       
