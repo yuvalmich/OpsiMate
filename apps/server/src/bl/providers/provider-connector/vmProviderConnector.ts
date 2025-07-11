@@ -1,9 +1,7 @@
 import {DiscoveredService, Provider, Service, ServiceType} from "@service-peek/shared";
 import * as sshClient from "../../../dal/sshClient";
 import {ProviderConnector} from "./providerConnector";
-import {Logger} from "@service-peek/shared";
 
-const logger = new Logger('VMProviderConnector');
 
 export class VMProviderConnector implements ProviderConnector {
     async discoverServices(provider: Provider): Promise<DiscoveredService[]> {
