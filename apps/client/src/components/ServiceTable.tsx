@@ -260,7 +260,9 @@ export function ServiceTable({
                     />
                   </TableCell>
                   {visibleColumns.name && <TableCell className="font-medium">{service.name}</TableCell>}
-                  {visibleColumns.serviceIP && <TableCell>{service.serviceIP || '-'}</TableCell>}
+                  {visibleColumns.serviceIP && <TableCell>
+                    {service.serviceType === 'SYSTEMD' ? service.provider.providerIP : service.serviceIP || '-'}
+                  </TableCell>}
                   {visibleColumns.serviceStatus && (
                     <TableCell className="text-center">
                       <Badge className={cn(getStatusColor(service.serviceStatus), "font-medium")}>
@@ -269,7 +271,15 @@ export function ServiceTable({
                     </TableCell>
                   )}
                   {visibleColumns.provider && <TableCell>{service.provider.name}</TableCell>}
-                  {visibleColumns.containerDetails && <TableCell>{service.containerDetails?.image || '-'}</TableCell>}
+                  {visibleColumns.containerDetails && <TableCell>
+                    {service.serviceType === 'DOCKER' ? (
+                      service.containerDetails?.image || '-'
+                    ) : service.serviceType === 'SYSTEMD' ? (
+                      <span className="text-green-600 font-medium">Systemd Service</span>
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>}
                 </TableRow>
               ))
             )}

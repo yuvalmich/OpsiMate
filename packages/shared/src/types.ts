@@ -1,6 +1,6 @@
 export enum ProviderType {
   VM = 'VM',
-  K8S = 'K8S',
+  K8S = 'K8S'
 }
 
 export enum IntegrationType {

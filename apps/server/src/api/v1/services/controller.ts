@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import { CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema, Logger } from "@service-peek/shared";
+import { CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema, Logger, ServiceType } from "@service-peek/shared";
 import { providerConnectorFactory } from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import { ProviderNotFound } from "../../../bl/providers/ProviderNotFound";
 import { ServiceNotFound } from "../../../bl/services/ServiceNotFound";
-import {ProviderRepository} from "../../../dal/providerRepository";
-import {ServiceRepository} from "../../../dal/serviceRepository";
+import { ProviderRepository } from "../../../dal/providerRepository";
+import { ServiceRepository } from "../../../dal/serviceRepository";
+import { checkSystemServiceStatus } from "../../../dal/sshClient";
 
 const logger = new Logger('api/v1/services/controller');
 
@@ -31,6 +32,23 @@ export class ServiceController {
             if (!service) {
                 logger.error(`No service found with id ${lastID}`);
                 throw new ProviderNotFound(validatedData.providerId);
+            }
+            
+            // If it's a systemd service, check its actual status
+            if (service.serviceType === ServiceType.SYSTEMD) {
+                try {
+                    const actualStatus = await checkSystemServiceStatus(provider, service.name);
+                    
+                    // Update the service status in the database
+                    await this.serviceRepo.updateService(lastID, { serviceStatus: actualStatus });
+                    
+                    // Update the service object for the response
+                    service.serviceStatus = actualStatus;
+                    logger.info(`Updated systemd service ${service.name} status to ${actualStatus}`);
+                } catch (error) {
+                    logger.error('Failed to check systemd service status:', error);
+                    // Continue with unknown status if check fails
+                }
             }
 
             res.status(201).json({ success: true, data: { ...service, provider }, message: 'Service created successfully' });
@@ -136,7 +154,7 @@ export class ServiceController {
             }
 
             const providerConnector = providerConnectorFactory(provider.providerType);
-            await providerConnector.startService(provider, service.name);
+            await providerConnector.startService(provider, service.name, service.serviceType);
             await this.serviceRepo.updateService(serviceId, { serviceStatus: 'running' });
 
             const updatedService = await this.serviceRepo.getServiceWithProvider(serviceId);
@@ -167,7 +185,7 @@ export class ServiceController {
             }
 
             const providerConnector = providerConnectorFactory(provider.providerType);
-            await providerConnector.stopService(provider, service.name);
+            await providerConnector.stopService(provider, service.name, service.serviceType);
             await this.serviceRepo.updateService(serviceId, { serviceStatus: 'stopped' });
 
             const updatedService = await this.serviceRepo.getServiceWithProvider(serviceId);

@@ -58,33 +58,37 @@ export function RightSidebar({ service, onClose, collapsed }: RightSidebarProps)
         <div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-4">
             <div>
-              <div className="text-muted-foreground">Server ID</div>
-              <div className="font-medium text-foreground text-sm">{service.serviceIP}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground">OS</div>
-              <div className="font-medium text-foreground text-sm">{service.os}</div>
+              <div className="text-muted-foreground">Provider</div>
+              <div className="font-medium text-foreground text-sm">{service.provider.name}</div>
             </div>
             <div>
               <div className="text-muted-foreground">IP Address</div>
-              <div className="font-medium text-foreground font-mono text-sm">{service.ipAddress}</div>
+              <div className="font-medium text-foreground font-mono text-sm">
+                {service.serviceType === 'SYSTEMD' ? service.provider.providerIP : service.serviceIP || '-'}
+              </div>
             </div>
             <div>
-              <div className="text-muted-foreground">Port</div>
-              <div className="font-medium text-foreground text-sm">{service.port || '-'}</div>
+              <div className="text-muted-foreground">Service Type</div>
+              <div className="font-medium text-foreground text-sm">{service.serviceType}</div>
             </div>
             <div>
-              <div className="text-muted-foreground">Uptime</div>
-              <div className="font-medium text-foreground text-sm">{service.uptime || '-'}</div>
+              <div className="text-muted-foreground">Created At</div>
+              <div className="font-medium text-foreground text-sm">
+                {new Date(service.createdAt).toLocaleString()}
+              </div>
             </div>
-            <div>
-              <div className="text-muted-foreground">Memory</div>
-              <div className="font-medium text-foreground text-sm">{service.memory || '-'}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground">CPU</div>
-              <div className="font-medium text-foreground text-sm">{service.cpu || '-'}</div>
-            </div>
+            {service.serviceType === 'DOCKER' && service.containerDetails && (
+              <>
+                <div>
+                  <div className="text-muted-foreground">Container Image</div>
+                  <div className="font-medium text-foreground text-sm">{service.containerDetails.image || '-'}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Container ID</div>
+                  <div className="font-medium text-foreground text-sm">{service.containerDetails.id || '-'}</div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import {ProviderConnector} from "./providerConnector";
-import {DiscoveredService, Provider, Service} from "@service-peek/shared";
+import {DiscoveredService, Provider, Service, ServiceType} from "@service-peek/shared";
 import {getK8RLogs, getK8SServices} from "../../../dal/kubeConnector";
 
 export class K8SProviderConnector implements ProviderConnector {
@@ -7,11 +7,11 @@ export class K8SProviderConnector implements ProviderConnector {
         return [await getK8RLogs(provider, service.name, service.containerDetails?.namespace || 'default')];
     }
 
-    startService(_: Provider, _2: string): Promise<void> {
+    startService(_: Provider, _2: string, _3?: ServiceType): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
-    stopService(_: Provider, _2: string): Promise<void> {
+    stopService(_: Provider, _2: string, _3?: ServiceType): Promise<void> {
         throw new Error("Method not implemented.");
     }
 

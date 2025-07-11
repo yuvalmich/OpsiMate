@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import { ProviderBL } from '../bl/providers/provider.bl';
 import { providerConnectorFactory } from '../bl/providers/provider-connector/providerConnectorFactory';
-import {DiscoveredService, Logger, Provider} from '@service-peek/shared';
+import { DiscoveredService, Logger, Provider, ServiceType } from '@service-peek/shared';
 import { ServiceRepository } from "../dal/serviceRepository";
+import { checkSystemServiceStatus } from "../dal/sshClient";
 
 const BATCH_SIZE = 10;
 const logger = new Logger('refresh-job');
@@ -55,13 +56,31 @@ export class RefreshJob {
         const dbServices = await this.serviceRepo.getServicesByProviderId(provider.id);
 
         for (const dbService of dbServices) {
-            const matchedService = this.findMatchingService(discoveredServices, dbService.name);
+            // For systemd services, we need to check them individually to ensure accurate status
+            if (dbService.serviceType === ServiceType.SYSTEMD) {
+                try {
+                    const actualStatus = await checkSystemServiceStatus(provider, dbService.name);
+                    
+                    // Update service status only if it is different to reduce db calls
+                    if (actualStatus !== dbService.serviceStatus) {
+                        await this.serviceRepo.updateService(dbService.id, {
+                            serviceStatus: actualStatus
+                        });
+                        logger.info(`Updated systemd service ${dbService.name} status to ${actualStatus}`);
+                    }
+                } catch (error) {
+                    logger.error(`Failed to check systemd service ${dbService.name} status:`, error);
+                }
+            } else {
+                // For non-systemd services, use the discovered services
+                const matchedService = this.findMatchingService(discoveredServices, dbService.name);
 
-            // Update service status only if it is different to reduce db calls.
-            if (matchedService && matchedService.serviceStatus !== dbService.serviceStatus) {
-                await this.serviceRepo.updateService(dbService.id, {
-                    serviceStatus: matchedService.serviceStatus
-                });
+                // Update service status only if it is different to reduce db calls
+                if (matchedService && matchedService.serviceStatus !== dbService.serviceStatus) {
+                    await this.serviceRepo.updateService(dbService.id, {
+                        serviceStatus: matchedService.serviceStatus
+                    });
+                }
             }
         }
     };
