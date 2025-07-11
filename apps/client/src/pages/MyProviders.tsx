@@ -44,8 +44,13 @@ import {
 import {useToast} from "@/hooks/use-toast";
 import {Link} from "react-router-dom";
 import {cn} from "@/lib/utils";
-import { Provider } from '@service-peek/shared';
+import { Provider as SharedProvider } from '@service-peek/shared';
 import { AddServiceDialog, ServiceConfig } from "@/components/AddServiceDialog";
+
+// Local Provider type that extends the shared one with services
+interface Provider extends SharedProvider {
+    services?: ServiceConfig[];
+}
 
 
 import {EditProviderDialog} from "@/components/EditProviderDialog";
@@ -60,7 +65,8 @@ const mockProviderInstances = [
         privateKeyFilename: "id_rsa",
         SSHPort: 22,
         providerType: "VM" as any,
-        createdAt: "2025-06-01T08:00:00Z"
+        createdAt: "2025-06-01T08:00:00Z",
+        services: []
     },
     {
         id: 2,
@@ -70,7 +76,8 @@ const mockProviderInstances = [
         privateKeyFilename: "id_rsa_db",
         SSHPort: 22,
         providerType: "VM" as any,
-        createdAt: "2025-06-02T14:30:00Z"
+        createdAt: "2025-06-02T14:30:00Z",
+        services: []
     },
     {
         id: 3,
@@ -80,7 +87,8 @@ const mockProviderInstances = [
         privateKeyFilename: "id_rsa_k8s",
         SSHPort: 22,
         providerType: "K8S" as any,
-        createdAt: "2025-06-05T09:20:00Z"
+        createdAt: "2025-06-05T09:20:00Z",
+        services: []
     }
 ] as Provider[];
 
@@ -176,9 +184,8 @@ export function MyProviders() {
             if (response.success && response.data && response.data.providers) {
                 // Convert API data to Provider format
                 const apiProviders: Provider[] = response.data.providers.map(provider => {
-                    debugger;
                     const mappedProvider = {
-                        id: provider.id ? provider.id.toString() : `temp-${Date.now()}`,
+                        id: Number(provider.id),
                         name: provider.name || '',
                         providerIP: provider.providerIP || '',
                         username: provider.username || '',
@@ -303,7 +310,7 @@ export function MyProviders() {
             if (response.success && response.data) {
                 // Update just this provider with fresh data
                 const updatedProviders = providerInstances.map(provider =>
-                    provider.id === id
+                    provider.id === Number(id)
                         ? {
                             ...provider,
                             name: response.data.name,
@@ -446,7 +453,7 @@ export function MyProviders() {
             });
 
             // Refresh the provider to get updated service status
-            setTimeout(() => handleRowClick(providerInstances.find(i => i.id === providerId)!), 2000);
+            setTimeout(() => handleRowClick(providerInstances.find(i => i.id === Number(providerId))!), 2000);
 
         } catch (error) {
             console.error(`Error ${action}ing service:`, error);
@@ -458,30 +465,32 @@ export function MyProviders() {
         }
     };
 
-    const handleAddService = async (providerId: string, service: ServiceConfig) => {
+    // Helper function to update UI after service addition
+    const updateUIAfterServiceAddition = (providerId: number, service: ServiceConfig) => {
+        // Find the provider and add the new service to its services array
+        const updatedProviders = providerInstances.map(provider => {
+            if (provider.id === providerId) {
+                return {
+                    ...provider,
+                    services: [service, ...(provider.services ?? [])]
+                };
+            }
+            return provider;
+        });
+        setProviderInstances(updatedProviders);
+        console.log(updatedProviders); // Debug: log after update
+    };
+
+    const handleAddService = async (providerId: number, service: ServiceConfig) => {
         try {
             // Close the dialog first
             setIsAddServiceDialogOpen(false);
-
-            // Automatically expand the services section to show the new service
-            // const newExpanded = new Set(expandedServices);
-            // newExpanded.add(providerId);
-            // setExpandedServices(newExpanded);
-
+            // Update the UI immediately with the new service
+            updateUIAfterServiceAddition(providerId, service);
             toast({
                 title: "Service added",
                 description: `${service.name} has been successfully added`,
             });
-
-            // Refresh only the specific provider's services after a short delay
-            setTimeout(async () => {
-                const provider = providerInstances.find(i => i.id === providerId);
-                if (provider) {
-                    // Refresh just this provider's services without changing expansion state
-                    await refreshProviderServices(provider);
-                }
-            }, 500);
-
         } catch (error) {
             console.error("Error adding service:", error);
             toast({
@@ -512,7 +521,7 @@ export function MyProviders() {
 
             // Update the UI with the new status
             const updatedProviders = providerInstances.map(provider => {
-                if (provider.id === providerId && provider.services) {
+                if (provider.id === Number(providerId) && provider.services) {
                     return {
                         ...provider,
                         services: provider.services.map(service =>
@@ -526,7 +535,7 @@ export function MyProviders() {
             setProviderInstances(updatedProviders);
 
             // Update selected provider if it's the one containing this service
-            if (selectedProvider && selectedProvider.id === providerId && selectedProvider.services) {
+            if (selectedProvider && selectedProvider.id === Number(providerId) && selectedProvider.services) {
                 const updatedSelectedProvider = {
                     ...selectedProvider,
                     services: selectedProvider.services.map(service =>
@@ -612,7 +621,7 @@ export function MyProviders() {
         if (!selectedProvider) return;
         try {
             // Call the API to delete the provider
-            const response = await providerApi.deleteProvider(parseInt(selectedProvider.id));
+            const response = await providerApi.deleteProvider(selectedProvider.id);
 
             if (response.success) {
                 // Update the UI by removing the deleted provider
@@ -650,12 +659,12 @@ export function MyProviders() {
     }) => {
         try {
             // Call the API to update the provider
-            const response = await providerApi.updateProvider(parseInt(providerId), updatedData);
+            const response = await providerApi.updateProvider(Number(providerId), updatedData);
 
             if (response.success && response.data) {
                 // Update the UI with the updated provider
                 const updatedProviders = providerInstances.map(provider => {
-                    if (provider.id === providerId) {
+                    if (provider.id === Number(providerId)) {
                         return {
                             ...provider,
                             name: updatedData.name,
@@ -672,8 +681,8 @@ export function MyProviders() {
                 setProviderInstances(updatedProviders);
 
                 // If this is the currently selected provider, update it
-                if (selectedProvider && selectedProvider.id === providerId) {
-                    const updatedProvider = updatedProviders.find(i => i.id === providerId);
+                if (selectedProvider && selectedProvider.id === Number(providerId)) {
+                    const updatedProvider = updatedProviders.find(i => i.id === Number(providerId));
                     if (updatedProvider) {
                         setSelectedProvider(updatedProvider);
                     }
@@ -744,7 +753,7 @@ export function MyProviders() {
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                             {filteredProviders.map((provider) => {
                                 // Always expanded if no services
-                                const hasServices = provider.services && provider.services.length > 0;
+                                const hasServices = Array.isArray(provider.services) && provider.services.length > 0;
                                 // const isExpanded = hasServices ? expandedServices.has(provider.id) : true;
                                 const isLoading = loadingServices.has(provider.id);
                                 const servicesToShow = hasServices ? provider.services : [];
@@ -779,7 +788,7 @@ export function MyProviders() {
                                                     <DropdownMenuContent align="end"
                                                                          onClick={(e) => e.stopPropagation()}>
                                                         <DropdownMenuItem
-                                                            onClick={() => handleRefreshProvider(provider.id)}>
+                                                            onClick={() => handleRefreshProvider(String(provider.id))}>
                                                             <RefreshCw className="mr-2 h-4 w-4"/>
                                                             Refresh
                                                         </DropdownMenuItem>
@@ -819,7 +828,7 @@ export function MyProviders() {
                                                 {/* Services Preview Section */}
                                                 {/* Always render the expanded services section */}
                                                 <div className="relative h-full">
-                                                    <div className="overflow-y-auto pr-2 max-h-[304px] py-4">
+                                                    <div className="overflow-y-scroll pr-2 max-h-[304px] h-full services-scrollbar">
                                                         {hasServices ? (
                                                             <div className="space-y-3">
                                                                 {servicesToShow.map((service) => (
@@ -873,20 +882,20 @@ export function MyProviders() {
                                                                                         </DropdownMenuItem>
                                                                                         {service.status !== 'running' && (
                                                                                             <DropdownMenuItem
-                                                                                                onClick={() => handleServiceAction(provider.id, service.id, 'start')}>
+                                                                                                onClick={() => handleServiceAction(String(provider.id), service.id, 'start')}>
                                                                                                 <Play
                                                                                                     className="mr-2 h-3 w-3"/> Start
                                                                                             </DropdownMenuItem>
                                                                                         )}
                                                                                         {service.status === 'running' && (
                                                                                             <DropdownMenuItem
-                                                                                                onClick={() => handleServiceAction(provider.id, service.id, 'stop')}>
+                                                                                                onClick={() => handleServiceAction(String(provider.id), service.id, 'stop')}>
                                                                                                 <Square
                                                                                                     className="mr-2 h-3 w-3"/> Stop
                                                                                             </DropdownMenuItem>
                                                                                         )}
                                                                                         <DropdownMenuItem
-                                                                                            onClick={() => handleServiceAction(provider.id, service.id, 'restart')}>
+                                                                                            onClick={() => handleServiceAction(String(provider.id), service.id, 'restart')}>
                                                                                             <RefreshCw
                                                                                                 className="mr-2 h-3 w-3"/> Restart
                                                                                         </DropdownMenuItem>
@@ -907,8 +916,8 @@ export function MyProviders() {
                                                         ) : (
                                                             <div className="flex-1 h-full flex flex-col justify-center">
                                                                 <div
-                                                                    className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-800/50 flex flex-col items-center"
-                                                                    style={{ height: '100%', alignItems: 'center', justifyContent: 'center' }}
+                                                                    className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-800/50 flex flex-col items-center justify-center h-full"
+                                                                    style={{ alignItems: 'center', justifyContent: 'center' }}
                                                                 >
                                                                     <Server className="h-8 w-8 text-muted-foreground mb-2"/>
                                                                     <h4 className="font-semibold text-sm text-foreground">No
@@ -972,7 +981,7 @@ export function MyProviders() {
             {/* Add Service Dialog */}
             {selectedServerForService && (
                 <AddServiceDialog
-                    serverId={selectedServerForService.id}
+                    serverId={String(selectedServerForService.id)}
                     serverName={selectedServerForService.name}
                     providerType={selectedServerForService.providerType}
                     open={isAddServiceDialogOpen}
