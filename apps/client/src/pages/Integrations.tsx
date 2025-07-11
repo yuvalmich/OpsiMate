@@ -676,18 +676,19 @@ export default function Integrations() {
                   }}>
                     {selectedIntegration.configFields.map(field => (
                       <div key={field.name} className="space-y-2">
-                        <label htmlFor={field.name} className="text-sm font-medium flex items-center gap-1">
+                        <label htmlFor={`${selectedIntegration.id}-${field.name}`} className="text-sm font-medium">
                           {field.label} {field.required && <span className="text-destructive">*</span>}
                         </label>
                         {field.type === 'select' ? (
                           <select 
-                            id={field.name}
+                            id={`${selectedIntegration.id}-${field.name}`}
                             name={field.name}
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             required={field.required}
                             value={formData[field.name] || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
                             disabled={isSubmitting}
+                            autoComplete="off"
                           >
                             <option value="">Select {field.label}</option>
                             {field.options?.map(option => (
@@ -696,7 +697,7 @@ export default function Integrations() {
                           </select>
                         ) : (
                           <Input 
-                            id={field.name}
+                            id={`${selectedIntegration.id}-${field.name}`}
                             name={field.name}
                             type={field.type}
                             placeholder={field.placeholder}
@@ -704,6 +705,7 @@ export default function Integrations() {
                             value={formData[field.name] || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
                             disabled={isSubmitting}
+                            autoComplete={field.type === 'password' ? 'new-password' : 'off'}
                           />
                         )}
                       </div>
