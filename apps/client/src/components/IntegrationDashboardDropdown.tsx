@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { KibanaIcon } from './icons/KibanaIcon';
 import { GrafanaIcon } from './icons/GrafanaIcon';
+import { DatadogIcon } from './icons/DatadogIcon';
 import { ChevronDown, ExternalLink, Loader2 } from 'lucide-react';
 import { integrationApi } from '@/lib/api';
 import { Tag } from '@service-peek/shared';
@@ -23,7 +24,7 @@ interface Dashboard {
 
 interface IntegrationDashboardDropdownProps {
   tags: Tag[];
-  integrationType: 'Kibana' | 'Grafana';
+  integrationType: 'Kibana' | 'Grafana' | 'Datadog';
   className?: string;
 }
 
@@ -41,7 +42,18 @@ export function IntegrationDashboardDropdown({
 
   // Display properties based on integration type
   const displayName = `${integrationType} Dashboards`;
-  const IconComponent = integrationType === 'Kibana' ? KibanaIcon : GrafanaIcon;
+  const getIconComponent = () => {
+    switch (integrationType) {
+      case 'Kibana':
+        return KibanaIcon;
+      case 'Datadog':
+        return DatadogIcon;
+      case 'Grafana':
+      default:
+        return GrafanaIcon;
+    }
+  };
+  const IconComponent = getIconComponent();
 
   useEffect(() => {
     fetchIntegration();

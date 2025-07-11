@@ -7,13 +7,12 @@ export class KibanaIntegrationConnector implements IntegrationConnector {
     private logger = new Logger('bl/integrations/kibana-integration-connector');
     async getUrls(integration: Integration, tags: string[]): Promise<IntegrationUrls[]> {
         try {
-            // Check if credentials exist and have the token field
-            if (!integration.credentials || !integration.credentials["token"]) {
-                this.logger.error('Missing Kibana API token in credentials');
+            if (!integration.credentials || !integration.credentials["apiKey"]) {
+                this.logger.error('Missing Kibana API apiKey in credentials');
                 return [];
             }
             
-            const kibanaClient = new KibanaClient(integration.externalUrl, integration.credentials["token"] as string);
+            const kibanaClient = new KibanaClient(integration.externalUrl, integration.credentials["apiKey"] as string);
             
             // Process all tags in parallel and collect dashboards
             const dashboardPromises: Promise<IntegrationUrls[]>[] = tags.map(async (tag: string) => {

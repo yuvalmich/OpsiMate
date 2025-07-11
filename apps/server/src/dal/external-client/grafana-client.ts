@@ -5,7 +5,7 @@ export interface GrafanaDashboardSummary {
 }
 
 export class GrafanaClient {
-    constructor(private url: string, private token: string) {}
+    constructor(private url: string, private apiKey: string) {}
 
     async searchByTags(tags: string[]): Promise<GrafanaDashboardSummary[]> {
         const query = new URLSearchParams();
@@ -14,7 +14,7 @@ export class GrafanaClient {
 
         const res = await fetch(`${this.url}/api/search?${query.toString()}`, {
             headers: {
-                Authorization: `Bearer ${this.token}`,
+                Authorization: `Bearer ${this.apiKey}`,
                 'Content-Type': 'application/json',
             },
         });

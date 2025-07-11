@@ -8,6 +8,7 @@ import { integrationApi } from '@/lib/api';
 enum IntegrationType {
   Grafana = 'Grafana',
   Kibana = 'Kibana',
+  Datadog = 'Datadog',
 }
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -88,6 +89,18 @@ const INTEGRATIONS: Integration[] = [
     ],
   },
   {
+    id: 'datadog',
+    name: 'Datadog',
+    description: 'Cloud monitoring and analytics platform for infrastructure, applications, and logs.',
+    logo: 'https://imgix.datadoghq.com/img/dd_logo_n_70x75.png',
+    tags: ['Monitoring', 'APM', 'Logs', 'Metrics'],
+    configFields: [
+      { name: 'url', label: 'Datadog URL', type: 'text', placeholder: 'https://api.datadoghq.com', required: true },
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'appKey', label: 'Application Key', type: 'password', required: true },
+    ],
+  },
+  {
     id: 'prometheus',
     name: 'Prometheus',
     description: 'Open-source systems monitoring and alerting toolkit.',
@@ -141,17 +154,7 @@ const INTEGRATIONS: Integration[] = [
       { name: 'region', label: 'AWS Region', type: 'select', options: ['us-east-1', 'us-east-2', 'us-west-1', 'us-west-2', 'eu-west-1', 'eu-central-1', 'ap-northeast-1'], required: true },
     ],
   },
-  {
-    id: 'datadog',
-    name: 'Datadog',
-    description: 'Monitoring and security platform for cloud applications.',
-    logo: 'https://imgix.datadoghq.com/img/about/presskit/logo-v/dd_vertical_purple.png',
-    tags: ['Monitoring', 'APM', 'Logs', 'Metrics'],
-    configFields: [
-      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'appKey', label: 'Application Key', type: 'password', required: true },
-    ],
-  },
+  // Removed duplicate datadog entry
   {
     id: 'newrelic',
     name: 'New Relic',
@@ -250,8 +253,14 @@ export default function Integrations() {
           // Update configured instances based on saved integrations
           const instances: Record<string, number> = {};
           response.data.integrations.forEach(integration => {
-            const type = integration.type.toLowerCase();
-            instances[type] = (instances[type] || 0) + 1;
+            // Use the integration ID from INTEGRATIONS array that matches this type
+            const matchingIntegrationType = Object.values(IntegrationType).find(
+              type => type === integration.type
+            );
+            if (matchingIntegrationType) {
+              const id = matchingIntegrationType.toLowerCase();
+              instances[id] = (instances[id] || 0) + 1;
+            }
           });
           setConfiguredInstances(instances);
         }
@@ -443,10 +452,20 @@ export default function Integrations() {
                     
                     // If integration exists, pre-fill form data
                     if (existingIntegration) {
-                      setFormData({
-                        url: existingIntegration.externalUrl || '',
-                        apiKey: existingIntegration.credentials?.token || ''
-                      });
+                      // Handle different credential formats based on integration type
+                      if (integration.id === 'datadog') {
+                        setFormData({
+                          url: existingIntegration.externalUrl || '',
+                          apiKey: existingIntegration.credentials?.apiKey || '',
+                          appKey: existingIntegration.credentials?.appKey || ''
+                        });
+                      } else {
+                        // Default for other integrations like Grafana and Kibana
+                        setFormData({
+                          url: existingIntegration.externalUrl || '',
+                          apiKey: existingIntegration.credentials?.apiKey || ''
+                        });
+                      }
                     } else {
                       // Clear form data for new integration
                       setFormData({});
@@ -565,18 +584,31 @@ export default function Integrations() {
                       const typeMapping = {
                         'grafana': IntegrationType.Grafana,
                         'kibana': IntegrationType.Kibana,
+                        'datadog': IntegrationType.Datadog,
                         // Add other integration types as needed
                       };
                       
                       // Prepare the integration data
+                      let credentials = {};
+                      
+                      // Handle different credential formats based on integration type
+                      if (selectedIntegration.id === 'datadog') {
+                        credentials = {
+                          apiKey: formData.apiKey || '',
+                          appKey: formData.appKey || ''
+                        };
+                      } else {
+                        // Default for other integrations like Grafana and Kibana
+                        credentials = {
+                          apiKey: formData.apiKey || ''
+                        };
+                      }
+                      
                       const integrationData = {
                         name: selectedIntegration.name,
                         type: typeMapping[selectedIntegration.id as keyof typeof typeMapping] || IntegrationType.Grafana,
                         externalUrl: formData.url || '',
-                        credentials: {
-                          // Use 'token' instead of 'apiKey' to match what IntegrationConnector expects
-                          token: formData.apiKey || '',
-                        }
+                        credentials
                       };
                       
                       let response;
@@ -644,18 +676,19 @@ export default function Integrations() {
                   }}>
                     {selectedIntegration.configFields.map(field => (
                       <div key={field.name} className="space-y-2">
-                        <label htmlFor={field.name} className="text-sm font-medium flex items-center gap-1">
+                        <label htmlFor={`${selectedIntegration.id}-${field.name}`} className="text-sm font-medium">
                           {field.label} {field.required && <span className="text-destructive">*</span>}
                         </label>
                         {field.type === 'select' ? (
                           <select 
-                            id={field.name}
+                            id={`${selectedIntegration.id}-${field.name}`}
                             name={field.name}
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             required={field.required}
                             value={formData[field.name] || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
                             disabled={isSubmitting}
+                            autoComplete="off"
                           >
                             <option value="">Select {field.label}</option>
                             {field.options?.map(option => (
@@ -664,7 +697,7 @@ export default function Integrations() {
                           </select>
                         ) : (
                           <Input 
-                            id={field.name}
+                            id={`${selectedIntegration.id}-${field.name}`}
                             name={field.name}
                             type={field.type}
                             placeholder={field.placeholder}
@@ -672,6 +705,7 @@ export default function Integrations() {
                             value={formData[field.name] || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
                             disabled={isSubmitting}
+                            autoComplete={field.type === 'password' ? 'new-password' : 'off'}
                           />
                         )}
                       </div>

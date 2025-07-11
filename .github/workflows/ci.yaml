@@ -27,13 +27,12 @@ jobs:
       - name: Lint apps/server
         run: |
           cd apps/server
-          npm run lint
+          npm run lint -- --max-warnings=0
 
       - name: Lint packages/shared
         run: |
           cd packages/shared
-          npm run lint
-
+          npm run lint -- --max-warnings=0
 
       # Uncomment when ready
       # - name: Run tests
