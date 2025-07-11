@@ -6,7 +6,7 @@ export class GrafanaIntegrationConnector implements IntegrationConnector {
     async getUrls(integration: Integration, tags: string[]): Promise<IntegrationUrls[]> {
         const grafanaClient = new GrafanaClient(
             integration.externalUrl,
-            integration.credentials["token"] as string
+            integration.credentials["apiKey"] as string
         );
 
         const dashboards: GrafanaDashboardSummary[] = await grafanaClient.searchByTags(tags);

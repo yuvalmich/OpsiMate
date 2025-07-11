@@ -6,6 +6,7 @@ export enum ProviderType {
 export enum IntegrationType {
   Grafana = 'Grafana',
   Kibana = 'Kibana',
+  Datadog = 'Datadog',
 }
 
 export enum ServiceType {

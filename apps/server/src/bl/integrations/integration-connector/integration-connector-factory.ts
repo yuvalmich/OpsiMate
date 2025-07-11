@@ -2,6 +2,7 @@ import {IntegrationType} from '@service-peek/shared';
 import {IntegrationConnector} from "./integration-connector";
 import {GrafanaIntegrationConnector} from "./grafana-integration-connector";
 import {KibanaIntegrationConnector} from "./kibana-integration-connector";
+import {DatadogIntegrationConnector} from "./datadog-integration-connector";
 
 
 export function integrationConnectorFactory(type: IntegrationType): IntegrationConnector {
@@ -11,4 +12,5 @@ export function integrationConnectorFactory(type: IntegrationType): IntegrationC
 const integrationsMap = {
   [IntegrationType.Grafana]: new GrafanaIntegrationConnector(),
   [IntegrationType.Kibana]: new KibanaIntegrationConnector(),
+  [IntegrationType.Datadog]: new DatadogIntegrationConnector(),
 }
