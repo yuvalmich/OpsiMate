@@ -46,7 +46,7 @@ export class GrafanaClient {
     async getAlerts(tags: string[]): Promise<GrafanaAlert[]> {
         const res = await fetch(`${this.url}/api/alertmanager/grafana/api/v2/alerts`, {
             headers: {
-                Authorization: `Bearer ${this.token}`,
+                Authorization: `Bearer ${this.apiKey}`,
             },
         });
 

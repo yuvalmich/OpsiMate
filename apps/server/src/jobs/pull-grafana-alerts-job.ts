@@ -38,7 +38,7 @@ export class PullGrafanaAlertsJob {
         const tags: Tag[] = await this.tagRepo.getAllTags();
         const tagNames = tags.map(t => t.name);
 
-        const token = grafanaIntegration.credentials["token"] as string
+        const token = grafanaIntegration.credentials["apiKey"] as string
 
         if (!token) {
             logger.warn(`No token for Grafana integration ${grafanaIntegration.name}`);
@@ -63,5 +63,9 @@ export class PullGrafanaAlertsJob {
                 logger.error('Failed to insert alert', err);
             }
         }
+
+        const resolvedAlerts = await this.alertBL.deleteAlertsNotInIds(alerts.map(alert => alert.fingerprint));
+        logger.info(`resolved ${resolvedAlerts.changes} alerts`);
+
     }
 }

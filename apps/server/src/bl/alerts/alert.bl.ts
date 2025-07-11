@@ -16,4 +16,14 @@ export class AlertBL {
             throw error;
         }
     }
+
+    async deleteAlertsNotInIds(ids: string[]): Promise<{ changes: number }> {
+        try {
+            logger.info(`deleting all alerts except of: ${JSON.stringify(ids)}`);
+            return await this.alertRepo.deleteAlertsNotInIds(ids);
+        } catch (error) {
+            logger.error("Error deleting alerts", error);
+            throw error;
+        }
+    }
 }

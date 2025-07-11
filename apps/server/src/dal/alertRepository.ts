@@ -12,8 +12,8 @@ export class AlertRepository {
     async insertOrUpdateAlert(alert: Omit<AlertRow, 'created_at' | 'is_dismissed'>): Promise<{ changes: number }> {
         return runAsync(() => {
             const stmt = this.db.prepare(`
-                INSERT INTO alerts (id, status, tag, starts_at, updated_at, alert_url, is_dismissed)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO alerts (id, status, tag, starts_at, updated_at, alert_url)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     status=excluded.status,
                     tag=excluded.tag,
@@ -48,6 +48,24 @@ export class AlertRepository {
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             `).run();
+        });
+    }
+
+    async deleteAlertsNotInIds(ids: string[]): Promise<{ changes: number }> {
+        return runAsync(() => {
+            // If the array is empty, delete all alerts
+            if (ids.length === 0) {
+                const stmt = this.db.prepare(`DELETE FROM alerts`);
+                const result = stmt.run();
+                return { changes: result.changes };
+            }
+            // Otherwise, delete alerts not in the provided ids
+            const placeholders = ids.map(() => '?').join(',');
+            const stmt = this.db.prepare(
+                `DELETE FROM alerts WHERE id NOT IN (${placeholders})`
+            );
+            const result = stmt.run(...ids);
+            return { changes: result.changes };
         });
     }
 }
