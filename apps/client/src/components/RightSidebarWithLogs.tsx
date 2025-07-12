@@ -2,29 +2,50 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { X, FileText, RefreshCw, Plus } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { X, FileText, RefreshCw, Plus, ChevronDown, ChevronRight, Server, ExternalLink, Tag as TagIcon, AlertTriangle, Activity } from "lucide-react";
 import { Service } from "./ServiceTable";
 import { cn } from "@/lib/utils";
 import { providerApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { TagBadge } from "./ui/tag-badge";
 import { TagSelector } from "./TagSelector";
-import { Tag } from "@service-peek/shared";
+import { Tag, Alert } from "@service-peek/shared";
 import { IntegrationDashboardDropdown } from "./IntegrationDashboardDropdown";
+import { AlertsSection } from "./AlertsSection";
 
 interface RightSidebarProps {
   service: Service | null;
   onClose: () => void;
   collapsed: boolean;
   onServiceUpdate?: (updatedService: Service) => void;
+  alerts?: Alert[];
+  onAlertDismiss?: (alertId: string) => void;
 }
 
-export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpdate }: RightSidebarProps) {
+export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpdate, alerts = [], onAlertDismiss }: RightSidebarProps) {
   const { toast } = useToast();
   const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [serviceTags, setServiceTags] = useState<Tag[]>(service?.tags || []);
+  
+  // Collapsible section states - all collapsed by default
+  const [sectionsOpen, setSectionsOpen] = useState({
+    details: false, // Collapsed by default
+    alerts: false, // Collapsed by default
+    externalLinks: false, // Collapsed by default
+    logs: false, // Collapsed by default
+    tags: false // Collapsed by default
+  });
+
+  // Toggle section open/closed state
+  const toggleSection = (section: keyof typeof sectionsOpen) => {
+    setSectionsOpen(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const fetchLogs = async () => {
     if (!service) return;
@@ -141,130 +162,226 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
     );
   }
 
+  // Reusable CollapsibleSection component
+  const CollapsibleSection = ({ 
+    title, 
+    icon: Icon, 
+    isOpen, 
+    onToggle, 
+    children, 
+    badge,
+    className = ""
+  }: {
+    title: string;
+    icon: React.ComponentType<{ className?: string }>;
+    isOpen: boolean;
+    onToggle: () => void;
+    children: React.ReactNode;
+    badge?: string | number;
+    className?: string;
+  }) => (
+    <Collapsible open={isOpen} onOpenChange={onToggle}>
+      <CollapsibleTrigger asChild>
+        <Button 
+          variant="ghost" 
+          className={cn(
+            "w-full justify-between p-2 h-auto hover:bg-muted/50 transition-colors",
+            className
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <Icon className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium text-sm">{title}</span>
+            {badge && (
+              <Badge variant="secondary" className="text-xs h-5">
+                {badge}
+              </Badge>
+            )}
+          </div>
+          {isOpen ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )}
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="px-2 pb-3">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+
   return (
-    <div className="w-full bg-card border-l border-border p-4 h-full text-xs flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-foreground">Service Details</h3>
+    <div className="w-full bg-card border-l border-border h-full flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center gap-2">
+          <Server className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-semibold text-foreground">Service Details</h3>
+        </div>
         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onClose}>
           <X className="h-3 w-3" />
         </Button>
       </div>
 
-      <div className="flex-grow overflow-auto pr-2 -mr-2 space-y-4">
+      {/* Service Name & Status - Always Visible */}
+      <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-muted-foreground text-xs">Name</div>
-            <h4 className="font-medium text-foreground text-base">{service.name}</h4>
+            <h4 className="font-semibold text-foreground text-lg">{service.name}</h4>
+            <p className="text-muted-foreground text-sm">{service.serviceType}</p>
           </div>
-          <Badge className={cn(getStatusColor(service.serviceStatus), "text-xs py-0.5 px-2 flex-shrink-0")}>
+          <Badge className={cn(getStatusColor(service.serviceStatus), "text-xs py-1 px-3")}>
             {service.serviceStatus}
           </Badge>
         </div>
-
-        <Separator />
-
-        {/* External Links Section */}
-        <div>
-          <h4 className="font-medium text-foreground text-xs mb-2">External Links</h4>
-          <div className="flex flex-col gap-2">
-            <IntegrationDashboardDropdown 
-              tags={serviceTags} 
-              integrationType="Grafana"
-              className="w-full"
-            />
-            <IntegrationDashboardDropdown 
-              tags={serviceTags} 
-              integrationType="Kibana"
-              className="w-full"
-            />
-            <IntegrationDashboardDropdown 
-              tags={serviceTags} 
-              integrationType="Datadog"
-              className="w-full"
-            />
-          </div>
-        </div>
-
-        <Separator />
-
-        <div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-            <div>
-              <div className="text-muted-foreground">Service ID</div>
-              <div className="font-medium text-foreground text-sm">{service.id}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground">Type</div>
-              <div className="font-medium text-foreground text-sm">{service.serviceType}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground">IP Address</div>
-              <div className="font-medium text-foreground font-mono text-sm">{service.serviceIP || '-'}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground">Provider</div>
-              <div className="font-medium text-foreground text-sm">{service.provider.name}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground">Provider IP</div>
-              <div className="font-medium text-foreground text-sm">{service.provider.providerIP}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground">Created</div>
-              <div className="font-medium text-foreground text-sm">{new Date(service.createdAt).toLocaleString()}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground">Container ID</div>
-              <div className="font-medium text-foreground text-sm">{service.containerDetails?.id || '-'}</div>
-            </div>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Service Logs Section */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-foreground text-xs">Service Logs</h4>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={fetchLogs}
-              disabled={loading}
-              className="h-6 w-6 p-0"
-            >
-              <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center py-4">
-              <div className="animate-pulse text-muted-foreground text-xs">Loading logs...</div>
-            </div>
-          ) : error ? (
-            <div className="text-red-500 py-2 text-xs">{error}</div>
-          ) : logs.length === 0 ? (
-            <div className="text-muted-foreground py-2 text-xs">No logs available</div>
-          ) : (
-            <div className="bg-muted rounded-md p-2 overflow-auto max-h-[200px]">
-              <pre className="text-xs font-mono whitespace-pre-wrap">
-                {logs.join('\n')}
-              </pre>
-            </div>
-          )}
-        </div>
       </div>
 
-      <div className="pt-4 flex-shrink-0">
-        <Separator />
-        <div className="space-y-2 pt-4">
-          <h4 className="font-medium text-foreground text-xs">Tags</h4>
-          <TagSelector
-            selectedTags={serviceTags}
-            onTagsChange={handleTagsChange}
-            serviceId={parseInt(service.id)}
-            className=""
-          />
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="space-y-1">
+          {/* Service Details Section - First/Top */}
+          <CollapsibleSection
+            title="Service Information"
+            icon={Server}
+            isOpen={sectionsOpen.details}
+            onToggle={() => toggleSection('details')}
+          >
+            <div className="grid grid-cols-1 gap-3 pt-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-muted-foreground text-xs mb-1">Service ID</div>
+                  <div className="font-medium text-foreground text-sm">{service.id}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs mb-1">IP Address</div>
+                  <div className="font-medium text-foreground font-mono text-sm">{service.serviceIP || '-'}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-muted-foreground text-xs mb-1">Provider</div>
+                  <div className="font-medium text-foreground text-sm">{service.provider.name}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs mb-1">Provider IP</div>
+                  <div className="font-medium text-foreground text-sm">{service.provider.providerIP}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-muted-foreground text-xs mb-1">Created</div>
+                  <div className="font-medium text-foreground text-sm">{new Date(service.createdAt).toLocaleDateString()}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs mb-1">Container ID</div>
+                  <div className="font-medium text-foreground text-sm truncate">{service.containerDetails?.id || '-'}</div>
+                </div>
+              </div>
+            </div>
+          </CollapsibleSection>
+
+          {/* Alerts Section - Smart visibility */}
+          {(service?.serviceAlerts?.length || 0) > 0 && (
+            <CollapsibleSection
+              title="Alerts"
+              icon={AlertTriangle}
+              isOpen={sectionsOpen.alerts}
+              onToggle={() => toggleSection('alerts')}
+              badge={service?.serviceAlerts?.filter(a => !a.isDismissed).length || 0}
+              className="text-orange-600"
+            >
+              <AlertsSection 
+                alerts={service?.serviceAlerts || []}
+                onAlertDismiss={onAlertDismiss}
+              />
+            </CollapsibleSection>
+          )}
+
+          {/* External Links Section */}
+          <CollapsibleSection
+            title="External Links"
+            icon={ExternalLink}
+            isOpen={sectionsOpen.externalLinks}
+            onToggle={() => toggleSection('externalLinks')}
+          >
+            <div className="space-y-2 pt-2">
+              <IntegrationDashboardDropdown 
+                tags={serviceTags} 
+                integrationType="Grafana"
+                className="w-full"
+              />
+              <IntegrationDashboardDropdown 
+                tags={serviceTags} 
+                integrationType="Kibana"
+                className="w-full"
+              />
+              <IntegrationDashboardDropdown 
+                tags={serviceTags} 
+                integrationType="Datadog"
+                className="w-full"
+              />
+            </div>
+          </CollapsibleSection>
+
+          {/* Service Logs Section */}
+          <CollapsibleSection
+            title="Service Logs"
+            icon={Activity}
+            isOpen={sectionsOpen.logs}
+            onToggle={() => toggleSection('logs')}
+          >
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-muted-foreground text-xs">Recent logs</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={fetchLogs}
+                  disabled={loading}
+                  className="h-6 w-6 p-0"
+                >
+                  <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+
+              {loading ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-pulse text-muted-foreground text-xs">Loading logs...</div>
+                </div>
+              ) : error ? (
+                <div className="text-red-500 py-2 text-xs bg-red-50 rounded p-2">{error}</div>
+              ) : logs.length === 0 ? (
+                <div className="text-muted-foreground py-2 text-xs bg-muted/30 rounded p-2 text-center">No logs available</div>
+              ) : (
+                <div className="bg-muted rounded-md p-3 overflow-auto max-h-[200px] border">
+                  <pre className="text-xs font-mono whitespace-pre-wrap text-foreground">
+                    {logs.join('\n')}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          {/* Tags Section - Smart visibility */}
+          {(serviceTags.length > 0 || sectionsOpen.tags) && (
+            <CollapsibleSection
+              title="Tags"
+              icon={TagIcon}
+              isOpen={sectionsOpen.tags}
+              onToggle={() => toggleSection('tags')}
+              badge={serviceTags.length}
+            >
+              <div className="pt-2">
+                <TagSelector
+                  selectedTags={serviceTags}
+                  onTagsChange={handleTagsChange}
+                  serviceId={parseInt(service.id)}
+                  className=""
+                />
+              </div>
+            </CollapsibleSection>
+          )}
         </div>
       </div>
     </div>

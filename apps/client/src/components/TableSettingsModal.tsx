@@ -14,7 +14,8 @@ const columnLabels = {
   serviceIP: 'Service IP',
   serviceStatus: 'Status',
   provider: 'Provider',
-  containerDetails: 'Container Details'
+  containerDetails: 'Container Details',
+  alerts: 'Alerts'
 }
 
 export function TableSettingsModal({

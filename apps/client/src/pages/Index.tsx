@@ -10,7 +10,8 @@ import { SavedViewsManager } from "@/components/SavedViewsManager"
 import { DashboardLayout } from "../components/DashboardLayout"
 import { SavedView } from "@/types/SavedView"
 import { getSavedViews, saveView, deleteView, getActiveViewId, setActiveViewId } from "@/lib/savedViews"
-import { providerApi } from "@/lib/api"
+import { providerApi, alertsApi } from "@/lib/api"
+import { Alert } from "@service-peek/shared"
 
 
 const Index = () => {
@@ -26,7 +27,8 @@ const Index = () => {
         serviceIP: true,
         serviceStatus: true,
         provider: true,
-        containerDetails: false
+        containerDetails: false,
+        alerts: true
     })
     const [filters, setFilters] = useState<Filters>({})
     const [filterPanelCollapsed, setFilterPanelCollapsed] = useState(false)
@@ -34,6 +36,7 @@ const Index = () => {
     const [searchTerm, setSearchTerm] = useState("")
     const [savedViews, setSavedViews] = useState<SavedView[]>([])
     const [activeViewId, setActiveViewId] = useState<string | undefined>()
+    const [alerts, setAlerts] = useState<Alert[]>([])
 
     // Fetch services from API
     const fetchServices = useCallback(async () => {
@@ -50,7 +53,8 @@ const Index = () => {
                         serviceType: service.serviceType,
                         createdAt: service.createdAt,
                         provider: service.provider,
-                        containerDetails: service.containerDetails
+                        containerDetails: service.containerDetails,
+                        tags: service.tags || [] // Include tags from backend
                     }
                 ))
 
@@ -74,19 +78,69 @@ const Index = () => {
         }
     }, [])
 
+    // Fetch alerts from API with enhanced tag-based logic
+    const fetchAlerts = useCallback(async () => {
+        try {
+            const response = await alertsApi.getAllAlerts()
+            if (response.success && response.data) {
+                setAlerts(response.data.alerts)
+            } else {
+                console.error('Error fetching alerts:', response.error)
+            }
+        } catch (error) {
+            console.error('Error fetching alerts:', error)
+        }
+    }, [])
+
+    // Enhanced alert calculation: each service gets alerts for ALL its tags
+    const servicesWithAlerts = useMemo(() => {
+        console.log('🔍 Debug - Services:', services.length, 'Alerts:', alerts.length)
+        return services.map(service => {
+            console.log(`🏷️  Service ${service.name} tags:`, service.tags?.map(t => t.name) || [])
+            
+            // Get all unique alerts that match any of the service's tags (including dismissed)
+            const serviceAlerts = alerts.filter(alert => {
+                console.log(`🚨 Checking alert ${alert.id} (tag: ${alert.tag}) against service ${service.name}`)
+                
+                // Check if alert tag matches any of the service's tags
+                const matches = service.tags?.some(tag => tag.name === alert.tag)
+                console.log(`   Match result: ${matches}`)
+                return matches
+            })
+            
+            // Remove duplicates (in case an alert matches multiple tags of the same service)
+            const uniqueAlerts = serviceAlerts.filter((alert, index, self) => 
+                index === self.findIndex(a => a.id === alert.id)
+            )
+            
+            // Count only non-dismissed alerts for the badge count
+            const activeAlerts = uniqueAlerts.filter(alert => !alert.isDismissed);
+            
+            console.log(`✅ Service ${service.name} final result: ${activeAlerts.length} active, ${uniqueAlerts.length - activeAlerts.length} dismissed`)
+            
+            return {
+                ...service,
+                alertsCount: activeAlerts.length, // Only count non-dismissed alerts
+                serviceAlerts: uniqueAlerts // Store ALL alerts for sidebar display (including dismissed)
+            }
+        })
+    }, [services, alerts])
+
     // Load services on component mount and set up periodic refresh
     useEffect(() => {
         fetchServices()
+        fetchAlerts()
         
         // Set up automatic refresh every 30 seconds (30000 ms)
         const refreshInterval = setInterval(() => {
-            console.log('Auto-refreshing services data...')
+            console.log('Auto-refreshing services and alerts data...')
             fetchServices()
+            fetchAlerts()
         }, 30000)
         
         // Clean up interval on component unmount
         return () => clearInterval(refreshInterval)
-    }, [fetchServices])
+    }, [fetchServices, fetchAlerts])
 
     // Load saved views and active view on component mount
     useEffect(() => {
@@ -114,7 +168,8 @@ const Index = () => {
                             serviceIP: true,
                             serviceStatus: true,
                             provider: true,
-                            containerDetails: true
+                            containerDetails: true,
+                            alerts: true
                         });
                     } else {
                         // If the active view ID doesn't exist, fall back to the first available view or default
@@ -143,10 +198,10 @@ const Index = () => {
     const filteredServices = useMemo(() => {
         const activeFilterKeys = Object.keys(filters).filter(key => filters[key].length > 0);
         if (activeFilterKeys.length === 0) {
-            return services;
+            return servicesWithAlerts;
         }
 
-        return services.filter(service => {
+        return servicesWithAlerts.filter(service => {
             return activeFilterKeys.every(key => {
                 const filterValues = filters[key];
                 const serviceValue = service[key as keyof Service];
@@ -156,7 +211,7 @@ const Index = () => {
                 return true;
             });
         });
-    }, [services, filters]);
+    }, [servicesWithAlerts, filters]);
 
     const toggleFilterPanel = () => {
         setFilterPanelCollapsed(!filterPanelCollapsed)
@@ -461,6 +516,19 @@ const Index = () => {
         }
     }
 
+    const handleAlertDismiss = (alertId: string) => {
+        // Update the alerts state to mark the alert as dismissed
+        setAlerts(prevAlerts => 
+            prevAlerts.map(alert => 
+                alert.id === alertId 
+                    ? { ...alert, isDismissed: true }
+                    : alert
+            )
+        )
+        // Optionally refresh alerts from server
+        fetchAlerts()
+    }
+
     return (
         <div className="flex flex-col h-screen">
             <DashboardLayout>
@@ -517,6 +585,8 @@ const Index = () => {
                                     onClose={() => setSelectedService(null)}
                                     collapsed={rightSidebarCollapsed}
                                     onServiceUpdate={handleServiceUpdate}
+                                    alerts={alerts}
+                                    onAlertDismiss={handleAlertDismiss}
                                 />
                             </div>
                         )}

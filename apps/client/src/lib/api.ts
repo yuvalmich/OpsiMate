@@ -1,4 +1,4 @@
-import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType } from '@service-peek/shared';
+import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType, Alert } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
@@ -8,7 +8,7 @@ const API_BASE_URL = 'http://localhost:3001/api/v1';
  */
 async function apiRequest<T>(
   endpoint: string,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' = 'GET',
   data?: unknown
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -395,5 +395,52 @@ export const integrationApi = {
         error: error instanceof Error ? error.message : 'Unknown error occurred'
       };
     }
+  }
+};
+
+/**
+ * Alerts API endpoints
+ */
+export const alertsApi = {
+  // Get all alerts
+  async getAllAlerts(): Promise<ApiResponse<{ alerts: Alert[] }>> {
+    return await apiRequest<{ alerts: Alert[] }>('/alerts');
+  },
+
+  // Dismiss an alert
+  async dismissAlert(alertId: string): Promise<ApiResponse<{ alert: Alert }>> {
+    return await apiRequest<{ alert: Alert }>(`/alerts/${alertId}/dismiss`, 'PATCH');
+  },
+
+  // Get alerts by tag
+  async getAlertsByTag(tag: string): Promise<ApiResponse<{ alerts: Alert[] }>> {
+    const response = await this.getAllAlerts();
+    if (response.success && response.data) {
+      const filteredAlerts = response.data.alerts.filter(alert => alert.tag === tag);
+      return {
+        success: true,
+        data: { alerts: filteredAlerts }
+      };
+    }
+    return response;
+  },
+
+  // Get alerts by multiple tags (for services with multiple tags)
+  async getAlertsByTags(tags: string[]): Promise<ApiResponse<{ alerts: Alert[] }>> {
+    const response = await this.getAllAlerts();
+    if (response.success && response.data) {
+      const filteredAlerts = response.data.alerts.filter(alert => 
+        tags.includes(alert.tag)
+      );
+      // Remove duplicates
+      const uniqueAlerts = filteredAlerts.filter((alert, index, self) => 
+        index === self.findIndex(a => a.id === alert.id)
+      );
+      return {
+        success: true,
+        data: { alerts: uniqueAlerts }
+      };
+    }
+    return response;
   }
 };

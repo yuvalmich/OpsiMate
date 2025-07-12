@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Settings, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useMemo } from "react"
-import { Tag } from "@service-peek/shared"
+import { Tag, Alert } from "@service-peek/shared"
 
 export interface Service {
   id: string
@@ -32,6 +32,8 @@ export interface Service {
     namespace?: string
   }
   tags?: Tag[]
+  alertsCount?: number
+  serviceAlerts?: Alert[]
 }
 
 interface ServiceTableProps {
@@ -225,6 +227,7 @@ export function ServiceTable({
               {visibleColumns.serviceStatus && <TableHead className="font-medium">Status</TableHead>}
               {visibleColumns.provider && <TableHead className="font-medium">Provider</TableHead>}
               {visibleColumns.containerDetails && <TableHead className="font-medium">Container Details</TableHead>}
+              {visibleColumns.alerts && <TableHead className="font-medium">Alerts</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -278,6 +281,15 @@ export function ServiceTable({
                       <span className="text-green-600 font-medium">Systemd Service</span>
                     ) : (
                       '-'
+                    )}
+                  </TableCell>}
+                  {visibleColumns.alerts && <TableCell className="text-center">
+                    {service.alertsCount && service.alertsCount > 0 ? (
+                      <Badge variant="destructive" className="font-medium">
+                        {service.alertsCount}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">0</span>
                     )}
                   </TableCell>}
                 </TableRow>
