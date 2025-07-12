@@ -70,7 +70,7 @@ export class AlertRepository {
         });
     }
 
-    private toSharedAlert(row: AlertRow): SharedAlert {
+    private toSharedAlert = (row: AlertRow): SharedAlert => {
         return {
             id: row.id,
             status: row.status,
@@ -81,7 +81,7 @@ export class AlertRepository {
             createdAt: row.created_at,
             isDismissed: row.is_dismissed,
         };
-    }
+    };
 
     async getAllAlerts(): Promise<SharedAlert[]> {
         return runAsync(() => {
