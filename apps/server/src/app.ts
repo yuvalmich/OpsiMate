@@ -1,0 +1,83 @@
+import express from 'express';
+import cors from 'cors';
+import healthRouter from './api/health';
+import createV1Router from './api/v1/v1';
+import { ProviderRepository } from './dal/providerRepository';
+import { ServiceRepository } from './dal/serviceRepository';
+import { ViewRepository } from './dal/viewRepository';
+import { TagRepository } from './dal/tagRepository';
+import { IntegrationRepository } from './dal/integrationRepository';
+import { AlertRepository } from './dal/alertRepository';
+import { ProviderBL } from './bl/providers/provider.bl';
+import { ViewBL } from './bl/custom-views/custom-view.bl';
+import { IntegrationBL } from './bl/integrations/integration.bl';
+import { AlertBL } from './bl/alerts/alert.bl';
+import { ProviderController } from './api/v1/providers/controller';
+import { ServiceController } from './api/v1/services/controller';
+import { ViewController } from './api/v1/views/controller';
+import { TagController } from './api/v1/tags/controller';
+import { IntegrationController } from './api/v1/integrations/controller';
+import { AlertController } from './api/v1/alerts/controller';
+import Database from "better-sqlite3";
+import {RefreshJob} from "./jobs/refresh-job";
+import {PullGrafanaAlertsJob} from "./jobs/pull-grafana-alerts-job";
+
+export async function createApp(db: Database.Database, config?: { enableJobs: boolean }): Promise<express.Application> {
+    const app = express();
+
+    app.use(express.json());
+    app.use(cors({
+        origin: 'http://localhost:8080',
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization']
+    }));
+
+    // Repositories
+    const providerRepo = new ProviderRepository(db);
+    const serviceRepo = new ServiceRepository(db);
+    const viewRepo = new ViewRepository(db);
+    const tagRepo = new TagRepository(db);
+    const integrationRepo = new IntegrationRepository(db);
+    const alertRepo = new AlertRepository(db);
+
+    // Init tables
+    await Promise.all([
+        providerRepo.initProvidersTable(),
+        serviceRepo.initServicesTable(),
+        viewRepo.initViewsTable(),
+        tagRepo.initTagsTables(),
+        integrationRepo.initIntegrationsTable(),
+        alertRepo.initAlertsTable(),
+    ]);
+
+    // BL
+    const providerBL = new ProviderBL(providerRepo, serviceRepo);
+    const integrationBL = new IntegrationBL(integrationRepo);
+    const alertBL = new AlertBL(alertRepo);
+
+    // Controllers
+    const providerController = new ProviderController(providerBL);
+    const serviceController = new ServiceController(providerRepo, serviceRepo);
+    const viewController = new ViewController(new ViewBL(viewRepo));
+    const tagController = new TagController(tagRepo, serviceRepo);
+    const integrationController = new IntegrationController(integrationBL);
+    const alertController = new AlertController(alertBL);
+
+    app.use('/', healthRouter);
+    app.use('/api/v1', createV1Router(
+        providerController,
+        serviceController,
+        viewController,
+        tagController,
+        integrationController,
+        alertController
+    ));
+
+    if (config?.enableJobs) {
+        new RefreshJob(providerBL, serviceRepo).startRefreshJob();
+        new PullGrafanaAlertsJob(alertBL, integrationBL, tagRepo).startPullGrafanaAlertsJob();
+    }
+
+    return app;
+}

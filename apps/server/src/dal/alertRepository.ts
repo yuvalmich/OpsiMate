@@ -79,7 +79,7 @@ export class AlertRepository {
             updatedAt: row.updated_at,
             alertUrl: row.alert_url,
             createdAt: row.created_at,
-            isDismissed: row.is_dismissed,
+            isDismissed: row.is_dismissed ? true : false,
         };
     };
 

@@ -1,15 +1,16 @@
-const axios = require('axios');
-const {Logger} = require("@service-peek/shared");
+import axios, { AxiosResponse } from 'axios';
+import { Logger } from '@service-peek/shared';
 
 const BASE_URL = 'http://localhost:3001/api/v1/integration';
 const logger = new Logger('test-private-key');
+
 async function testPrivateKeyFunctionality() {
     try {
         logger.info('Testing private key filename functionality...\n');
 
         // Test 1: Create a provider with private key filename
         logger.info('1. Creating provider with private key filename...');
-        const createResponse = await axios.post(`${BASE_URL}/providers`, {
+        const createResponse: AxiosResponse = await axios.post(`${BASE_URL}/providers`, {
             provider_name: 'Test Server',
             provider_ip: '192.168.1.100',
             username: 'ubuntu',
@@ -17,24 +18,24 @@ async function testPrivateKeyFunctionality() {
             ssh_port: 22
         });
 
-        logger.info('✅ Provider created successfully:', createResponse.data);
+        logger.info('✅ Provider created successfully: ' + JSON.stringify(createResponse.data));
         const providerId = createResponse.data.data.id;
 
         // Test 2: Get all providers
         logger.info('\n2. Getting all providers...');
-        const providersResponse = await axios.get(`${BASE_URL}/providers`);
-        logger.info('✅ Providers retrieved:', providersResponse.data);
+        const providersResponse: AxiosResponse = await axios.get(`${BASE_URL}/providers`);
+        logger.info('✅ Providers retrieved: ' + JSON.stringify(providersResponse.data));
 
         // Test 3: Test SSH connection (this will fail but should show proper error handling)
         logger.info('\n3. Testing SSH connection (expected to fail with sample key)...');
         try {
-            const sshResponse = await axios.get(`${BASE_URL}/providers/${providerId}/instance`);
-            logger.info('✅ SSH connection response:', sshResponse.data);
-        } catch (error) {
+            const sshResponse: AxiosResponse = await axios.get(`${BASE_URL}/providers/${providerId}/instance`);
+            logger.info('✅ SSH connection response: ' + JSON.stringify(sshResponse.data));
+        } catch (error: any) {
             if (error.response) {
-                logger.info('✅ SSH connection failed as expected:', error.response.data);
+                logger.info('✅ SSH connection failed as expected: ' + JSON.stringify(error.response.data));
             } else {
-                logger.info('❌ Unexpected error:', error.message);
+                logger.info('❌ Unexpected error: ' + error.message);
             }
         }
 
@@ -46,10 +47,9 @@ async function testPrivateKeyFunctionality() {
         logger.info('- ✅ Proper error handling for missing key files');
         logger.info('- ✅ Security: Private keys are not stored in database');
 
-    } catch (error) {
-        logger.error('❌ Test failed:', error.response?.data || error.message);
+    } catch (error: any) {
+        logger.error('❌ Test failed: ' + (error.response?.data ? JSON.stringify(error.response.data) : error.message));
     }
 }
 
-// Start the test
 testPrivateKeyFunctionality(); 
