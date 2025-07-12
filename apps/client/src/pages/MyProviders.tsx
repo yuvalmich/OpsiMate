@@ -421,17 +421,19 @@ export function MyProviders() {
     };
 
     const updateUIAfterServiceAddition = (providerId: number, service: ServiceConfig) => {
-        const updatedProviders = providerInstances.map(provider => {
-            if (provider.id === providerId) {
-                return {
-                    ...provider,
-                    services: [service, ...(provider.services ?? [])]
-                };
-            }
-            return provider;
+        setProviderInstances(prevProviders => {
+            const updatedProviders = prevProviders.map(provider => {
+                if (provider.id === providerId) {
+                    return {
+                        ...provider,
+                        services: [service, ...(provider.services ?? [])]
+                    };
+                }
+                return provider;
+            });
+            console.log('Updated providers after service addition:', updatedProviders);
+            return updatedProviders;
         });
-        setProviderInstances(updatedProviders);
-        console.log(updatedProviders);
     };
 
     const handleAddService = async (providerId: number, service: ServiceConfig) => {

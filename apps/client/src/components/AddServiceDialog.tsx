@@ -46,7 +46,11 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
   // Check if this is a Kubernetes provider by checking the provider type
   const isKubernetes = providerType === 'kubernetes' || providerType === 'K8S';
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"manual" | "container" | "systemd">("manual");
+  
+  // For Kubernetes providers, we only show the container tab (which shows pods)
+  // For other providers, we default to manual tab
+  const [activeTab, setActiveTab] = useState<"manual" | "container" | "systemd">(isKubernetes ? "container" : "manual");
+  
   const [serviceName, setServiceName] = useState("");
   const [servicePort, setServicePort] = useState("");
   const [loading, setLoading] = useState(false);
@@ -136,10 +140,10 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
 
   // Load containers from the server using API when the dialog opens or tab changes
   useEffect(() => {
-    if (open && activeTab === "container") {
+    if (open && (activeTab === "container" || isKubernetes)) {
       fetchContainers();
     }
-  }, [open, activeTab, serverId]);
+  }, [open, activeTab, serverId, isKubernetes]);
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -344,6 +348,8 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
       }
 
       // Add successful services to UI
+      // For multiple services, we need to call onServiceAdded for each one
+      // but we'll use React's functional state update to ensure all services are added
       createdServices.forEach(service => onServiceAdded(service));
 
       // Show appropriate toast message
@@ -456,182 +462,283 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
           </DialogDescription>
         </DialogHeader>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "manual" | "container" | "systemd")} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
-          <TabsTrigger value="manual">
-            Manual Service
-          </TabsTrigger>
-          <TabsTrigger value="container">
-            {isKubernetes ? 'Kubernetes Pods' : 'Docker Containers'}
-          </TabsTrigger>
-          <TabsTrigger value="systemd">
-            Systemd Services
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="manual" className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="serviceName">Service Name</Label>
-            <Input
-              id="serviceName"
-              placeholder="Enter service name"
-              value={serviceName}
-              onChange={(e) => setServiceName(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="servicePort">Port (Optional)</Label>
-            <Input
-              id="servicePort"
-              placeholder="e.g. 8080"
-              value={servicePort}
-              onChange={(e) => setServicePort(e.target.value)}
-            />
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="systemd" className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="systemdServiceName">Systemd Service Name</Label>
-            <Input
-              id="systemdServiceName"
-              placeholder="Enter systemd service name (e.g. nginx.service)"
-              value={serviceName}
-              onChange={(e) => setServiceName(e.target.value)}
-            />
-          </div>
-          <div className="text-sm text-muted-foreground mt-2">
-            <p>Enter the exact name of the systemd service as it appears in the system.</p>
-            <p className="mt-1">Example: nginx.service, docker.service, etc.</p>
-          </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mt-4">
-            <div className="flex items-start">
-              <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-amber-800">Manual Entry Only</h4>
-                <p className="text-sm text-amber-700 mt-1">
-                  Systemd services must be added manually. Auto-discovery has been disabled for systemd services.
-                </p>
-              </div>
+        {isKubernetes ? (
+          // For Kubernetes providers, only show the pods UI without tabs
+          <div className="w-full">
+            <h3 className="text-lg font-medium mb-4">Kubernetes Pods</h3>
+            
+            {/* Container/pods UI for Kubernetes */}
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-medium">Available Pods</h4>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchContainers}
+                disabled={loadingContainers}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${loadingContainers ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
+            
+            <div className="space-y-4 mt-4">
+              {loadingContainers ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Loading pods...</span>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <p className="text-destructive">{error}</p>
+                  <Button variant="outline" onClick={fetchContainers} className="mt-4">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Try Again
+                  </Button>
+                </div>
+              ) : containers.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No pods found</p>
+                  <Button variant="outline" onClick={fetchContainers} className="mt-4">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Refresh
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 mb-4 p-2 border rounded bg-muted/20">
+                    <Checkbox
+                      id="select-all-containers"
+                      checked={containers.filter(c => !c.alreadyAdded).every(c => c.selected)}
+                      onCheckedChange={toggleAllContainersSelection}
+                    />
+                    <Label htmlFor="select-all-containers" className="font-medium cursor-pointer">
+                      Monitor all pods
+                    </Label>
+                  </div>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {containers.map(container => (
+                      <div
+                        key={container.id}
+                        className={cn(
+                          "flex items-center space-x-3 border rounded-md p-3",
+                          container.selected && "border-primary bg-primary/5",
+                          container.alreadyAdded ? "opacity-60 cursor-not-allowed" : "hover:bg-accent cursor-pointer"
+                        )}
+                        onClick={() => toggleContainerSelection(container.id)}
+                      >
+                        <Checkbox
+                          id={`container-${container.id}`}
+                          checked={container.alreadyAdded || container.selected}
+                          disabled={container.alreadyAdded}
+                          onCheckedChange={() => toggleContainerSelection(container.id)}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium">{container.name}</div>
+                            {container.alreadyAdded && (
+                              <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                Already exists
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">{container.image}</div>
+                          <div className="text-xs mt-1">
+                            <span className={`inline-block px-2 py-1 rounded-full ${container.serviceStatus === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                              {container.serviceStatus}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </TabsContent>
+        ) : (
+          // For other providers, show all tabs
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "manual" | "container" | "systemd")} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="manual">
+                Manual Service
+              </TabsTrigger>
+              <TabsTrigger value="container">
+                Docker Containers
+              </TabsTrigger>
+              <TabsTrigger value="systemd">
+                Systemd Services
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="container" className="py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium">
-              Available {isKubernetes ? 'Pods' : 'Containers'}
-            </h4>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchContainers}
-              disabled={loadingContainers}
-            >
-              <RefreshCw className={`mr-2 h-4 w-4 ${loadingContainers ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
-          
-          <div className="space-y-4 mt-4">
-            {loadingContainers ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">Loading {isKubernetes ? 'pods' : 'containers'}...</span>
+            <TabsContent value="manual" className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="serviceName">Service Name</Label>
+                <Input
+                  id="serviceName"
+                  placeholder="Enter service name"
+                  value={serviceName}
+                  onChange={(e) => setServiceName(e.target.value)}
+                />
               </div>
-            ) : error ? (
-              <div className="text-center py-8">
-                <p className="text-destructive">{error}</p>
-                <Button variant="outline" onClick={fetchContainers} className="mt-4">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Try Again
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="servicePort">Port (Optional)</Label>
+                <Input
+                  id="servicePort"
+                  placeholder="e.g. 8080"
+                  value={servicePort}
+                  onChange={(e) => setServicePort(e.target.value)}
+                />
               </div>
-            ) : containers.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No {isKubernetes ? 'pods' : 'containers'} found</p>
-                <Button variant="outline" onClick={fetchContainers} className="mt-4">
-                  <RefreshCw className="mr-2 h-4 w-4" />
+            </TabsContent>
+            
+            <TabsContent value="systemd" className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="systemdServiceName">Systemd Service Name</Label>
+                <Input
+                  id="systemdServiceName"
+                  placeholder="Enter systemd service name (e.g. nginx.service)"
+                  value={serviceName}
+                  onChange={(e) => setServiceName(e.target.value)}
+                />
+              </div>
+              <div className="text-sm text-muted-foreground mt-2">
+                <p>Enter the exact name of the systemd service as it appears in the system.</p>
+                <p className="mt-1">Example: nginx.service, docker.service, etc.</p>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mt-4">
+                <div className="flex items-start">
+                  <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-amber-800">Manual Entry Only</h4>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Systemd services must be added manually. Auto-discovery has been disabled for systemd services.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="container" className="py-4">
+              {/* Container UI for non-Kubernetes providers */}
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-medium">Available Containers</h4>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchContainers}
+                  disabled={loadingContainers}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${loadingContainers ? 'animate-spin' : ''}`} />
                   Refresh
                 </Button>
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2 mb-4 p-2 border rounded bg-muted/20">
-                  <Checkbox
-                    id="select-all-containers"
-                    checked={containers.filter(c => !c.alreadyAdded).every(c => c.selected)}
-                    onCheckedChange={toggleAllContainersSelection}
-                  />
-                  <Label htmlFor="select-all-containers" className="font-medium cursor-pointer">
-                    Monitor all {isKubernetes ? 'pods' : 'Docker containers'}
-                  </Label>
-                </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {containers.map(container => (
-                    <div
-                      key={container.id}
-                      className={cn(
-                        "flex items-center space-x-3 border rounded-md p-3",
-                        container.selected && "border-primary bg-primary/5",
-                        container.alreadyAdded ? "opacity-60 cursor-not-allowed" : "hover:bg-accent cursor-pointer"
-                      )}
-                      onClick={() => toggleContainerSelection(container.id)}
-                    >
+        
+              <div className="space-y-4 mt-4">
+                {loadingContainers ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-muted-foreground">Loading containers...</span>
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-8">
+                    <p className="text-destructive">{error}</p>
+                    <Button variant="outline" onClick={fetchContainers} className="mt-4">
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Try Again
+                    </Button>
+                  </div>
+                ) : containers.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No containers found</p>
+                    <Button variant="outline" onClick={fetchContainers} className="mt-4">
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Refresh
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2 mb-4 p-2 border rounded bg-muted/20">
                       <Checkbox
-                        id={`container-${container.id}`}
-                        checked={container.alreadyAdded || container.selected}
-                        disabled={container.alreadyAdded}
-                        onCheckedChange={() => toggleContainerSelection(container.id)}
+                        id="select-all-containers"
+                        checked={containers.filter(c => !c.alreadyAdded).every(c => c.selected)}
+                        onCheckedChange={toggleAllContainersSelection}
                       />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className="font-medium">{container.name}</div>
-                          {container.alreadyAdded && (
-                            <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3" />
-                              Already exists
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{container.image}</div>
-                        <div className="text-xs mt-1">
-                          <span className={`inline-block px-2 py-1 rounded-full ${container.serviceStatus === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {container.serviceStatus}
-                          </span>
-                        </div>
-                      </div>
+                      <Label htmlFor="select-all-containers" className="font-medium cursor-pointer">
+                        Monitor all Docker containers
+                      </Label>
                     </div>
-                  ))}
-                </div>
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {containers.map(container => (
+                        <div
+                          key={container.id}
+                          className={cn(
+                            "flex items-center space-x-3 border rounded-md p-3",
+                            container.selected && "border-primary bg-primary/5",
+                            container.alreadyAdded ? "opacity-60 cursor-not-allowed" : "hover:bg-accent cursor-pointer"
+                          )}
+                          onClick={() => toggleContainerSelection(container.id)}
+                        >
+                          <Checkbox
+                            id={`container-${container.id}`}
+                            checked={container.alreadyAdded || container.selected}
+                            disabled={container.alreadyAdded}
+                            onCheckedChange={() => toggleContainerSelection(container.id)}
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <div className="font-medium">{container.name}</div>
+                              {container.alreadyAdded && (
+                                <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center gap-1">
+                                  <AlertCircle className="h-3 w-3" />
+                                  Already exists
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-sm text-muted-foreground">{container.image}</div>
+                            <div className="text-xs mt-1">
+                              <span className={`inline-block px-2 py-1 rounded-full ${container.serviceStatus === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                {container.serviceStatus}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      <DialogFooter>
-        <Button variant="outline" onClick={onClose} disabled={loading}>
-          Cancel
-        </Button>
-        {activeTab === "manual" ? (
-          <Button type="button" onClick={handleAddManualService} disabled={loading}>
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Add Service
-          </Button>
-        ) : activeTab === "systemd" ? (
-          <Button type="button" onClick={handleAddSystemdService} disabled={loading}>
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Add Systemd Service
-          </Button>
-        ) : (
-          <Button type="button" onClick={handleAddContainersOrPods} disabled={loading}>
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Add Selected {isKubernetes ? 'Pods' : 'Containers'}
-          </Button>
+            </TabsContent>
+          </Tabs>
         )}
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-);
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          {isKubernetes ? (
+            <Button type="button" onClick={handleAddContainersOrPods} disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Add Selected Pods
+            </Button>
+          ) : activeTab === "manual" ? (
+            <Button type="button" onClick={handleAddManualService} disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Add Service
+            </Button>
+          ) : activeTab === "systemd" ? (
+            <Button type="button" onClick={handleAddSystemdService} disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Add Systemd Service
+            </Button>
+          ) : (
+            <Button type="button" onClick={handleAddContainersOrPods} disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Add Selected Containers
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
