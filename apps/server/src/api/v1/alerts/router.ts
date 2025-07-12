@@ -7,5 +7,8 @@ export default function createAlertRouter(controller: AlertController) {
     // GET all alerts
     router.get('/', controller.getAlerts.bind(controller));
 
+    // Dismiss an alert
+    router.patch('/:id/dismiss', controller.dismissAlert.bind(controller));
+
     return router;
 } 

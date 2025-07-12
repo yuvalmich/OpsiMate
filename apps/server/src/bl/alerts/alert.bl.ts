@@ -36,4 +36,14 @@ export class AlertBL {
             throw error;
         }
     }
+
+    async dismissAlert(id: string): Promise<Alert | null> {
+        try {
+            logger.info(`Dismissing alert with id: ${id}`);
+            return await this.alertRepo.dismissAlert(id);
+        } catch (error) {
+            logger.error('Error dismissing alert', error);
+            throw error;
+        }
+    }
 }

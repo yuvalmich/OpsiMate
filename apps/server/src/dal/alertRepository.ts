@@ -90,4 +90,14 @@ export class AlertRepository {
             return rows.map(this.toSharedAlert);
         });
     }
+
+    async dismissAlert(id: string): Promise<SharedAlert | null> {
+        return runAsync(() => {
+            const updateStmt = this.db.prepare('UPDATE alerts SET is_dismissed = 1 WHERE id = ?');
+            updateStmt.run(id);
+            const selectStmt = this.db.prepare('SELECT * FROM alerts WHERE id = ?');
+            const row = selectStmt.get(id) as AlertRow | undefined;
+            return row ? this.toSharedAlert(row) : null;
+        });
+    }
 }
