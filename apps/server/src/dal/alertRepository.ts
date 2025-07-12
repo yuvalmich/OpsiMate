@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
 import { AlertRow } from './models';
+import { Alert as SharedAlert } from '@service-peek/shared/src/types';
 
 export class AlertRepository {
     private db: Database.Database;
@@ -66,6 +67,27 @@ export class AlertRepository {
             );
             const result = stmt.run(...ids);
             return { changes: result.changes };
+        });
+    }
+
+    private toSharedAlert(row: AlertRow): SharedAlert {
+        return {
+            id: row.id,
+            status: row.status,
+            tag: row.tag,
+            startsAt: row.starts_at,
+            updatedAt: row.updated_at,
+            alertUrl: row.alert_url,
+            createdAt: row.created_at,
+            isDismissed: row.is_dismissed,
+        };
+    }
+
+    async getAllAlerts(): Promise<SharedAlert[]> {
+        return runAsync(() => {
+            const stmt = this.db.prepare('SELECT * FROM alerts');
+            const rows = stmt.all() as AlertRow[];
+            return rows.map(this.toSharedAlert);
         });
     }
 }

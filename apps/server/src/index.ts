@@ -21,6 +21,7 @@ import {Logger} from "@service-peek/shared";
 import {AlertRepository} from "./dal/alertRepository";
 import {AlertBL} from "./bl/alerts/alert.bl";
 import {PullGrafanaAlertsJob} from "./jobs/pull-grafana-alerts-job";
+import {AlertController} from "./api/v1/alerts/controller";
 
 const logger: Logger = new Logger('server');
 const app = express();
@@ -57,10 +58,11 @@ const serviceController = new ServiceController(providerRepo, serviceRepo) // to
 const viewController = new ViewController(new ViewBL(viewRepo))
 const tagController = new TagController(tagRepo, serviceRepo)
 const integrationController = new IntegrationController(integrationBL)
+const alertController = new AlertController(alertBL);
 
 // API routes
 app.use('/', healthRouter);
-app.use('/api/v1', createV1Router(providerController, serviceController, viewController, tagController, integrationController));
+app.use('/api/v1', createV1Router(providerController, serviceController, viewController, tagController, integrationController, alertController));
 
 // Initialize database tables
 // todo: move it from here.

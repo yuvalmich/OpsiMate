@@ -76,6 +76,17 @@ export interface DiscoveredService {
   namespace?: string;
 }
 
+export interface Alert {
+  id: string;
+  status: string;
+  tag: string;
+  startsAt: string;
+  updatedAt: string;
+  alertUrl: string;
+  createdAt: string;
+  isDismissed: boolean;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
