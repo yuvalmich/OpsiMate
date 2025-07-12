@@ -363,25 +363,23 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
             </div>
           </CollapsibleSection>
 
-          {/* Tags Section - Smart visibility */}
-          {(serviceTags.length > 0 || sectionsOpen.tags) && (
-            <CollapsibleSection
-              title="Tags"
-              icon={TagIcon}
-              isOpen={sectionsOpen.tags}
-              onToggle={() => toggleSection('tags')}
-              badge={serviceTags.length}
-            >
-              <div className="pt-2">
-                <TagSelector
-                  selectedTags={serviceTags}
-                  onTagsChange={handleTagsChange}
-                  serviceId={parseInt(service.id)}
-                  className=""
-                />
-              </div>
-            </CollapsibleSection>
-          )}
+          {/* Tags Section - Always visible */}
+          <CollapsibleSection
+            title="Tags"
+            icon={TagIcon}
+            isOpen={sectionsOpen.tags}
+            onToggle={() => toggleSection('tags')}
+            badge={serviceTags.length}
+          >
+            <div className="pt-2">
+              <TagSelector
+                selectedTags={serviceTags}
+                onTagsChange={handleTagsChange}
+                serviceId={parseInt(service.id)}
+                className=""
+              />
+            </div>
+          </CollapsibleSection>
         </div>
       </div>
     </div>
