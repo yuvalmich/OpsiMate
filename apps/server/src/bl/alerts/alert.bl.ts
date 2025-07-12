@@ -1,6 +1,6 @@
 import { AlertRepository } from "../../dal/alertRepository";
 import { AlertRow } from "../../dal/models";
-import { Logger } from "@service-peek/shared";
+import {Alert, Logger} from "@service-peek/shared";
 
 const logger = new Logger('bl/alert.bl');
 
@@ -23,6 +23,26 @@ export class AlertBL {
             return await this.alertRepo.deleteAlertsNotInIds(ids);
         } catch (error) {
             logger.error("Error deleting alerts", error);
+            throw error;
+        }
+    }
+
+    async getAllAlerts(): Promise<Alert[]> {
+        try {
+            logger.info('Fetching all alerts');
+            return await this.alertRepo.getAllAlerts();
+        } catch (error) {
+            logger.error('Error fetching alerts', error);
+            throw error;
+        }
+    }
+
+    async dismissAlert(id: string): Promise<Alert | null> {
+        try {
+            logger.info(`Dismissing alert with id: ${id}`);
+            return await this.alertRepo.dismissAlert(id);
+        } catch (error) {
+            logger.error('Error dismissing alert', error);
             throw error;
         }
     }
