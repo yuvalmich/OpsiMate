@@ -34,6 +34,12 @@ jobs:
           cd packages/shared
           npm run lint -- --max-warnings=0
 
+      - name: Test apps/server
+        run: |
+          cd apps/server
+          npm test
+
+
       # Uncomment when ready
       # - name: Run tests
       #   run: npm run test
