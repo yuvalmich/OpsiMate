@@ -67,6 +67,7 @@ export type AlertRow = {
     starts_at: string;
     updated_at: string;
     alert_url: string;
+    alert_name: string;
     created_at: string;
     is_dismissed: boolean;
 };

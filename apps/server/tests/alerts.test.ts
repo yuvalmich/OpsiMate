@@ -23,6 +23,7 @@ const seedAlerts = () => {
       starts_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       alert_url: 'https://example.com/alert/1',
+      alert_name: 'Test Alert 1',
       is_dismissed: false
     },
     {
@@ -32,6 +33,7 @@ const seedAlerts = () => {
       starts_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
       updated_at: new Date().toISOString(),
       alert_url: 'https://example.com/alert/2',
+      alert_name: 'Test Alert 2',
       is_dismissed: false
     },
     {
@@ -41,13 +43,14 @@ const seedAlerts = () => {
       starts_at: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
       updated_at: new Date().toISOString(),
       alert_url: 'https://example.com/alert/3',
+      alert_name: 'Test Alert 3',
       is_dismissed: true
     }
   ];
 
   const insertStmt = db.prepare(`
-    INSERT INTO alerts (id, status, tag, starts_at, updated_at, alert_url, is_dismissed)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO alerts (id, status, tag, starts_at, updated_at, alert_url, alert_name, is_dismissed)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   sampleAlerts.forEach(alert => {
@@ -58,6 +61,7 @@ const seedAlerts = () => {
         alert.starts_at,
         alert.updated_at,
         alert.alert_url,
+        alert.alert_name,
         alert.is_dismissed ? 1 : 0
     );
   });
@@ -70,6 +74,7 @@ const seedAlerts = () => {
       startsAt: row.starts_at,
       updatedAt: row.updated_at,
       alertUrl: row.alert_url,
+      alertName: row.alert_name,
       createdAt: (Date.now()).toString(),
       isDismissed: row.is_dismissed,
     }
@@ -90,6 +95,7 @@ beforeAll(async () => {
       starts_at TEXT,
       updated_at TEXT,
       alert_url TEXT,
+      alert_name TEXT,
       is_dismissed BOOLEAN DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -130,6 +136,7 @@ describe('Alerts API', () => {
       expect(alerts[0]).toHaveProperty('startsAt');
       expect(alerts[0]).toHaveProperty('updatedAt');
       expect(alerts[0]).toHaveProperty('alertUrl');
+      expect(alerts[0]).toHaveProperty('alertName');
       expect(alerts[0]).toHaveProperty('isDismissed');
     });
 
@@ -217,6 +224,7 @@ describe('Alerts API', () => {
           starts_at TEXT,
           updated_at TEXT,
           alert_url TEXT,
+          alert_name TEXT,
           is_dismissed BOOLEAN DEFAULT 0,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
