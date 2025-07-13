@@ -83,6 +83,7 @@ export interface Alert {
   startsAt: string;
   updatedAt: string;
   alertUrl: string;
+  alertName: string;
   createdAt: string;
   isDismissed: boolean;
 }

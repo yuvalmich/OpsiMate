@@ -13,14 +13,15 @@ export class AlertRepository {
     async insertOrUpdateAlert(alert: Omit<AlertRow, 'created_at' | 'is_dismissed'>): Promise<{ changes: number }> {
         return runAsync(() => {
             const stmt = this.db.prepare(`
-                INSERT INTO alerts (id, status, tag, starts_at, updated_at, alert_url)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO alerts (id, status, tag, starts_at, updated_at, alert_url, alert_name)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     status=excluded.status,
                     tag=excluded.tag,
                     starts_at=excluded.starts_at,
                     updated_at=excluded.updated_at,
-                    alert_url=excluded.alert_url
+                    alert_url=excluded.alert_url,
+                    alert_name=excluded.alert_name
             `);
             const result = stmt.run(
                 alert.id,
@@ -28,7 +29,8 @@ export class AlertRepository {
                 alert.tag,
                 alert.starts_at,
                 alert.updated_at,
-                alert.alert_url
+                alert.alert_url,
+                alert.alert_name
             );
             return { changes: result.changes };
         });
@@ -45,6 +47,7 @@ export class AlertRepository {
                     starts_at TEXT,
                     updated_at TEXT,
                     alert_url TEXT,
+                    alert_name TEXT,
                     is_dismissed BOOLEAN DEFAULT 0,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
@@ -78,6 +81,7 @@ export class AlertRepository {
             startsAt: row.starts_at,
             updatedAt: row.updated_at,
             alertUrl: row.alert_url,
+            alertName: row.alert_name,
             createdAt: row.created_at,
             isDismissed: row.is_dismissed ? true : false,
         };
