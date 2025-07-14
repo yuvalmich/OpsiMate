@@ -54,10 +54,6 @@ export function TagSelector({ selectedTags, onTagsChange, serviceId, className }
       const response = await providerApi.addTagToService(Number(serviceId), Number(tag.id));
       if (response.success) {
         onTagsChange([...selectedTags, tag]);
-        toast({
-          title: "Success",
-          description: "Tag added to service"
-        });
       } else {
         toast({
           title: "Error",

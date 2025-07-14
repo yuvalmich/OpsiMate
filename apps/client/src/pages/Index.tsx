@@ -297,10 +297,13 @@ const Index = () => {
             setSearchTerm(view.searchTerm);
             await setActiveViewId(view.id);
 
-            toast({
-                title: "View Applied",
-                description: `"${view.name}" view has been applied.`
-            });
+            // Only show toast if not the default 'All Services' view
+            if (view.name !== "All Services") {
+                toast({
+                    title: "View Applied",
+                    description: `"${view.name}" view has been applied.`
+                });
+            }
         } catch (error) {
             console.error('Error applying view:', error);
             toast({
