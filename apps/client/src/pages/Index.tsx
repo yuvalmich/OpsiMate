@@ -229,11 +229,14 @@ const Index = () => {
                             return filterValues.includes(String(service.containerDetails?.namespace));
                         
                         case 'tags':
-                            // Handle tags array - service must have at least one tag that matches
+                            // Handle tags array - service must have ALL selected tags (AND logic)
                             if (!service.tags || service.tags.length === 0) {
                                 return false;
                             }
-                            return service.tags.some(tag => filterValues.includes(tag.name));
+                            // Check if the service has ALL the selected tags
+                            return filterValues.every(selectedTag => 
+                                service.tags.some(tag => tag.name === selectedTag)
+                            );
                         
                         default:
                             // Fallback for any other direct properties

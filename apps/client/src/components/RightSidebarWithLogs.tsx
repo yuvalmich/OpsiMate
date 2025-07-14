@@ -30,9 +30,9 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
   const [error, setError] = useState<string | null>(null);
   const [serviceTags, setServiceTags] = useState<Tag[]>(service?.tags || []);
   
-  // Collapsible section states - all collapsed by default
+  // Collapsible section states - Service Information expanded by default
   const [sectionsOpen, setSectionsOpen] = useState({
-    details: false, // Collapsed by default
+    details: true, // Expanded by default
     alerts: false, // Collapsed by default
     externalLinks: false, // Collapsed by default
     logs: false, // Collapsed by default
@@ -185,7 +185,7 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
         <Button 
           variant="ghost" 
           className={cn(
-            "w-full justify-between p-2 h-auto hover:bg-muted/50 transition-colors",
+            "w-full justify-between p-2 h-auto transition-colors text-foreground hover:text-foreground hover:bg-transparent",
             className
           )}
         >
@@ -239,7 +239,7 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-auto">
-        <div className="space-y-1">
+        <div className="space-y-1 p-2">
           {/* Service Details Section - First/Top */}
           <CollapsibleSection
             title="Service Information"
@@ -247,7 +247,7 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
             isOpen={sectionsOpen.details}
             onToggle={() => toggleSection('details')}
           >
-            <div className="grid grid-cols-1 gap-3 pt-2">
+            <div className="grid grid-cols-1 gap-4 p-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-muted-foreground text-xs mb-1">Service ID</div>
