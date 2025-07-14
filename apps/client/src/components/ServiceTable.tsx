@@ -268,7 +268,7 @@ export function ServiceTable({
                   </TableCell>}
                   {visibleColumns.serviceStatus && (
                     <TableCell className="text-center">
-                      <Badge className={cn(getStatusColor(service.serviceStatus), "font-medium")}>
+                      <Badge className={cn(getStatusColor(service.serviceStatus), "font-medium")}> 
                         {service.serviceStatus}
                       </Badge>
                     </TableCell>

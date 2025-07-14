@@ -204,9 +204,41 @@ const Index = () => {
         return servicesWithAlerts.filter(service => {
             return activeFilterKeys.every(key => {
                 const filterValues = filters[key];
-                const serviceValue = service[key as keyof Service];
                 if (Array.isArray(filterValues) && filterValues.length > 0) {
-                    return filterValues.includes(String(serviceValue));
+                    // Handle different filter field types
+                    switch (key) {
+                        case 'serviceStatus':
+                        case 'serviceType':
+                            // Direct service properties
+                            return filterValues.includes(String(service[key]));
+                        
+                        case 'providerType':
+                            // Nested provider property
+                            return filterValues.includes(String(service.provider?.providerType));
+                        
+                        case 'providerName':
+                            // Nested provider property
+                            return filterValues.includes(String(service.provider?.name));
+                        
+                        case 'containerImage':
+                            // Nested container details property
+                            return filterValues.includes(String(service.containerDetails?.image));
+                        
+                        case 'containerNamespace':
+                            // Nested container details property
+                            return filterValues.includes(String(service.containerDetails?.namespace));
+                        
+                        case 'tags':
+                            // Handle tags array - service must have at least one tag that matches
+                            if (!service.tags || service.tags.length === 0) {
+                                return false;
+                            }
+                            return service.tags.some(tag => filterValues.includes(tag.name));
+                        
+                        default:
+                            // Fallback for any other direct properties
+                            return filterValues.includes(String(service[key as keyof Service]));
+                    }
                 }
                 return true;
             });

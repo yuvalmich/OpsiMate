@@ -77,7 +77,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <LeftSidebar collapsed={isSidebarCollapsed} />
         </div>
         
-        <div className="flex-1 relative bg-muted/20">
+        <div className="flex-1 min-w-0 relative bg-muted/20 w-full">
            <Button
             onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
             variant="ghost"
@@ -86,7 +86,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
-          <main className="h-full overflow-auto">
+          <main className="h-full overflow-auto w-full">
             {children}
           </main>
         </div>
