@@ -575,7 +575,7 @@ const Index = () => {
                             />
                         </div>
                         <div className="flex-1 flex flex-col">
-                            <div className="flex-1 p-4 overflow-auto">
+                            <div className="flex-1 p-4 flex flex-col overflow-auto">
                                 <div className="flex justify-between items-center mb-4">
                                     <SavedViewsManager
                                         currentFilters={filters}

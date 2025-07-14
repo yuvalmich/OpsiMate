@@ -119,7 +119,7 @@ export function ServiceTable({
             </Button>
           </div>
         </div>
-        <div className="overflow-auto flex-grow relative">
+        <div className="flex-1 relative min-h-[200px]">
           <Table className="relative">
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow className="hover:bg-transparent">
@@ -205,7 +205,7 @@ export function ServiceTable({
         </div>
       </div>
 
-      <div className="overflow-auto flex-grow relative">
+      <div className="flex-1 relative min-h-[200px]">
         <Table className="relative">
           <TableHeader className="sticky top-0 bg-card z-10">
             <TableRow className="hover:bg-transparent">
