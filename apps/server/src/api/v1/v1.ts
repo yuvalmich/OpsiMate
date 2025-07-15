@@ -5,12 +5,14 @@ import viewRouter from './views/router';
 import tagRouter from './tags/router';
 import integrationRouter from './integrations/router';
 import alertRouter from './alerts/router';
+import usersRouter from './users/router';
 import {ProviderController} from "./providers/controller";
 import {ServiceController} from "./services/controller";
 import {ViewController} from "./views/controller";
 import {TagController} from "./tags/controller";
 import {IntegrationController} from "./integrations/controller";
 import {AlertController} from "./alerts/controller";
+import { UsersController } from './users/controller';
 
 
 export default function createV1Router(providerController: ProviderController,
@@ -18,7 +20,8 @@ export default function createV1Router(providerController: ProviderController,
                                        viewController: ViewController,
                                        tagController: TagController,
                                        integrationController: IntegrationController,
-                                       alertController: AlertController) {
+                                       alertController: AlertController,
+                                       usersController: UsersController) {
     const router = PromiseRouter();
 
     router.use('/providers', providerRouter(providerController));
@@ -27,6 +30,7 @@ export default function createV1Router(providerController: ProviderController,
     router.use('/tags', tagRouter(tagController));
     router.use('/integrations', integrationRouter(integrationController));
     router.use('/alerts', alertRouter(alertController));
+    router.use('/users', usersRouter(usersController));
 
     return router;
 }
