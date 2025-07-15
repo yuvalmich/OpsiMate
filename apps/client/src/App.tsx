@@ -8,6 +8,8 @@ import Providers from "./pages/Providers";
 import MyProviders from "./pages/MyProviders";
 import Integrations from "./pages/Integrations";
 import NotFound from "./pages/NotFound";
+import Login from './pages/Login';
+import Register from './pages/Register';
 import { ThemeProvider } from "./components/ThemeProvider";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
             <Route path="/providers" element={<Providers />} />
             <Route path="/my-providers" element={<MyProviders />} />
             <Route path="/integrations" element={<Integrations />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

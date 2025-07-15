@@ -1,7 +1,14 @@
-import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType, Alert } from '@service-peek/shared';
+import { Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType, Alert } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
-const API_BASE_URL = 'http://localhost:3001/api/v1';
+export type ApiResponse<T = any> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+  [key: string]: any; // Allow extra properties like token
+};
+
+export const API_BASE_URL = 'http://localhost:3001/api/v1';
 
 /**
  * Generic API request handler
@@ -13,10 +20,12 @@ async function apiRequest<T>(
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
 
+  const token = localStorage.getItem('jwt');
   const options: RequestInit = {
     method,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     },
     credentials: 'include',
   };
@@ -444,3 +453,5 @@ export const alertsApi = {
     return response;
   }
 };
+
+export { apiRequest };

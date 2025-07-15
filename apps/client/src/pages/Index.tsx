@@ -15,6 +15,11 @@ import { Alert } from "@service-peek/shared"
 
 
 const Index = () => {
+    useEffect(() => {
+        if (!localStorage.getItem('jwt')) {
+            window.location.href = '/login';
+        }
+    }, []);
     const {toast} = useToast()
     const [services, setServices] = useState<Service[]>([])
     const [loading, setLoading] = useState(true)
