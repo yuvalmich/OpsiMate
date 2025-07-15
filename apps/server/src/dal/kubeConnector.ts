@@ -33,28 +33,24 @@ const getK8RLogs = async (_provider: Provider, serviceName: string, namespace: s
         })
 }
 
-
 const getK8SServices = async (_provider: Provider): Promise<DiscoveredService[]> => {
     const k8sApi = createClient(_provider)
-    const servicesResp = await k8sApi.listServiceForAllNamespaces();
+    const servicesResp = await k8sApi.listPodForAllNamespaces();
 
-    return servicesResp.items.map(svc => {
-        const name = svc.metadata?.name || 'unknown';
-        const serviceIP = svc.spec?.clusterIP || 'None';
-        // TODO how to choose the correct port?
-        const ports = (svc.spec?.ports || []).map(
-            p => `${p.port}${p.protocol ? '/' + p.protocol : ''}`
-        );
+    return servicesResp.items
+        .filter(service => service.metadata?.namespace !== "kube-system")
+        .map(svc => {
+            const name = svc.metadata?.name || 'unknown';
+            const serviceIP = svc.status?.hostIP
+            const port = (svc.spec?.containers?.flatMap(i => i.ports?.map(i => i.containerPort)) || [])?.[0]
 
-        // TODO - should fetch the status of the service
-        return {
-            name,
-            serviceIP,
-            port: ports[0] ?? '',
-            serviceStatus: "running",
-            namespace: svc.metadata?.namespace || 'default'
-        };
-    });
+            return {
+                name,
+                serviceStatus: svc.status?.phase || 'unknown',
+                serviceIP: serviceIP || ':' + port,
+                namespace: svc.metadata?.namespace || 'default'
+            };
+        });
 }
 
 export {getK8SServices, getK8RLogs}
