@@ -204,9 +204,44 @@ const Index = () => {
         return servicesWithAlerts.filter(service => {
             return activeFilterKeys.every(key => {
                 const filterValues = filters[key];
-                const serviceValue = service[key as keyof Service];
                 if (Array.isArray(filterValues) && filterValues.length > 0) {
-                    return filterValues.includes(String(serviceValue));
+                    // Handle different filter field types
+                    switch (key) {
+                        case 'serviceStatus':
+                        case 'serviceType':
+                            // Direct service properties
+                            return filterValues.includes(String(service[key]));
+                        
+                        case 'providerType':
+                            // Nested provider property
+                            return filterValues.includes(String(service.provider?.providerType));
+                        
+                        case 'providerName':
+                            // Nested provider property
+                            return filterValues.includes(String(service.provider?.name));
+                        
+                        case 'containerImage':
+                            // Nested container details property
+                            return filterValues.includes(String(service.containerDetails?.image));
+                        
+                        case 'containerNamespace':
+                            // Nested container details property
+                            return filterValues.includes(String(service.containerDetails?.namespace));
+                        
+                        case 'tags':
+                            // Handle tags array - service must have ALL selected tags (AND logic)
+                            if (!service.tags || service.tags.length === 0) {
+                                return false;
+                            }
+                            // Check if the service has ALL the selected tags
+                            return filterValues.every(selectedTag => 
+                                service.tags.some(tag => tag.name === selectedTag)
+                            );
+                        
+                        default:
+                            // Fallback for any other direct properties
+                            return filterValues.includes(String(service[key as keyof Service]));
+                    }
                 }
                 return true;
             });
@@ -265,10 +300,13 @@ const Index = () => {
             setSearchTerm(view.searchTerm);
             await setActiveViewId(view.id);
 
-            toast({
-                title: "View Applied",
-                description: `"${view.name}" view has been applied.`
-            });
+            // Only show toast if not the default 'All Services' view
+            if (view.name !== "All Services") {
+                toast({
+                    title: "View Applied",
+                    description: `"${view.name}" view has been applied.`
+                });
+            }
         } catch (error) {
             console.error('Error applying view:', error);
             toast({
@@ -543,7 +581,7 @@ const Index = () => {
                             />
                         </div>
                         <div className="flex-1 flex flex-col">
-                            <div className="flex-1 p-4 overflow-auto">
+                            <div className="flex-1 p-4 flex flex-col overflow-auto">
                                 <div className="flex justify-between items-center mb-4">
                                     <SavedViewsManager
                                         currentFilters={filters}

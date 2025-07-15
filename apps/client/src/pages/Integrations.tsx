@@ -278,7 +278,7 @@ export default function Integrations() {
                            integration.description.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesTags = selectedTags.length === 0 || 
-                         selectedTags.some(tag => integration.tags.includes(tag));
+                         selectedTags.every(tag => integration.tags.includes(tag));
       
       return matchesSearch && matchesTags;
     });

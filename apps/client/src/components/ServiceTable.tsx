@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Settings, Search, X } from "lucide-react"
+import { Settings, Search, X, ChevronUp, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useMemo } from "react"
 import { Tag, Alert } from "@service-peek/shared"
@@ -36,6 +36,48 @@ export interface Service {
   serviceAlerts?: Alert[]
 }
 
+type SortField = 'name' | 'serviceIP' | 'serviceStatus' | 'provider' | 'containerDetails' | 'alerts' | 'createdAt'
+type SortDirection = 'asc' | 'desc'
+
+interface SortableHeaderProps {
+  children: React.ReactNode
+  field: SortField
+  currentSort: { field: SortField; direction: SortDirection } | null
+  onSort: (field: SortField) => void
+  className?: string
+}
+
+function SortableHeader({ children, field, currentSort, onSort, className }: SortableHeaderProps) {
+  const isActive = currentSort?.field === field
+  const isAsc = isActive && currentSort.direction === 'asc'
+  const isDesc = isActive && currentSort.direction === 'desc'
+
+  return (
+    <TableHead 
+      className={cn("font-medium cursor-pointer hover:bg-muted/50 transition-colors select-none", className)}
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        <div className="flex flex-col">
+          <ChevronUp 
+            className={cn(
+              "h-3 w-3 transition-colors",
+              isAsc ? "text-foreground" : "text-muted-foreground/50"
+            )} 
+          />
+          <ChevronDown 
+            className={cn(
+              "h-3 w-3 transition-colors -mt-1",
+              isDesc ? "text-foreground" : "text-muted-foreground/50"
+            )} 
+          />
+        </div>
+      </div>
+    </TableHead>
+  )
+}
+
 interface ServiceTableProps {
   services: Service[]
   selectedServices: Service[]
@@ -58,6 +100,7 @@ export function ServiceTable({
   loading
 }: ServiceTableProps) {
   const [internalSearchTerm, setInternalSearchTerm] = useState("")
+  const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: SortDirection } | null>(null)
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm
 
   const getStatusColor = (status: Service['serviceStatus']) => {
@@ -70,22 +113,91 @@ export function ServiceTable({
     }
   }
 
-  // Filter services based on search term
-  const filteredServices = useMemo(() => {
-    if (!searchTerm.trim()) return services
-
-    const searchLower = searchTerm.toLowerCase()
-    return services.filter(service => {
-      return (
-        service.name.toLowerCase().includes(searchLower) ||
-        service.serviceIP?.toLowerCase().includes(searchLower) ||
-        service.serviceStatus.toLowerCase().includes(searchLower) ||
-        service.provider.name.toLowerCase().includes(searchLower) ||
-        service.provider.providerIP.toLowerCase().includes(searchLower) ||
-        (service.containerDetails?.image && service.containerDetails.image.toLowerCase().includes(searchLower))
-      )
+  const handleSort = (field: SortField) => {
+    setSortConfig(current => {
+      if (current?.field === field) {
+        // If clicking the same field, toggle direction
+        return {
+          field,
+          direction: current.direction === 'asc' ? 'desc' : 'asc'
+        }
+      } else {
+        // If clicking a new field, set to ascending
+        return { field, direction: 'asc' }
+      }
     })
-  }, [services, searchTerm])
+  }
+
+  // Filter and sort services
+  const filteredAndSortedServices = useMemo(() => {
+    let filtered = services
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase()
+      filtered = services.filter(service => {
+        return (
+          service.name.toLowerCase().includes(searchLower) ||
+          service.serviceIP?.toLowerCase().includes(searchLower) ||
+          service.serviceStatus.toLowerCase().includes(searchLower) ||
+          service.provider.name.toLowerCase().includes(searchLower) ||
+          service.provider.providerIP.toLowerCase().includes(searchLower) ||
+          (service.containerDetails?.image && service.containerDetails.image.toLowerCase().includes(searchLower))
+        )
+      })
+    }
+
+    // Apply sorting
+    if (sortConfig) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any
+        let bValue: any
+
+        switch (sortConfig.field) {
+          case 'name':
+            aValue = a.name.toLowerCase()
+            bValue = b.name.toLowerCase()
+            break
+          case 'serviceIP':
+            aValue = (a.serviceType === 'SYSTEMD' ? a.provider.providerIP : a.serviceIP) || ''
+            bValue = (b.serviceType === 'SYSTEMD' ? b.provider.providerIP : b.serviceIP) || ''
+            break
+          case 'serviceStatus':
+            aValue = a.serviceStatus.toLowerCase()
+            bValue = b.serviceStatus.toLowerCase()
+            break
+          case 'provider':
+            aValue = a.provider.name.toLowerCase()
+            bValue = b.provider.name.toLowerCase()
+            break
+          case 'containerDetails':
+            aValue = a.serviceType === 'DOCKER' ? (a.containerDetails?.image || '') : a.serviceType
+            bValue = b.serviceType === 'DOCKER' ? (b.containerDetails?.image || '') : b.serviceType
+            break
+          case 'alerts':
+            aValue = a.alertsCount || 0
+            bValue = b.alertsCount || 0
+            break
+          case 'createdAt':
+            aValue = new Date(a.createdAt).getTime()
+            bValue = new Date(b.createdAt).getTime()
+            break
+          default:
+            return 0
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1
+        }
+        return 0
+      })
+    }
+
+    return filtered
+  }, [services, searchTerm, sortConfig])
 
   const clearSearch = () => {
     if (onSearchChange) {
@@ -119,7 +231,7 @@ export function ServiceTable({
             </Button>
           </div>
         </div>
-        <div className="overflow-auto flex-grow relative">
+        <div className="flex-1 relative min-h-[200px]">
           <Table className="relative">
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow className="hover:bg-transparent">
@@ -130,7 +242,6 @@ export function ServiceTable({
                     aria-label="Select all services"
                   />
                 </TableHead>
-                11
                 {visibleColumns.name && <TableHead className="font-medium">Name</TableHead>}
                 {visibleColumns.serviceIP && <TableHead className="font-medium">Service IP</TableHead>}
                 {visibleColumns.serviceStatus && <TableHead className="font-medium">Status</TableHead>}
@@ -161,8 +272,13 @@ export function ServiceTable({
           <div>
             <h3 className="text-lg font-semibold text-foreground">Services</h3>
             <p className="text-sm text-muted-foreground">
-              {filteredServices.length} of {services.length} services found
+              {filteredAndSortedServices.length} of {services.length} services found
               {searchTerm && ` matching "${searchTerm}"`}
+              {sortConfig && (
+                <span className="ml-2 text-xs bg-muted px-2 py-1 rounded">
+                  Sorted by {sortConfig.field} ({sortConfig.direction})
+                </span>
+              )}
             </p>
           </div>
           <Button
@@ -205,16 +321,16 @@ export function ServiceTable({
         </div>
       </div>
 
-      <div className="overflow-auto flex-grow relative">
+      <div className="flex-1 relative min-h-[200px]">
         <Table className="relative">
           <TableHeader className="sticky top-0 bg-card z-10">
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-10">
                 <Checkbox
-                  checked={filteredServices.length > 0 && selectedServices.length === filteredServices.length}
+                  checked={filteredAndSortedServices.length > 0 && selectedServices.length === filteredAndSortedServices.length}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      onServicesSelect(filteredServices);
+                      onServicesSelect(filteredAndSortedServices);
                     } else {
                       onServicesSelect([]);
                     }
@@ -222,16 +338,64 @@ export function ServiceTable({
                   aria-label="Select all services"
                 />
               </TableHead>
-              {visibleColumns.name && <TableHead className="font-medium">Name</TableHead>}
-              {visibleColumns.serviceIP && <TableHead className="font-medium">Service IP</TableHead>}
-              {visibleColumns.serviceStatus && <TableHead className="font-medium">Status</TableHead>}
-              {visibleColumns.provider && <TableHead className="font-medium">Provider</TableHead>}
-              {visibleColumns.containerDetails && <TableHead className="font-medium">Container Details</TableHead>}
-              {visibleColumns.alerts && <TableHead className="font-medium">Alerts</TableHead>}
+              {visibleColumns.name && (
+                <SortableHeader
+                  field="name"
+                  currentSort={sortConfig}
+                  onSort={handleSort}
+                >
+                  Name
+                </SortableHeader>
+              )}
+              {visibleColumns.serviceIP && (
+                <SortableHeader
+                  field="serviceIP"
+                  currentSort={sortConfig}
+                  onSort={handleSort}
+                >
+                  Service IP
+                </SortableHeader>
+              )}
+              {visibleColumns.serviceStatus && (
+                <SortableHeader
+                  field="serviceStatus"
+                  currentSort={sortConfig}
+                  onSort={handleSort}
+                >
+                  Status
+                </SortableHeader>
+              )}
+              {visibleColumns.provider && (
+                <SortableHeader
+                  field="provider"
+                  currentSort={sortConfig}
+                  onSort={handleSort}
+                >
+                  Provider
+                </SortableHeader>
+              )}
+              {visibleColumns.containerDetails && (
+                <SortableHeader
+                  field="containerDetails"
+                  currentSort={sortConfig}
+                  onSort={handleSort}
+                >
+                  Container Details
+                </SortableHeader>
+              )}
+              {visibleColumns.alerts && (
+                <SortableHeader
+                  field="alerts"
+                  currentSort={sortConfig}
+                  onSort={handleSort}
+                >
+                  Alerts
+                </SortableHeader>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredServices.length === 0 ? (
+            {filteredAndSortedServices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="text-center py-12 h-[200px]">
                   <div className="text-muted-foreground">
@@ -240,7 +404,7 @@ export function ServiceTable({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredServices.map((service) => (
+              filteredAndSortedServices.map((service) => (
                 <TableRow
                   key={service.id}
                   className={cn(
@@ -268,7 +432,7 @@ export function ServiceTable({
                   </TableCell>}
                   {visibleColumns.serviceStatus && (
                     <TableCell className="text-center">
-                      <Badge className={cn(getStatusColor(service.serviceStatus), "font-medium")}>
+                      <Badge className={cn(getStatusColor(service.serviceStatus), "font-medium")}> 
                         {service.serviceStatus}
                       </Badge>
                     </TableCell>
