@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { UserBL } from '../../../bl/users/user.bl';
 import {CreateUserSchema, LoginSchema, RegisterSchema, UpdateUserRoleSchema} from '@service-peek/shared';
 import jwt from 'jsonwebtoken';
+import { AuthenticatedRequest } from '../../../middleware/auth';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme-secret';
 
@@ -28,7 +29,10 @@ export class UsersController {
         }
     };
 
-    createUserHandler = async (req: Request, res: Response) => {
+    createUserHandler = async (req: AuthenticatedRequest, res: Response) => {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, error: 'Forbidden: Admins only' });
+        }
         try {
             const { email, fullName, password, role } = CreateUserSchema.parse(req.body);
             const result = await this.userBL.createUser(email, fullName, password, role);
@@ -44,7 +48,10 @@ export class UsersController {
         }
     };
 
-    updateUserRoleHandler = async (req: Request, res: Response) => {
+    updateUserRoleHandler = async (req: AuthenticatedRequest, res: Response) => {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, error: 'Forbidden: Admins only' });
+        }
         try {
             const { email, newRole } = UpdateUserRoleSchema.parse(req.body);
             await this.userBL.updateUserRole(email, newRole);

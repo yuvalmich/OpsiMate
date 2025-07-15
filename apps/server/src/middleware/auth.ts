@@ -18,7 +18,7 @@ export function authenticateJWT(req: AuthenticatedRequest, res: Response, next: 
         const payload = jwt.verify(token, JWT_SECRET) as { id: number; email: string; role: string };
         req.user = payload;
         next();
-    } catch (err) {
+    } catch {
         return res.status(401).json({ success: false, error: 'Invalid or expired token' });
     }
 } 
