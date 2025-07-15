@@ -15,6 +15,20 @@ export enum ServiceType {
   MANUAL = 'MANUAL',
 }
 
+export enum Role {
+  Admin = 'admin',
+  Editor = 'editor',
+  Viewer = 'viewer',
+}
+
+export interface User {
+  id: number;
+  email: string;
+  fullName: string;
+  role: Role;
+  createdAt: string;
+}
+
 export interface IntegrationUrls {
   name: string,
   url: string,

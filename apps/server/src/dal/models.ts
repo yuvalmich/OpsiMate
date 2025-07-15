@@ -77,6 +77,6 @@ export type UserRow = {
     email: string;
     password_hash: string;
     full_name: string;
-    role: 'admin' | 'viewer';
+    role: 'admin' | 'editor' | 'viewer';
     created_at: string;
 };

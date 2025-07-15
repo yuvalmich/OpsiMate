@@ -1,19 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { UserBL } from '../../../bl/users/user.bl';
-
-const RegisterSchema = z.object({
-    email: z.string().email(),
-    fullName: z.string().min(1),
-    password: z.string().min(6)
-});
-
-const CreateUserSchema = RegisterSchema;
-
-const LoginSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(6)
-});
+import {CreateUserSchema, LoginSchema, RegisterSchema, UpdateUserRoleSchema} from '@service-peek/shared';
 
 export class UsersController {
     constructor(private userBL: UserBL) {}
@@ -38,14 +26,28 @@ export class UsersController {
 
     createUserHandler = async (req: Request, res: Response) => {
         try {
-            const { email, fullName, password } = CreateUserSchema.parse(req.body);
-            const result = await this.userBL.createUser(email, fullName, password);
+            const { email, fullName, password, role } = CreateUserSchema.parse(req.body);
+            const result = await this.userBL.createUser(email, fullName, password, role);
             res.status(201).json({ success: true, data: result });
         } catch (error) {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else if (error instanceof Error && error.message.includes('UNIQUE constraint failed: users.email')) {
                 res.status(400).json({ success: false, error: 'Email already registered' });
+            } else {
+                res.status(500).json({ success: false, error: 'Internal server error' });
+            }
+        }
+    };
+
+    updateUserRoleHandler = async (req: Request, res: Response) => {
+        try {
+            const { email, newRole } = UpdateUserRoleSchema.parse(req.body);
+            await this.userBL.updateUserRole(email, newRole);
+            res.status(200).json({ success: true, message: 'User role updated successfully' });
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
             } else {
                 res.status(500).json({ success: false, error: 'Internal server error' });
             }

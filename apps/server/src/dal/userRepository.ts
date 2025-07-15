@@ -24,7 +24,7 @@ export class UserRepository {
         });
     }
 
-    async createUser(email: string, password_hash: string, full_name: string, role: 'admin' | 'viewer'): Promise<{ lastID: number }> {
+    async createUser(email: string, password_hash: string, full_name: string, role: 'admin' | 'editor' | 'viewer'): Promise<{ lastID: number }> {
         return runAsync<{ lastID: number }>(() => {
             const stmt = this.db.prepare(
                 'INSERT INTO users (email, password_hash, full_name, role) VALUES (?, ?, ?, ?)' 
@@ -46,6 +46,13 @@ export class UserRepository {
             const stmt = this.db.prepare('SELECT COUNT(*) as count FROM users');
             const row = stmt.get() as { count: number };
             return row.count;
+        });
+    }
+
+    async updateUserRole(email: string, newRole: 'admin' | 'editor' | 'viewer'): Promise<void> {
+        return runAsync(() => {
+            const stmt = this.db.prepare('UPDATE users SET role = ? WHERE email = ?');
+            stmt.run(newRole, email);
         });
     }
 } 
