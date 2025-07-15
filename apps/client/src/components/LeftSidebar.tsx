@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button"
 import { Settings, Layers, LayoutDashboard, Database, Puzzle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
-import { AppIcon } from "./icons/AppIcon"
 import { ThemeToggle } from "./ThemeToggle"
 
 interface LeftSidebarProps {
@@ -13,9 +12,21 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
   const location = useLocation();
   return (
     <div className={cn("w-full bg-background flex flex-col h-full overflow-hidden", collapsed && "items-center")}>
-      <div className={cn("flex items-center h-16 px-4", collapsed && "justify-center px-2")}>
-        <AppIcon className="h-7 w-7 text-primary flex-shrink-0" />
-        <h2 className={cn("ml-2 text-xl font-bold text-foreground whitespace-nowrap", collapsed && "sr-only")}>Service Peek</h2>
+      <div className={cn("flex items-center h-20 px-5 border-b", collapsed && "justify-center px-2")}>
+        <div className="flex items-center">
+          <div className="relative w-11 h-11 flex-shrink-0">
+            <img 
+              src="/logo.png" 
+              alt="OpsiMate Logo" 
+              className="w-full h-full object-contain" 
+              style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.1))' }}
+            />
+          </div>
+          <div className={cn("ml-3", collapsed && "sr-only")}>
+            <h2 className="text-xl font-bold text-foreground whitespace-nowrap tracking-tight">OpsiMate</h2>
+            <p className="text-xs text-muted-foreground">Operational Insights</p>
+          </div>
+        </div>
       </div>
       
       <div className={cn("px-4 space-y-2 w-full flex-grow flex flex-col", collapsed && "px-2 items-center")}>
@@ -84,7 +95,7 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
         <div className={collapsed ? "" : "self-start"}>
           <ThemeToggle />
         </div>
-        <p className={cn("text-xs text-muted-foreground", collapsed && "sr-only")}>© 2024 Service Peek</p>
+        <p className={cn("text-xs text-muted-foreground", collapsed && "sr-only")}>© 2024 OpsiMate</p>
       </div>
     </div>
   )
