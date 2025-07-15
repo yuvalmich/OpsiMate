@@ -13,6 +13,7 @@ import {TagController} from "./tags/controller";
 import {IntegrationController} from "./integrations/controller";
 import {AlertController} from "./alerts/controller";
 import { UsersController } from './users/controller';
+import { authenticateJWT } from '../../middleware/auth';
 
 
 export default function createV1Router(providerController: ProviderController,
@@ -24,12 +25,19 @@ export default function createV1Router(providerController: ProviderController,
                                        usersController: UsersController) {
     const router = PromiseRouter();
 
+    // Public endpoints
+    router.post('/users/register', usersController.registerHandler);
+    router.post('/users/login', usersController.loginHandler);
+
+    // JWT-protected endpoints
+    router.use(authenticateJWT);
     router.use('/providers', providerRouter(providerController));
     router.use('/services', serviceRouter(serviceController, tagController));
     router.use('/views', viewRouter(viewController));
     router.use('/tags', tagRouter(tagController));
     router.use('/integrations', integrationRouter(integrationController));
     router.use('/alerts', alertRouter(alertController));
+    // All other /users endpoints (except /register and /login) are protected
     router.use('/users', usersRouter(usersController));
 
     return router;
