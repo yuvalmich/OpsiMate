@@ -55,4 +55,11 @@ export class UserRepository {
             stmt.run(newRole, email);
         });
     }
+
+    async getAllUsers(): Promise<Omit<UserRow, 'password_hash'>[]> {
+        return runAsync(() => {
+            const stmt = this.db.prepare('SELECT id, email, full_name, role, created_at FROM users');
+            return stmt.all() as Omit<UserRow, 'password_hash'>[];
+        });
+    }
 } 

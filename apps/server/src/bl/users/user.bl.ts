@@ -1,7 +1,7 @@
 import { UserRepository } from '../../dal/userRepository';
 import { UserRow } from '../../dal/models';
 import bcrypt from 'bcrypt';
-import { Role } from '@service-peek/shared';
+import { Role, User } from '@service-peek/shared';
 
 export class UserBL {
     constructor(private userRepo: UserRepository) {}
@@ -38,5 +38,16 @@ export class UserBL {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password_hash, ...userInfo } = user;
         return userInfo;
+    }
+
+    async getAllUsers(): Promise<User[]> {
+        const users = await this.userRepo.getAllUsers();
+        return users.map(u => ({
+            id: u.id,
+            email: u.email,
+            fullName: u.full_name,
+            role: u.role as Role,
+            createdAt: u.created_at,
+        }));
     }
 } 

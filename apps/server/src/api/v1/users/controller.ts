@@ -81,4 +81,16 @@ export class UsersController {
             }
         }
     };
+
+    getAllUsersHandler = async (req: AuthenticatedRequest, res: Response) => {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, error: 'Forbidden: Admins only' });
+        }
+        try {
+            const users = await this.userBL.getAllUsers();
+            res.status(200).json({ success: true, data: users });
+        } catch {
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    };
 } 

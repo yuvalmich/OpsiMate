@@ -89,4 +89,53 @@ describe('Authentication API', () => {
     // 200 is expected, but if no alerts table, could be 500
     expect([200, 500]).toContain(res.status);
   });
+
+  test('should get all users as admin, reject for non-admin or unauthenticated', async () => {
+    // Register admin
+    await app.post('/api/v1/users/register').send({
+      email: 'admin2@example.com',
+      fullName: 'Admin2 User',
+      password: 'securepassword'
+    });
+    // Login as admin
+    const loginRes = await app.post('/api/v1/users/login').send({
+      email: 'admin2@example.com',
+      password: 'securepassword'
+    });
+    const adminToken = loginRes.body.token;
+
+    // Admin can get all users
+    const res = await app.get('/api/v1/users').set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data[0]).toMatchObject({
+      email: 'admin2@example.com',
+      fullName: 'Admin2 User',
+      role: 'admin',
+    });
+
+    // Unauthenticated request
+    const unauthRes = await app.get('/api/v1/users');
+    expect(unauthRes.status).toBe(401);
+    expect(unauthRes.body.success).toBe(false);
+
+    // Register a non-admin user (admin creates them)
+    await app.post('/api/v1/users').set('Authorization', `Bearer ${adminToken}`).send({
+      email: 'viewer@example.com',
+      fullName: 'Viewer User',
+      password: 'securepassword',
+      role: 'viewer'
+    });
+    // Login as viewer
+    const viewerLogin = await app.post('/api/v1/users/login').send({
+      email: 'viewer@example.com',
+      password: 'securepassword'
+    });
+    const viewerToken = viewerLogin.body.token;
+    // Viewer should get 403
+    const viewerRes = await app.get('/api/v1/users').set('Authorization', `Bearer ${viewerToken}`);
+    expect(viewerRes.status).toBe(403);
+    expect(viewerRes.body.success).toBe(false);
+  });
 }); 
