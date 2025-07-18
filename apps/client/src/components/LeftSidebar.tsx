@@ -17,7 +17,7 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
     <div className={cn("w-full bg-background flex flex-col h-full overflow-hidden", collapsed && "items-center")}>
       <div className={cn("flex items-center h-16 px-4", collapsed && "justify-center px-2")}>
         <AppIcon className="h-7 w-7 text-primary flex-shrink-0" />
-        <h2 className={cn("ml-2 text-xl font-bold text-foreground whitespace-nowrap", collapsed && "sr-only")}>Service Peek</h2>
+        <h2 className={cn("ml-2 text-xl font-bold text-foreground whitespace-nowrap", collapsed && "sr-only")}>OpsiMate</h2>
       </div>
       
       <div className={cn("px-4 space-y-2 w-full flex-grow flex flex-col", collapsed && "px-2 items-center")}>
@@ -84,6 +84,7 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
       
       <div className={cn("p-4 mt-auto flex flex-col gap-3", collapsed && "items-center")}>
         <div className={cn("flex flex-col gap-3 items-center")}>
+          <ThemeButton collapsed={collapsed} />
           {isAdmin() && (
             <Button 
               variant={location.pathname === "/settings" ? "default" : "ghost"}
@@ -100,7 +101,6 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
               </Link>
             </Button>
           )}
-          <ThemeButton collapsed={collapsed} />
           <LogoutButton 
             collapsed={collapsed} 
             onLogout={() => {

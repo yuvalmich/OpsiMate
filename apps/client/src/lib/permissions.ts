@@ -1,3 +1,4 @@
+import { Role } from '@service-peek/shared';
 import { getUserRole } from './auth';
 
 export type Permission = 'create' | 'edit' | 'delete' | 'view';
@@ -6,11 +7,11 @@ export function hasPermission(permission: Permission): boolean {
   const userRole = getUserRole();
   
   switch (userRole) {
-    case 'admin':
+    case Role.Admin:
       return true; // Admins can do everything
-    case 'editor':
+    case Role.Editor:
       return permission !== 'delete'; // Editors can create, edit, view but not delete
-    case 'viewer':
+    case Role.Viewer:
       return permission === 'view'; // Viewers can only view
     default:
       return false;
@@ -35,7 +36,7 @@ export function canView(): boolean {
 
 // Specific permission checks for different features
 export function canManageUsers(): boolean {
-  return getUserRole() === 'admin';
+  return getUserRole() === Role.Admin;
 }
 
 export function canManageProviders(): boolean {
