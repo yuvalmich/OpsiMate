@@ -1,5 +1,5 @@
 import * as k8s from '@kubernetes/client-node';
-import {DiscoveredService, Provider} from "@service-peek/shared";
+import {DiscoveredService, Logger, Provider} from "@service-peek/shared";
 import path from "path";
 import fs from "fs";
 import {ObjectCoreV1Api} from "@kubernetes/client-node/dist/gen/types/ObjectParamAPI";
@@ -11,6 +11,8 @@ function getPrivateKeysDir(): string {
         ? securityConfig.private_keys_path
         : path.resolve(__dirname, '../../../', securityConfig.private_keys_path);
 }
+
+const logger = new Logger('kubeConnector.ts');
 
 function getKeyPath(filename: string) {
     const privateKeysDir = getPrivateKeysDir();
@@ -40,6 +42,25 @@ const getK8RLogs = async (_provider: Provider, serviceName: string, namespace: s
         })
 }
 
+const deleteK8RPod = async (_provider: Provider, podName: string, namespace: string): Promise<void> => {
+    const k8sApi = createClient(_provider)
+
+    return k8sApi.deleteNamespacedPod(
+        {
+            name: podName,
+            namespace: namespace,
+            pretty: 'true'
+        }
+    ).then(res => {
+        logger.info(`Pod: ${podName} in namespace: ${namespace} deleted successfully`);
+    }).catch(err => {
+        logger.error(`Failed to delete pod: ${podName} in namespace:  ${namespace}, err`);
+
+        throw err;
+    })
+}
+
+
 const getK8SServices = async (_provider: Provider): Promise<DiscoveredService[]> => {
     const k8sApi = createClient(_provider)
     const servicesResp = await k8sApi.listPodForAllNamespaces();
@@ -60,4 +81,4 @@ const getK8SServices = async (_provider: Provider): Promise<DiscoveredService[]>
         });
 }
 
-export {getK8SServices, getK8RLogs}
+export {getK8SServices, getK8RLogs, deleteK8RPod}
