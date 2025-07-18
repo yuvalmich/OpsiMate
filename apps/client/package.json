@@ -13,7 +13,6 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@service-peek/shared": "*",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -42,6 +41,7 @@
     "@radix-ui/react-toggle": "^1.1.0",
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.4",
+    "@service-peek/shared": "*",
     "@tanstack/react-query": "^5.56.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -50,6 +50,7 @@
     "embla-carousel-react": "^8.3.0",
     "express": "^5.1.0",
     "input-otp": "^1.2.4",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",

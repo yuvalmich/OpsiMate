@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom"
 import { AppIcon } from "./icons/AppIcon"
 import { ThemeButton } from "./ThemeButton"
 import { LogoutButton } from "./LogoutButton"
+import { isAdmin } from "../lib/auth"
 
 interface LeftSidebarProps {
   collapsed: boolean
@@ -82,7 +83,23 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
       </div>
       
       <div className={cn("p-4 mt-auto flex flex-col gap-3", collapsed && "items-center")}>
-        <div className={cn("flex flex-col gap-3", collapsed ? "items-center" : "items-center")}>
+        <div className={cn("flex flex-col gap-3 items-center")}>
+          {isAdmin() && (
+            <Button 
+              variant={location.pathname === "/settings" ? "default" : "ghost"}
+              className={cn(
+                "gap-3 h-10 items-center", 
+                collapsed ? "w-10 justify-center p-0" : "w-full justify-center px-3",
+                location.pathname === "/settings" && "text-primary-foreground"
+              )}
+              asChild
+            >
+              <Link to="/settings">
+                <Settings className="h-5 w-5 flex-shrink-0 items-center" />
+                <span className={cn("font-medium", collapsed && "sr-only")}>Settings</span>
+              </Link>
+            </Button>
+          )}
           <ThemeButton collapsed={collapsed} />
           <LogoutButton 
             collapsed={collapsed} 

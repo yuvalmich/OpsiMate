@@ -44,6 +44,7 @@ import {
 import {useToast} from "@/hooks/use-toast";
 import {Link} from "react-router-dom";
 import {cn} from "@/lib/utils";
+import { canManageProviders, canDelete } from "../lib/permissions";
 import { Provider as SharedProvider } from '@service-peek/shared';
 import { AddServiceDialog, ServiceConfig } from "@/components/AddServiceDialog";
 import { RightSidebarWithLogs } from "@/components/RightSidebarWithLogs";
@@ -725,14 +726,16 @@ export function MyProviders() {
                                                             <RefreshCw className="mr-2 h-4 w-4"/>
                                                             Refresh
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => {
-                                                            setSelectedProvider(provider);
-                                                            setIsEditDialogOpen(true);
-                                                        }}>
-                                                            <Edit className="mr-2 h-4 w-4"/>
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        {(provider.providerType === 'VM' || provider.providerType === 'K8S') && (
+                                                        {canManageProviders() && (
+                                                            <DropdownMenuItem onClick={() => {
+                                                                setSelectedProvider(provider);
+                                                                setIsEditDialogOpen(true);
+                                                            }}>
+                                                                <Edit className="mr-2 h-4 w-4"/>
+                                                                Edit
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        {canManageProviders() && (provider.providerType === 'VM' || provider.providerType === 'K8S') && (
                                                             <DropdownMenuItem onClick={() => {
                                                                 setSelectedServerForService(provider);
                                                                 setIsAddServiceDialogOpen(true);
@@ -741,16 +744,18 @@ export function MyProviders() {
                                                                 Add Service
                                                             </DropdownMenuItem>
                                                         )}
-                                                        <DropdownMenuItem
-                                                            onClick={() => {
-                                                                setSelectedProvider(provider);
-                                                                setIsDeleteDialogOpen(true);
-                                                            }}
-                                                            className="text-red-500 focus:text-red-500"
-                                                        >
-                                                            <Trash className="mr-2 h-4 w-4"/>
-                                                            Delete
-                                                        </DropdownMenuItem>
+                                                        {canDelete() && (
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    setSelectedProvider(provider);
+                                                                    setIsDeleteDialogOpen(true);
+                                                                }}
+                                                                className="text-red-500 focus:text-red-500"
+                                                            >
+                                                                <Trash className="mr-2 h-4 w-4"/>
+                                                                Delete
+                                                            </DropdownMenuItem>
+                                                        )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenuPortal>
                                             </DropdownMenu>
@@ -835,32 +840,36 @@ export function MyProviders() {
                                                                                             <Terminal
                                                                                                 className="mr-2 h-3 w-3"/> Details
                                                                                         </DropdownMenuItem>
-                                                                                        {service.status !== 'running' && (
+                                                                                                                                                                                {canManageProviders() && service.status !== 'running' && (
                                                                                             <DropdownMenuItem
                                                                                                 onClick={() => handleServiceAction(String(provider.id), service.id, 'start')}>
                                                                                                 <Play
                                                                                                     className="mr-2 h-3 w-3"/> Start
                                                                                             </DropdownMenuItem>
                                                                                         )}
-                                                                                        {service.status === 'running' && (
+                                                                                        {canManageProviders() && service.status === 'running' && (
                                                                                             <DropdownMenuItem
                                                                                                 onClick={() => handleServiceAction(String(provider.id), service.id, 'stop')}>
                                                                                                 <Square
                                                                                                     className="mr-2 h-3 w-3"/> Stop
                                                                                             </DropdownMenuItem>
                                                                                         )}
-                                                                                        <DropdownMenuItem
-                                                                                            onClick={() => handleServiceAction(String(provider.id), service.id, 'restart')}>
-                                                                                            <RefreshCw
-                                                                                                className="mr-2 h-3 w-3"/> Restart
-                                                                                        </DropdownMenuItem>
-                                                                                        <DropdownMenuItem
-                                                                                            onClick={() => handleDeleteService(service.id)}
-                                                                                            className="text-red-500 focus:text-red-500"
-                                                                                        >
-                                                                                            <Trash
-                                                                                                className="mr-2 h-3 w-3"/> Delete
-                                                                                        </DropdownMenuItem>
+                                                                                        {canManageProviders() && (
+                                                                                            <DropdownMenuItem
+                                                                                                onClick={() => handleServiceAction(String(provider.id), service.id, 'restart')}>
+                                                                                                <RefreshCw
+                                                                                                    className="mr-2 h-3 w-3"/> Restart
+                                                                                            </DropdownMenuItem>
+                                                                                        )}
+                                                                                        {canDelete() && (
+                                                                                            <DropdownMenuItem
+                                                                                                onClick={() => handleDeleteService(service.id)}
+                                                                                                className="text-red-500 focus:text-red-500"
+                                                                                            >
+                                                                                                <Trash
+                                                                                                    className="mr-2 h-3 w-3"/> Delete
+                                                                                            </DropdownMenuItem>
+                                                                                        )}
                                                                                     </DropdownMenuContent>
                                                                                 </DropdownMenuPortal>
                                                                             </DropdownMenu>
@@ -880,7 +889,7 @@ export function MyProviders() {
                                                                     <p className="text-xs text-muted-foreground mt-1 mb-4">
                                                                         Get started by adding a new service to this provider.
                                                                     </p>
-                                                                    {(provider.providerType === 'VM' || provider.providerType === 'K8S') && (
+                                                                    {canManageProviders() && (provider.providerType === 'VM' || provider.providerType === 'K8S') && (
                                                                         <Button
                                                                             variant="outline"
                                                                             size="sm"
