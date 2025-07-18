@@ -1,16 +1,22 @@
 import { initializeDb } from './dal/db';
 import { createApp } from './app';
+import { getServerConfig } from './config/config';
 import { Logger } from '@service-peek/shared';
 
-const PORT = process.env.PORT || 3001;
 const logger = new Logger('server');
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
+    const serverConfig = getServerConfig();
+    
+    // Allow environment variable to override config file
+    const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : serverConfig.port;
+    const HOST = process.env.HOST || serverConfig.host;
+    
     const db = initializeDb();
     const app = await createApp(db, {enableJobs: true});
 
-    app.listen(PORT, () => {
-        logger.info(`Server running on port ${PORT}`);
+    app.listen(PORT, HOST, () => {
+        logger.info(`Server running on ${HOST}:${PORT}`);
     });
 })();

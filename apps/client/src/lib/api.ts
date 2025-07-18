@@ -1,7 +1,7 @@
 import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType, Alert } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
-const API_BASE_URL = 'http://localhost:3001/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
 
 /**
  * Generic API request handler
