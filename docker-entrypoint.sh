@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Docker entrypoint script for Service Peek
 # Handles config file mounting and startup

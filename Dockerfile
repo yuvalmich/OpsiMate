@@ -3,8 +3,8 @@
 
 FROM node:20-alpine
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install basic dependencies
+RUN apk add --no-cache bash
 
 # Create app user for security
 RUN addgroup -g 1001 -S nodejs && \
@@ -46,5 +46,5 @@ VOLUME ["/app/data/database", "/app/data/private-keys", "/app/config"]
 ENV NODE_ENV=development
 
 # Start the application using custom entrypoint
-ENTRYPOINT ["dumb-init", "--", "/app/docker-entrypoint.sh"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["npm", "run", "dev"]
