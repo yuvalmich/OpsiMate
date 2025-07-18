@@ -47,83 +47,102 @@ npm run dev
 - `npm run clean` - Clean build outputs
 - `npm run format` - Format code with Prettier
 
-## Docker Usage
+## Quick Start
 
-### Quick Start with Docker
+### Prerequisites
 
-1. **Create data directories and copy SSH keys:**
+- Node.js 20+
+- Docker (for containerized deployment)
+- SSH private keys for service discovery (see `configuration_example/` for setup)
+
+### Local Development
+
+1. **Install dependencies:**
    ```bash
-   mkdir -p data/database data/private-keys
-   cp -r apps/server/data/private-keys/* data/private-keys/
+   npm install
    ```
 
-2. **Build and run the container:**
+2. **Set up configuration:**
    ```bash
-   docker build -t service-peek .
-   docker run -d \
-     --name service-peek-app \
-     -p 3001:3001 \
-     -p 8080:8080 \
-     -v $(pwd)/data/database:/app/data/database \
-     -v $(pwd)/data/private-keys:/app/data/private-keys \
-     -v $(pwd)/container-config.yml:/app/config/config.yml \
-     service-peek
+   # Copy example config and customize for your environment
+   cp configuration_example/config.yml ./config.yml
+   # Edit config.yml with your local paths
    ```
 
-3. **Access the application:**
+3. **Run the application:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Access the application:**
    - Backend API: http://localhost:3001/api/v1
    - Frontend: http://localhost:8080
 
-### Volume Mounts
+### Docker Deployment
 
-The container supports three volume mounts:
-- **Database**: `-v $(pwd)/data/database:/app/data/database` (required)
-- **Private Keys**: `-v $(pwd)/data/private-keys:/app/data/private-keys` (required)
-- **Config File**: `-v $(pwd)/container-config.yml:/app/config/config.yml` (optional)
+#### Option 1: Default Configuration (Simplest)
 
-### Configuration Options
-
-**Default behavior**: Uses the built-in `container-config.yml` if no config is mounted.
-
-**Custom config file**: Mount your own config file:
 ```bash
+# Create required directories
+mkdir -p data/database data/private-keys
+cp -r apps/server/data/private-keys/* data/private-keys/
+
+# Build and run with default config
+docker build -t service-peek .
 docker run -d \
   --name service-peek-app \
   -p 3001:3001 -p 8080:8080 \
   -v $(pwd)/data/database:/app/data/database \
   -v $(pwd)/data/private-keys:/app/data/private-keys \
-  -v $(pwd)/my-custom-config.yml:/app/config/config.yml \
   service-peek
 ```
 
-**Config file priority**:
-1. Mounted config file (`/app/config/config.yml`)
-2. Default container config (`/app/config/default-config.yml`)
-3. Project default config (`/app/config.yml`)
+#### Option 2: Custom Configuration
 
-### Verification
-
-To verify the config file mounting is working:
-
-1. **Check container logs**: Look for `Using CONFIG_FILE environment variable: /app/config/config.yml`
-2. **Verify database path**: Logs should show the database path from your mounted config
-3. **Test API endpoints**: `curl http://localhost:3001/api/v1/providers`
-
-**Example with custom config**:
 ```bash
-# Create custom config with different database name
-cp container-config.yml my-custom-config.yml
-# Edit database.path to use custom name
+# Use example config as starting point
+cp configuration_example/container-config.yml my-config.yml
+# Edit my-config.yml as needed
 
 # Run with custom config
 docker run -d \
-  --name service-peek-custom \
+  --name service-peek-app \
   -p 3001:3001 -p 8080:8080 \
   -v $(pwd)/data/database:/app/data/database \
   -v $(pwd)/data/private-keys:/app/data/private-keys \
-  -v $(pwd)/my-custom-config.yml:/app/config/config.yml \
+  -v $(pwd)/my-config.yml:/app/config/config.yml \
   service-peek
 ```
+
+### Configuration
+
+Configuration examples are available in the `configuration_example/` folder:
+
+- **`config.yml`** - Local development configuration
+- **`container-config.yml`** - Docker container configuration
+- **`custom-docker-config.yml`** - Custom Docker configuration example
+
+See `configuration_example/README.md` for detailed explanations.
+
+### Volume Mounts
+
+The container supports the following volume mounts:
+- **Database**: `-v $(pwd)/data/database:/app/data/database` (required for data persistence)
+- **Private Keys**: `-v $(pwd)/data/private-keys:/app/data/private-keys` (required for SSH connections)
+- **Config File**: `-v $(pwd)/my-config.yml:/app/config/config.yml` (optional for custom configuration)
+
+### Configuration Priority
+
+1. **Custom mounted config** (`/app/config/config.yml`) - if provided via volume mount
+2. **Built-in default config** (`/app/config/default-config.yml`) - used when no custom config is mounted
+
+### Verification
+
+To verify your deployment:
+
+1. **Check container logs**: `docker logs service-peek-app`
+2. **Test API**: `curl http://localhost:3001/api/v1/providers`
+3. **Access frontend**: Open http://localhost:8080 in your browser
 
 ## Workspaces
 

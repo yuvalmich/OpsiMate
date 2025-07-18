@@ -26,8 +26,8 @@ RUN npm rebuild
 RUN mkdir -p /app/data/database /app/data/private-keys /app/config && \
     chown -R servicepeek:nodejs /app/data /app/config
 
-# Create default config if none is mounted
-COPY --chown=servicepeek:nodejs container-config.yml /app/config/default-config.yml
+# Copy default config file to container
+COPY --chown=servicepeek:nodejs default-config.yml /app/config/default-config.yml
 
 # Copy entrypoint script
 COPY --chown=servicepeek:nodejs docker-entrypoint.sh /app/docker-entrypoint.sh
