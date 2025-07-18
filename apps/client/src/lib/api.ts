@@ -41,10 +41,21 @@ async function apiRequest<T>(
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API Error (${response.status}):`, errorText);
-      return {
-        success: false,
-        error: `HTTP ${response.status}: ${errorText || 'Unknown error'}`,
-      };
+      
+      // Try to parse the error as JSON to handle validation errors properly
+      try {
+        const errorJson = JSON.parse(errorText);
+        return {
+          success: false,
+          ...errorJson, // Spread the parsed JSON to preserve validation details
+        };
+      } catch {
+        // If it's not JSON, return as a simple error string
+        return {
+          success: false,
+          error: `HTTP ${response.status}: ${errorText || 'Unknown error'}`,
+        };
+      }
     }
 
     const result = await response.json();

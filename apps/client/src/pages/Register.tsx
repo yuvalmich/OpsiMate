@@ -3,33 +3,45 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { apiRequest } from '../lib/api';
 import { API_BASE_URL } from '../lib/api';
+import { useFormErrors } from '../hooks/useFormErrors';
+import { ErrorAlert } from '../components/ErrorAlert';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { errors, generalError, clearErrors, handleApiResponse } = useFormErrors();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    clearErrors();
+    
     try {
       const res = await apiRequest<{ token: string; data: any; error?: string }>(
         '/users/register',
         'POST',
         { email, fullName, password }
       );
-      const token = (res.data && res.data.token) || res.token;
-      if (res.success && token) {
-        localStorage.setItem('jwt', token);
-        window.location.href = '/';
+      
+      if (res.success) {
+        const token = (res.data && res.data.token) || res.token;
+        if (token) {
+          localStorage.setItem('jwt', token);
+          window.location.href = '/';
+        } else {
+          // This shouldn't happen in normal flow, but handle it gracefully
+          console.error('Registration successful but no token received');
+        }
       } else {
-        setError(res.error || 'Registration failed');
+        handleApiResponse(res);
       }
     } catch (err) {
-      setError('Network error');
+      handleApiResponse({ 
+        success: false, 
+        error: 'Network error. Please check your connection and try again.' 
+      });
     } finally {
       setLoading(false);
     }
@@ -47,6 +59,7 @@ const Register: React.FC = () => {
             onChange={e => setEmail(e.target.value)}
             required
           />
+          {errors.email && <ErrorAlert message={errors.email} className="mt-6" />}
         </div>
         <div className="mb-4">
           <Input
@@ -56,6 +69,7 @@ const Register: React.FC = () => {
             onChange={e => setFullName(e.target.value)}
             required
           />
+          {errors.fullName && <ErrorAlert message={errors.fullName} className="mt-6" />}
         </div>
         <div className="mb-4">
           <Input
@@ -65,8 +79,9 @@ const Register: React.FC = () => {
             onChange={e => setPassword(e.target.value)}
             required
           />
+          {errors.password && <ErrorAlert message={errors.password} className="mt-6" />}
         </div>
-        {error && <div className="text-red-500 mb-4 text-center">{error}</div>}
+        {generalError && <ErrorAlert message={generalError} className="mb-4" />}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Registering...' : 'Register'}
         </Button>

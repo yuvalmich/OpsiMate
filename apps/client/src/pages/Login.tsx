@@ -3,12 +3,14 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { apiRequest } from '../lib/api';
 import { API_BASE_URL } from '../lib/api';
+import { useFormErrors } from '../hooks/useFormErrors';
+import { ErrorAlert } from '../components/ErrorAlert';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { generalError, clearErrors, handleApiResponse } = useFormErrors({ showFieldErrors: false });
 
   useEffect(() => {
     if (localStorage.getItem('jwt')) {
@@ -19,22 +21,32 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    clearErrors();
+    
     try {
       const res = await apiRequest<{ token: string; data: any; error?: string }>(
         '/users/login',
         'POST',
         { email, password }
       );
-      const token = (res.data && res.data.token) || res.token;
-      if (res.success && token) {
-        localStorage.setItem('jwt', token);
-        window.location.href = '/';
+      
+      if (res.success) {
+        const token = (res.data && res.data.token) || res.token;
+        if (token) {
+          localStorage.setItem('jwt', token);
+          window.location.href = '/';
+        } else {
+          // This shouldn't happen in normal flow, but handle it gracefully
+          console.error('Login successful but no token received');
+        }
       } else {
-        setError(res.error || 'Login failed');
+        handleApiResponse(res);
       }
     } catch (err) {
-      setError('Network error');
+      handleApiResponse({ 
+        success: false, 
+        error: 'Network error. Please check your connection and try again.' 
+      });
     } finally {
       setLoading(false);
     }
@@ -62,7 +74,7 @@ const Login: React.FC = () => {
             required
           />
         </div>
-        {error && <div className="text-red-500 mb-4 text-center">{error}</div>}
+        {generalError && <ErrorAlert message={generalError} className="mb-4" />}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Logging in...' : 'Login'}
         </Button>

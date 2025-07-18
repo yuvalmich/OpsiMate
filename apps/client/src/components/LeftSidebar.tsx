@@ -3,7 +3,8 @@ import { Settings, Layers, LayoutDashboard, Database, Puzzle } from "lucide-reac
 import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
 import { AppIcon } from "./icons/AppIcon"
-import { ThemeToggle } from "./ThemeToggle"
+import { ThemeButton } from "./ThemeButton"
+import { LogoutButton } from "./LogoutButton"
 
 interface LeftSidebarProps {
   collapsed: boolean
@@ -81,10 +82,17 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
       </div>
       
       <div className={cn("p-4 mt-auto flex flex-col gap-3", collapsed && "items-center")}>
-        <div className={collapsed ? "" : "self-start"}>
-          <ThemeToggle />
+        <div className={cn("flex flex-col gap-3", collapsed ? "items-center" : "items-center")}>
+          <ThemeButton collapsed={collapsed} />
+          <LogoutButton 
+            collapsed={collapsed} 
+            onLogout={() => {
+              localStorage.removeItem('jwt');
+              window.location.href = '/login';
+            }} 
+          />
         </div>
-        <p className={cn("text-xs text-muted-foreground", collapsed && "sr-only")}>© 2024 Service Peek</p>
+        <p className={cn("text-xs text-muted-foreground", collapsed && "sr-only")}>© 2025 Service Peek</p>
       </div>
     </div>
   )
