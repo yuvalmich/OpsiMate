@@ -138,4 +138,25 @@ describe('Authentication API', () => {
     expect(viewerRes.status).toBe(403);
     expect(viewerRes.body.success).toBe(false);
   });
+
+  test('should return false for /users/exists when no users exist, and true after registration', async () => {
+    // Initially, no users
+    let res = await app.get('/api/v1/users/exists');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.exists).toBe(false);
+
+    // Register a user
+    await app.post('/api/v1/users/register').send({
+      email: 'exists@example.com',
+      fullName: 'Exists User',
+      password: 'securepassword'
+    });
+
+    // Now, users exist
+    res = await app.get('/api/v1/users/exists');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.exists).toBe(true);
+  });
 }); 

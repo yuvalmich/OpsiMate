@@ -29,6 +29,7 @@ export default function createV1Router(providerController: ProviderController,
     // Public endpoints
     router.post('/users/register', usersController.registerHandler);
     router.post('/users/login', usersController.loginHandler);
+    router.get('/users/exists', usersController.usersExistHandler);
 
     // JWT-protected endpoints
     router.use(authenticateJWT);

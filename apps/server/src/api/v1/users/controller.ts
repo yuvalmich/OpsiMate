@@ -93,4 +93,17 @@ export class UsersController {
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     };
+
+    /**
+     * Checks if any users exist in the database.
+     * Returns { exists: true } if at least one user exists, otherwise { exists: false }.
+     */
+    usersExistHandler = async (req: Request, res: Response) => {
+        try {
+            const exists = await this.userBL.usersExist();
+            res.status(200).json({ success: true, exists });
+        } catch {
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    };
 } 
