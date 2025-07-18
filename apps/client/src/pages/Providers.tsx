@@ -6,6 +6,7 @@ import { Server, Cloud, Database, Globe } from "lucide-react";
 import { ProviderSidebar } from "../components/ProviderSidebar";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { useToast } from "@/hooks/use-toast";
+import { canManageProviders } from "../lib/permissions";
 
 // Provider types
 export type ProviderType = "server" | "kubernetes" | "aws-ec2" | "aws-eks" | "gcp-compute" | "azure-vm";
@@ -114,13 +115,24 @@ export function Providers() {
                   <CardDescription>{provider.description}</CardDescription>
                 </CardContent>
                 <CardFooter className="pt-3">
-                  <Button 
-                    variant="default" 
-                    className="w-full"
-                    onClick={() => setSelectedProvider(provider)}
-                  >
-                    Configure
-                  </Button>
+                  {canManageProviders() ? (
+                    <Button 
+                      variant="default" 
+                      className="w-full"
+                      onClick={() => setSelectedProvider(provider)}
+                    >
+                      Configure
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      disabled
+                      title="You don't have permission to configure providers"
+                    >
+                      View Only
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             ))}

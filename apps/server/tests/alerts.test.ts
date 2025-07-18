@@ -9,6 +9,7 @@ const logger = new Logger('test-alerts');
 let app: SuperTest<Test>;
 let db: Database.Database;
 let testAlerts: Alert[] = [];
+let jwtToken: string;
 
 const seedAlerts = () => {
   // Clear existing alerts
@@ -103,6 +104,18 @@ beforeAll(async () => {
 
   const expressApp = await createApp(db);
   app = request(expressApp) as unknown as SuperTest<Test>;
+
+  // Register and login a user to get a JWT token
+  await app.post('/api/v1/users/register').send({
+    email: 'testadmin@example.com',
+    fullName: 'Test Admin',
+    password: 'testpassword'
+  });
+  const loginRes = await app.post('/api/v1/users/login').send({
+    email: 'testadmin@example.com',
+    password: 'testpassword'
+  });
+  jwtToken = loginRes.body.token;
 });
 
 beforeEach(() => {
@@ -116,7 +129,7 @@ afterAll(() => {
 describe('Alerts API', () => {
   describe('GET /api/v1/alerts', () => {
     test('should fetch all alerts successfully', async () => {
-      const response = await app.get('/api/v1/alerts');
+      const response = await app.get('/api/v1/alerts').set('Authorization', `Bearer ${jwtToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -125,7 +138,7 @@ describe('Alerts API', () => {
     });
 
     test('should return correct alert structure', async () => {
-      const response = await app.get('/api/v1/alerts');
+      const response = await app.get('/api/v1/alerts').set('Authorization', `Bearer ${jwtToken}`);
 
       expect(response.status).toBe(200);
       const alerts = response.body.data?.alerts;
@@ -144,7 +157,7 @@ describe('Alerts API', () => {
       // Clear all alerts
       db.exec('DELETE FROM alerts');
 
-      const response = await app.get('/api/v1/alerts');
+      const response = await app.get('/api/v1/alerts').set('Authorization', `Bearer ${jwtToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -156,7 +169,7 @@ describe('Alerts API', () => {
     test('should dismiss an active alert successfully', async () => {
       const alertId = testAlerts[0].id; // 'alert-1'
 
-      const response = await app.patch(`/api/v1/alerts/${alertId}/dismiss`);
+      const response = await app.patch(`/api/v1/alerts/${alertId}/dismiss`).set('Authorization', `Bearer ${jwtToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -173,7 +186,7 @@ describe('Alerts API', () => {
       expect(beforeResult.is_dismissed).toBe(0);
 
       // Dismiss the alert
-      await app.patch(`/api/v1/alerts/${alertId}/dismiss`);
+      await app.patch(`/api/v1/alerts/${alertId}/dismiss`).set('Authorization', `Bearer ${jwtToken}`);
 
       // Verify updated state
       const afterStmt = db.prepare('SELECT is_dismissed FROM alerts WHERE id = ?');
@@ -184,7 +197,7 @@ describe('Alerts API', () => {
     test('should handle dismissing an already dismissed alert', async () => {
       const alertId = testAlerts[2].id; // 'alert-3' (already dismissed)
 
-      const response = await app.patch(`/api/v1/alerts/${alertId}/dismiss`);
+      const response = await app.patch(`/api/v1/alerts/${alertId}/dismiss`).set('Authorization', `Bearer ${jwtToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -192,7 +205,7 @@ describe('Alerts API', () => {
     });
 
     test('should return 404 for non-existent alert', async () => {
-      const response = await app.patch('/api/v1/alerts/nonexistent-id-123/dismiss');
+      const response = await app.patch('/api/v1/alerts/nonexistent-id-123/dismiss').set('Authorization', `Bearer ${jwtToken}`);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -201,7 +214,7 @@ describe('Alerts API', () => {
 
   describe('Edge cases and error handling', () => {
     test('should handle malformed requests gracefully', async () => {
-      const response = await app.get('/api/v1/alerts/invalid-endpoint');
+      const response = await app.get('/api/v1/alerts/invalid-endpoint').set('Authorization', `Bearer ${jwtToken}`);
 
       expect(response.status).toBe(404);
     });
@@ -210,7 +223,7 @@ describe('Alerts API', () => {
       // Close the database to simulate an error
       db.close();
 
-      const response = await app.get('/api/v1/alerts');
+      const response = await app.get('/api/v1/alerts').set('Authorization', `Bearer ${jwtToken}`);
 
       expect(response.status).toBeGreaterThanOrEqual(500);
 

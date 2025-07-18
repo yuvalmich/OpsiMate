@@ -14,7 +14,12 @@ import { providerApi, alertsApi } from "@/lib/api"
 import { Alert } from "@service-peek/shared"
 
 
-const Index = () => {
+const Dashboard = () => {
+    useEffect(() => {
+        if (!localStorage.getItem('jwt')) {
+            window.location.href = '/login';
+        }
+    }, []);
     const {toast} = useToast()
     const [services, setServices] = useState<Service[]>([])
     const [loading, setLoading] = useState(true)
@@ -648,4 +653,4 @@ const Index = () => {
     )
 }
 
-export default Index
+export default Dashboard;

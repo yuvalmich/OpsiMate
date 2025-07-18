@@ -2,7 +2,10 @@ import { Button } from "@/components/ui/button"
 import { Settings, Layers, LayoutDashboard, Database, Puzzle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
-import { ThemeToggle } from "./ThemeToggle"
+import { AppIcon } from "./icons/AppIcon"
+import { ThemeButton } from "./ThemeButton"
+import { LogoutButton } from "./LogoutButton"
+import { isAdmin } from "../lib/auth"
 
 interface LeftSidebarProps {
   collapsed: boolean
@@ -15,12 +18,7 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
       <div className={cn("flex items-center h-20 px-5 border-b", collapsed && "justify-center px-2")}>
         <div className="flex items-center">
           <div className="relative w-11 h-11 flex-shrink-0">
-            <img 
-              src="/logo.png" 
-              alt="OpsiMate Logo" 
-              className="w-full h-full object-contain" 
-              style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.1))' }}
-            />
+            <AppIcon className="w-full h-full text-primary" />
           </div>
           <div className={cn("ml-3", collapsed && "sr-only")}>
             <h2 className="text-xl font-bold text-foreground whitespace-nowrap tracking-tight">OpsiMate</h2>
@@ -92,8 +90,31 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
       </div>
       
       <div className={cn("p-4 mt-auto flex flex-col gap-3", collapsed && "items-center")}>
-        <div className={collapsed ? "" : "self-start"}>
-          <ThemeToggle />
+        <div className={cn("flex flex-col gap-3 items-center")}>
+          <ThemeButton collapsed={collapsed} />
+          {isAdmin() && (
+            <Button 
+              variant={location.pathname === "/settings" ? "default" : "ghost"}
+              className={cn(
+                "gap-3 h-10 items-center", 
+                collapsed ? "w-10 justify-center p-0" : "w-full justify-center px-3",
+                location.pathname === "/settings" && "text-primary-foreground"
+              )}
+              asChild
+            >
+              <Link to="/settings">
+                <Settings className="h-5 w-5 flex-shrink-0 items-center" />
+                <span className={cn("font-medium", collapsed && "sr-only")}>Settings</span>
+              </Link>
+            </Button>
+          )}
+          <LogoutButton 
+            collapsed={collapsed} 
+            onLogout={() => {
+              localStorage.removeItem('jwt');
+              window.location.href = '/login';
+            }} 
+          />
         </div>
         <p className={cn("text-xs text-muted-foreground", collapsed && "sr-only")}>© 2024 OpsiMate</p>
       </div>
