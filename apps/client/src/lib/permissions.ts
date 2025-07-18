@@ -1,5 +1,11 @@
-import { Role } from '@service-peek/shared';
 import { getUserRole } from './auth';
+
+// Local role definitions for client-side use
+enum Role {
+  Admin = 'admin',
+  Editor = 'editor',
+  Viewer = 'viewer',
+}
 
 export type Permission = 'create' | 'edit' | 'delete' | 'view';
 
@@ -36,18 +42,55 @@ export function canView(): boolean {
 
 // Specific permission checks for different features
 export function canManageUsers(): boolean {
-  return getUserRole() === Role.Admin;
+  const userRole = getUserRole();
+  
+  switch (userRole) {
+    case Role.Admin:
+      return true;
+    case Role.Editor:
+      return false;
+    case Role.Viewer:
+      return false;
+    default:
+      return false;
+  }
 }
 
 export function canManageProviders(): boolean {
-  return hasPermission('create') || hasPermission('edit');
+  const userRole = getUserRole();
+  
+  switch (userRole) {
+    case Role.Admin:
+      return true;
+    case Role.Editor:
+      return true;
+    case Role.Viewer:
+      return false;
+    default:
+      return false;
+  }
 }
 
-export function canManageServices(): boolean {
-  return hasPermission('create') || hasPermission('edit');
+export function canViewServices(): boolean {
+  const userRole = getUserRole();
+  
+  switch (userRole) {
+    case Role.Admin:
+      return true;
+    case Role.Editor:
+      return true;
+    case Role.Viewer:
+      return true;
+    default:
+      return false;
+  }
 }
 
 export function canManageIntegrations(): boolean {
+  return getUserRole() === Role.Admin;
+}
+
+export function canManageServices(): boolean {
   return hasPermission('create') || hasPermission('edit');
 }
 

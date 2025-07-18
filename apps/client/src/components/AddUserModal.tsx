@@ -5,7 +5,7 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { apiRequest } from '../lib/api';
-import { User, Role } from '@service-peek/shared';
+import { User, Role } from '../types';
 import { ErrorAlert } from './ErrorAlert';
 import { useFormErrors } from '../hooks/useFormErrors';
 

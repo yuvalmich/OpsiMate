@@ -21,10 +21,5 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ['@service-peek/shared']
-  },
-  build: {
-    commonjsOptions: {
-      include: [/@service-peek\/shared/]
-    }
   }
 }));

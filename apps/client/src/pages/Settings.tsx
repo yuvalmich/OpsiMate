@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { apiRequest } from '../lib/api';
-import { User, Role } from '@service-peek/shared';
+import { User, Role } from '../types';
 import { getCurrentUser } from '../lib/auth';
 import { ErrorAlert } from '../components/ErrorAlert';
 import { useFormErrors } from '../hooks/useFormErrors';
