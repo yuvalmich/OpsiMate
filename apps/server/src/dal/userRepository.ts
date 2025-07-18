@@ -17,7 +17,7 @@ export class UserRepository {
                     email TEXT NOT NULL UNIQUE,
                     password_hash TEXT NOT NULL,
                     full_name TEXT NOT NULL,
-                    role TEXT NOT NULL CHECK(role IN ('admin', 'viewer')),
+                    role TEXT NOT NULL CHECK(role IN ('admin', 'editor', 'viewer')),
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             `).run();
