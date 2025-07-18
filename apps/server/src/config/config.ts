@@ -30,20 +30,28 @@ export function loadConfig(): ServicePeekConfig {
   }
 
   try {
-    // Try to find config.yml starting from current working directory and going up
-    let configPath: string | null = null;
-    let currentDir = process.cwd();
+    // Check for CONFIG_FILE environment variable first
+    let configPath: string | null = process.env.CONFIG_FILE || null;
     
-    // Look for config.yml in current directory and parent directories
-    for (let i = 0; i < 5; i++) { // Limit search to 5 levels up
-      const possiblePath = path.join(currentDir, 'config.yml');
-      if (fs.existsSync(possiblePath)) {
-        configPath = possiblePath;
-        break;
+    // If CONFIG_FILE is set, use it directly
+    if (configPath && fs.existsSync(configPath)) {
+      logger.info(`Using CONFIG_FILE environment variable: ${configPath}`);
+    } else {
+      // Try to find config.yml starting from current working directory and going up
+      configPath = null;
+      let currentDir = process.cwd();
+      
+      // Look for config.yml in current directory and parent directories
+      for (let i = 0; i < 5; i++) { // Limit search to 5 levels up
+        const possiblePath = path.join(currentDir, 'config.yml');
+        if (fs.existsSync(possiblePath)) {
+          configPath = possiblePath;
+          break;
+        }
+        const parentDir = path.dirname(currentDir);
+        if (parentDir === currentDir) break; // Reached root
+        currentDir = parentDir;
       }
-      const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) break; // Reached root
-      currentDir = parentDir;
     }
     
     if (!configPath) {
