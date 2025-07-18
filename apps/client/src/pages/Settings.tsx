@@ -10,7 +10,7 @@ import { User, Role } from '@service-peek/shared';
 import { getCurrentUser } from '../lib/auth';
 import { ErrorAlert } from '../components/ErrorAlert';
 import { useFormErrors } from '../hooks/useFormErrors';
-import { Users, Shield, Settings as SettingsIcon } from 'lucide-react';
+import { Users, FileText, Settings as SettingsIcon } from 'lucide-react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { AddUserModal } from '../components/AddUserModal';
 
@@ -120,9 +120,9 @@ const Settings: React.FC = () => {
             <Users className="h-4 w-4" />
             Users
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Security
+          <TabsTrigger value="audit" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Audit Log
           </TabsTrigger>
         </TabsList>
 
@@ -198,18 +198,33 @@ const Settings: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="space-y-6">
+        <TabsContent value="audit" className="space-y-6">
           <div>
-            <h2 className="text-2xl font-semibold">Security Settings</h2>
-            <p className="text-muted-foreground">Configure security and authentication settings.</p>
+            <h2 className="text-2xl font-semibold">Audit Log</h2>
+            <p className="text-muted-foreground">View activity logs for all dashboard operations and user actions.</p>
           </div>
           
           <Card>
             <CardHeader>
-              <CardTitle>Authentication</CardTitle>
+              <CardTitle>Activity Logs</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Security settings will be available in a future update.</p>
+              <div className="space-y-4">
+                <p className="text-muted-foreground">
+                  Audit logs will track all important activities including:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                  <li>User authentication and login events</li>
+                  <li>Provider creation, modification, and deletion</li>
+                  <li>Service operations (start, stop, restart)</li>
+                  <li>User management actions (create, update roles)</li>
+                  <li>Integration configuration changes</li>
+                  <li>System configuration modifications</li>
+                </ul>
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+                  <strong>Coming Soon:</strong> Audit logging functionality will be available in a future update.
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
