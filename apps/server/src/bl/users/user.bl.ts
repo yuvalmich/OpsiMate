@@ -50,4 +50,12 @@ export class UserBL {
             createdAt: u.created_at,
         }));
     }
+
+    /**
+     * Returns true if any users exist in the database, otherwise false.
+     */
+    async usersExist(): Promise<boolean> {
+        const count = await this.userRepo.countUsers();
+        return count > 0;
+    }
 } 
