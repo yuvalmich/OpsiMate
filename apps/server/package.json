@@ -23,11 +23,8 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "express-promise-router": "^4.1.1",
-<<<<<<< HEAD
     "js-yaml": "^4.1.0",
-=======
     "jsonwebtoken": "^9.0.2",
->>>>>>> main
     "node-ssh": "^13.1.0",
     "zod": "^3.23.8"
   },

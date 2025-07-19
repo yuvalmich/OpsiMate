@@ -3,8 +3,8 @@
 
 FROM node:20-alpine
 
-# Install basic dependencies
-RUN apk add --no-cache bash
+# Install basic dependencies including build tools for native modules
+RUN apk add --no-cache bash python3 make g++
 
 # Create app user for security
 RUN addgroup -g 1001 -S nodejs && \
@@ -20,7 +20,11 @@ COPY --chown=servicepeek:nodejs . .
 RUN npm install
 
 # Rebuild native modules for the container architecture
+RUN npm rebuild bcrypt --build-from-source
 RUN npm rebuild
+
+# Build shared package first to ensure TypeScript compilation
+RUN npm run build --workspace=@service-peek/shared
 
 # Create directories for volume mounts with proper permissions
 RUN mkdir -p /app/data/database /app/data/private-keys /app/config && \

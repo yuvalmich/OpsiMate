@@ -1,18 +1,13 @@
 import { Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType, Alert, AuditLog } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
-<<<<<<< HEAD
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
-=======
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
 export type ApiResponse<T = any> = {
   success: boolean;
   data?: T;
   error?: string;
   [key: string]: any; // Allow extra properties like token
 };
-
-export const API_BASE_URL = 'http://localhost:3001/api/v1';
->>>>>>> main
 
 /**
  * Generic API request handler
