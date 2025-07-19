@@ -51,7 +51,7 @@ const deleteK8RPod = async (_provider: Provider, podName: string, namespace: str
             namespace: namespace,
             pretty: 'true'
         }
-    ).then(res => {
+    ).then(() => {
         logger.info(`Pod: ${podName} in namespace: ${namespace} deleted successfully`);
     }).catch(err => {
         logger.error(`Failed to delete pod: ${podName} in namespace:  ${namespace}, err`);

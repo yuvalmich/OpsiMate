@@ -1,7 +1,18 @@
-import { ApiResponse, Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType, Alert } from '@service-peek/shared';
+import { Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType, Alert, AuditLog } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
+<<<<<<< HEAD
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
+=======
+export type ApiResponse<T = any> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+  [key: string]: any; // Allow extra properties like token
+};
+
+export const API_BASE_URL = 'http://localhost:3001/api/v1';
+>>>>>>> main
 
 /**
  * Generic API request handler
@@ -13,10 +24,12 @@ async function apiRequest<T>(
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
 
+  const token = localStorage.getItem('jwt');
   const options: RequestInit = {
     method,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     },
     credentials: 'include',
   };
@@ -32,10 +45,21 @@ async function apiRequest<T>(
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API Error (${response.status}):`, errorText);
-      return {
-        success: false,
-        error: `HTTP ${response.status}: ${errorText || 'Unknown error'}`,
-      };
+      
+      // Try to parse the error as JSON to handle validation errors properly
+      try {
+        const errorJson = JSON.parse(errorText);
+        return {
+          success: false,
+          ...errorJson, // Spread the parsed JSON to preserve validation details
+        };
+      } catch {
+        // If it's not JSON, return as a simple error string
+        return {
+          success: false,
+          error: `HTTP ${response.status}: ${errorText || 'Unknown error'}`,
+        };
+      }
     }
 
     const result = await response.json();
@@ -444,3 +468,11 @@ export const alertsApi = {
     return response;
   }
 };
+
+export const auditApi = {
+  getAuditLogs: async (page = 1, pageSize = 20) => {
+    return apiRequest<{ logs: AuditLog[]; total: number }>(`/audit?page=${page}&pageSize=${pageSize}`);
+  },
+};
+
+export { apiRequest };

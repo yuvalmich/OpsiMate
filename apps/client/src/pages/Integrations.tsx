@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { integrationApi } from '@/lib/api';
+import { canManageIntegrations, canDelete } from '@/lib/permissions';
 // Define IntegrationType locally until shared package export is fixed
 enum IntegrationType {
   Grafana = 'Grafana',
@@ -687,7 +688,7 @@ export default function Integrations() {
                             required={field.required}
                             value={formData[field.name] || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !canManageIntegrations()}
                             autoComplete="off"
                           >
                             <option value="">Select {field.label}</option>
@@ -704,7 +705,7 @@ export default function Integrations() {
                             required={field.required}
                             value={formData[field.name] || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !canManageIntegrations()}
                             autoComplete={field.type === 'password' ? 'new-password' : 'off'}
                           />
                         )}
@@ -714,7 +715,7 @@ export default function Integrations() {
                     <div className="pt-4 space-y-3">
                       <div className="flex justify-between mt-6">
                       {/* Delete button - only show for existing integrations */}
-                      {savedIntegrations.find(
+                      {canDelete() && savedIntegrations.find(
                         integration => integration.type === selectedIntegration.id.charAt(0).toUpperCase() + selectedIntegration.id.slice(1)
                       ) && (
                         <Button 
@@ -750,16 +751,22 @@ export default function Integrations() {
                         </Button>
                       )}
                       
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          'Save Integration'
-                        )}
-                      </Button>
+                      {canManageIntegrations() ? (
+                        <Button type="submit" disabled={isSubmitting}>
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            'Save Integration'
+                          )}
+                        </Button>
+                      ) : (
+                        <Button type="button" variant="outline" disabled>
+                          View Only - No Permission to Save
+                        </Button>
+                      )}
                     </div>
                       <p className="text-xs text-center text-muted-foreground">
                         You can configure multiple instances of the same integration

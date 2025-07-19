@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {IntegrationType, ProviderType, ServiceType} from './types';
+import {IntegrationType, ProviderType, ServiceType, Role} from './types';
 
 export const CreateProviderSchema = z.object({
     name: z.string().min(1, 'Provider name is required'),
@@ -100,6 +100,40 @@ export const TagIdSchema = z.object({
         return parsed;
     })
 });
+
+export const RoleSchema = z.nativeEnum(Role);
+
+export const UserSchema = z.object({
+    id: z.number(),
+    email: z.string().email(),
+    fullName: z.string(),
+    role: RoleSchema,
+    createdAt: z.string(),
+});
+
+export const CreateUserSchema = z.object({
+    email: z.string().email(),
+    fullName: z.string().min(1),
+    password: z.string().min(6),
+    role: RoleSchema
+});
+
+export const UpdateUserRoleSchema = z.object({
+    email: z.string().email(),
+    newRole: RoleSchema
+});
+
+export const RegisterSchema = CreateUserSchema.omit({ role: true });
+
+export const LoginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6)
+});
+
+
+export type UserSchemaType = z.infer<typeof UserSchema>;
+export type CreateUserRequest = z.infer<typeof CreateUserSchema>;
+export type UpdateUserRoleRequest = z.infer<typeof UpdateUserRoleSchema>;
 
 export type CreateProviderRequest = z.infer<typeof CreateProviderSchema>;
 export type AddBulkServiceRequest = z.infer<typeof AddBulkServiceSchema>;
