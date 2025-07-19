@@ -107,3 +107,28 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
 }
+
+export enum AuditActionType {
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+}
+
+export enum AuditResourceType {
+  PROVIDER = 'PROVIDER',
+  SERVICE = 'SERVICE',
+  USER = 'USER',
+  // Add more as needed
+}
+
+export interface AuditLog {
+  id: number;
+  actionType: AuditActionType;
+  resourceType: AuditResourceType;
+  resourceId: string;
+  userId: number;
+  timestamp: string;
+  resourceName: string;
+  userName: string;
+  details?: string;
+}

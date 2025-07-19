@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
-import {AddBulkServiceSchema, CreateProviderSchema, Logger, Provider} from "@service-peek/shared";
+import {AddBulkServiceSchema, CreateProviderSchema, Logger, Provider, User} from "@service-peek/shared";
 import { z } from "zod";
 import { providerConnectorFactory } from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import { ProviderNotFound } from "../../../bl/providers/ProviderNotFound";
 import {ProviderBL} from "../../../bl/providers/provider.bl";
+import { AuthenticatedRequest } from '../../../middleware/auth';
 
 const logger: Logger = new Logger('server');
 
@@ -21,10 +22,10 @@ export class ProviderController {
         }
     }
 
-    async createProvider(req: Request, res: Response) {
+    async createProvider(req: AuthenticatedRequest, res: Response) {
         try {
             const providerToCreate = CreateProviderSchema.parse(req.body);
-            const createdProvider = await this.providerBL.createProvider({ ...providerToCreate, createdAt: (Date.now()).toString() });
+            const createdProvider = await this.providerBL.createProvider({ ...providerToCreate, createdAt: (Date.now()).toString() }, req.user as User);
             res.status(201).json({ success: true, data: createdProvider });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -52,7 +53,7 @@ export class ProviderController {
         }
     }
 
-    async updateProvider(req: Request, res: Response) {
+    async updateProvider(req: AuthenticatedRequest, res: Response) {
         try {
             const providerId = parseInt(req.params.providerId);
             if (isNaN(providerId)) {
@@ -60,7 +61,7 @@ export class ProviderController {
             }
 
             const validatedData = CreateProviderSchema.parse(req.body);
-            const updatedProvider = await this.providerBL.updateProvider(providerId, validatedData);
+            const updatedProvider = await this.providerBL.updateProvider(providerId, validatedData, req.user as User);
 
             res.json({ success: true, data: updatedProvider, message: 'Provider updated successfully' });
         } catch (error) {
@@ -75,14 +76,13 @@ export class ProviderController {
         }
     }
 
-    async deleteProvider(req: Request, res: Response) {
+    async deleteProvider(req: AuthenticatedRequest, res: Response) {
         try {
             const providerId = parseInt(req.params.providerId);
             if (isNaN(providerId)) {
                 return res.status(400).json({ success: false, error: 'Invalid provider ID' });
             }
-
-            await this.providerBL.deleteProvider(providerId);
+            await this.providerBL.deleteProvider(providerId, req.user as User);
             res.json({ success: true, message: 'Provider and associated services deleted successfully' });
         } catch (error) {
             if (error instanceof ProviderNotFound) {
