@@ -25,6 +25,8 @@ const seedAlerts = () => {
       updated_at: new Date().toISOString(),
       alert_url: 'https://example.com/alert/1',
       alert_name: 'Test Alert 1',
+      summary: 'Summary 1',
+      runbook_url: 'https://runbook.com/1',
       is_dismissed: false
     },
     {
@@ -35,6 +37,8 @@ const seedAlerts = () => {
       updated_at: new Date().toISOString(),
       alert_url: 'https://example.com/alert/2',
       alert_name: 'Test Alert 2',
+      summary: 'Summary 2',
+      runbook_url: 'https://runbook.com/2',
       is_dismissed: false
     },
     {
@@ -45,13 +49,15 @@ const seedAlerts = () => {
       updated_at: new Date().toISOString(),
       alert_url: 'https://example.com/alert/3',
       alert_name: 'Test Alert 3',
+      summary: 'Summary 3',
+      runbook_url: 'https://runbook.com/3',
       is_dismissed: true
     }
   ];
 
   const insertStmt = db.prepare(`
-    INSERT INTO alerts (id, status, tag, starts_at, updated_at, alert_url, alert_name, is_dismissed)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO alerts (id, status, tag, starts_at, updated_at, alert_url, alert_name, summary, runbook_url, is_dismissed)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   sampleAlerts.forEach(alert => {
@@ -63,6 +69,8 @@ const seedAlerts = () => {
         alert.updated_at,
         alert.alert_url,
         alert.alert_name,
+        alert.summary,
+        alert.runbook_url,
         alert.is_dismissed ? 1 : 0
     );
   });
@@ -97,6 +105,8 @@ beforeAll(async () => {
       updated_at TEXT,
       alert_url TEXT,
       alert_name TEXT,
+      summary TEXT,
+      runbook_url TEXT,
       is_dismissed BOOLEAN DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -151,6 +161,8 @@ describe('Alerts API', () => {
       expect(alerts[0]).toHaveProperty('alertUrl');
       expect(alerts[0]).toHaveProperty('alertName');
       expect(alerts[0]).toHaveProperty('isDismissed');
+      expect(alerts[0]).toHaveProperty('summary');
+      expect(alerts[0]).toHaveProperty('runbookUrl');
     });
 
     test('should return empty array when no alerts exist', async () => {
@@ -238,6 +250,8 @@ describe('Alerts API', () => {
           updated_at TEXT,
           alert_url TEXT,
           alert_name TEXT,
+          summary TEXT,
+          runbook_url TEXT,
           is_dismissed BOOLEAN DEFAULT 0,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )

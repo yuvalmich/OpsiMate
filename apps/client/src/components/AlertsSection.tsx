@@ -4,14 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertTriangle, X, Eye, EyeOff, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { GrafanaIcon } from "@/components/icons/GrafanaIcon";
-import { Alert } from "@service-peek/shared";
+import { Alert as SharedAlert } from '@service-peek/shared';
 import { cn } from "@/lib/utils";
 import { alertsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface AlertsSectionProps {
-  alerts: Alert[];
+  alerts: SharedAlert[];
   onAlertDismiss?: (alertId: string) => void;
   className?: string;
 }
@@ -111,15 +111,34 @@ export function AlertsSection({ alerts, onAlertDismiss, className }: AlertsSecti
                 "bg-card border-border hover:bg-muted/50"
               )}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="flex items-center justify-center h-7 w-7 rounded-full bg-muted">
-                  <GrafanaIcon className="h-5 w-5 text-[#F46800]" />
-                </span>
-                <h4 className="font-semibold text-base text-foreground truncate">
-                  {alert.alertName}
-                </h4>
+              <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="flex items-center justify-center h-7 w-7 rounded-full bg-muted">
+                    <GrafanaIcon className="h-5 w-5 text-[#F46800]" />
+                  </span>
+                  <h4 className="font-semibold text-base text-foreground truncate">
+                    {alert.alertName}
+                  </h4>
+                </div>
+                {alert.summary && (
+                  <div className="text-xs text-muted-foreground mt-1 whitespace-pre-line break-words w-full">
+                    {alert.summary}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
+                {alert.runbookUrl && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent focus:bg-accent focus:ring-2 focus:ring-primary"
+                    title="Open Runbook"
+                    onClick={() => window.open(alert.runbookUrl, '_blank', 'noopener,noreferrer')}
+                  >
+                    <span className="sr-only">Open Runbook</span>
+                    📖
+                  </Button>
+                )}
                 {alert.alertUrl && (
                   <Button
                     variant="ghost"

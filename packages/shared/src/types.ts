@@ -98,6 +98,8 @@ export interface Alert {
   updatedAt: string;
   alertUrl: string;
   alertName: string;
+  summary?: string;
+  runbookUrl?: string;
   createdAt: string;
   isDismissed: boolean;
 }

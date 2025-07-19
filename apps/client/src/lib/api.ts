@@ -1,4 +1,4 @@
-import { Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType, Alert, AuditLog } from '@service-peek/shared';
+import { Provider, Service, ServiceWithProvider, DiscoveredService, Tag, Integration, IntegrationType, Alert as SharedAlert, AuditLog } from '@service-peek/shared';
 import { SavedView } from '@/types/SavedView';
 
 export type ApiResponse<T = any> = {
@@ -423,17 +423,17 @@ export const integrationApi = {
  */
 export const alertsApi = {
   // Get all alerts
-  async getAllAlerts(): Promise<ApiResponse<{ alerts: Alert[] }>> {
-    return await apiRequest<{ alerts: Alert[] }>('/alerts');
+  async getAllAlerts(): Promise<ApiResponse<{ alerts: SharedAlert[] }>> {
+    return await apiRequest<{ alerts: SharedAlert[] }>('/alerts');
   },
 
   // Dismiss an alert
-  async dismissAlert(alertId: string): Promise<ApiResponse<{ alert: Alert }>> {
-    return await apiRequest<{ alert: Alert }>(`/alerts/${alertId}/dismiss`, 'PATCH');
+  async dismissAlert(alertId: string): Promise<ApiResponse<{ alert: SharedAlert }>> {
+    return await apiRequest<{ alert: SharedAlert }>(`/alerts/${alertId}/dismiss`, 'PATCH');
   },
 
   // Get alerts by tag
-  async getAlertsByTag(tag: string): Promise<ApiResponse<{ alerts: Alert[] }>> {
+  async getAlertsByTag(tag: string): Promise<ApiResponse<{ alerts: SharedAlert[] }>> {
     const response = await this.getAllAlerts();
     if (response.success && response.data) {
       const filteredAlerts = response.data.alerts.filter(alert => alert.tag === tag);
@@ -446,7 +446,7 @@ export const alertsApi = {
   },
 
   // Get alerts by multiple tags (for services with multiple tags)
-  async getAlertsByTags(tags: string[]): Promise<ApiResponse<{ alerts: Alert[] }>> {
+  async getAlertsByTags(tags: string[]): Promise<ApiResponse<{ alerts: SharedAlert[] }>> {
     const response = await this.getAllAlerts();
     if (response.success && response.data) {
       const filteredAlerts = response.data.alerts.filter(alert => 
