@@ -12,13 +12,17 @@ export class UserBL {
         }
         const hash = await bcrypt.hash(password, 10);
         const result = await this.userRepo.createUser(email, hash, fullName, 'admin');
-        return { id: result.lastID, email, role: Role.Admin, fullName, createdAt: Date.now().toString() };
+        const user = await this.userRepo.getUserById(result.lastID);
+        if (!user) throw new Error('User creation failed');
+        return user;
     }
 
     async createUser(email: string, fullName: string, password: string, role: Role): Promise<User> {
         const hash = await bcrypt.hash(password, 10);
         const result = await this.userRepo.createUser(email, hash, fullName, role);
-        return { id: result.lastID, email, role: Role.Admin, fullName, createdAt: Date.now().toString() };
+        const user = await this.userRepo.getUserById(result.lastID);
+        if (!user) throw new Error('User creation failed');
+        return user;
     }
 
     async updateUserRole(email: string, newRole: Role): Promise<void> {
@@ -39,6 +43,14 @@ export class UserBL {
 
     async getAllUsers(): Promise<User[]> {
         return await this.userRepo.getAllUsers()
+    }
+
+    async deleteUser(id: number): Promise<void> {
+        await this.userRepo.deleteUser(id);
+    }
+
+    async getUserById(id: number): Promise<User | null> {
+        return this.userRepo.getUserById(id);
     }
 
     /**
