@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { apiRequest } from '../lib/api';
-import { User, Role, AuditLog, AuditActionType, AuditResourceType } from '@service-peek/shared';
+import { User, Role } from '../types';
 import { getCurrentUser } from '../lib/auth';
 import { ErrorAlert } from '../components/ErrorAlert';
 import { useFormErrors } from '../hooks/useFormErrors';
@@ -15,6 +15,7 @@ import { DashboardLayout } from '../components/DashboardLayout';
 import { AddUserModal } from '../components/AddUserModal';
 import { auditApi } from '../lib/api';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '../components/ui/alert-dialog';
+import {AuditLog} from "@service-peek/shared";
 
 const PAGE_SIZE = 20;
 
