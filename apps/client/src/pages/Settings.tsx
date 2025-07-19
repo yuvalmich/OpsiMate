@@ -6,14 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { apiRequest } from '../lib/api';
-import { User, Role, AuditLog, AuditActionType, AuditResourceType } from '../types';
+import { User, Role } from '../types';
 import { getCurrentUser } from '../lib/auth';
 import { ErrorAlert } from '../components/ErrorAlert';
 import { useFormErrors } from '../hooks/useFormErrors';
-import { Users, FileText, Settings as SettingsIcon } from 'lucide-react';
+import { Users, FileText, Settings as SettingsIcon, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { AddUserModal } from '../components/AddUserModal';
 import { auditApi } from '../lib/api';
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '../components/ui/alert-dialog';
+import {AuditLog} from "@service-peek/shared";
 
 const PAGE_SIZE = 20;
 
@@ -24,6 +26,8 @@ const Settings: React.FC = () => {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const { generalError, clearErrors, handleApiResponse } = useFormErrors();
   const currentUser = getCurrentUser();
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -94,6 +98,25 @@ const Settings: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const isAdmin = currentUser?.role === Role.Admin;
+
+  const handleDeleteUser = async (userId: number) => {
+    setDeleting(true);
+    try {
+      const response = await apiRequest(`/users/${userId}`, 'DELETE');
+      if (response.success) {
+        setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+        setUserToDelete(null);
+      } else {
+        handleApiResponse(response);
+      }
+    } catch (error) {
+      handleApiResponse({ success: false, error: 'Failed to delete user' });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) {
@@ -178,20 +201,57 @@ const Settings: React.FC = () => {
                       </TableCell>
                       <TableCell>{formatDate(user.createdAt)}</TableCell>
                       <TableCell>
-                        <Select
-                          value={user.role}
-                          onValueChange={(newRole) => handleRoleUpdate(user.email, newRole as Role)}
-                          disabled={updatingUser === user.email || user.email === currentUser?.email}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={Role.Viewer}>Viewer</SelectItem>
-                            <SelectItem value={Role.Editor}>Editor</SelectItem>
-                            <SelectItem value={Role.Admin}>Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={user.role}
+                            onValueChange={(newRole) => handleRoleUpdate(user.email, newRole as Role)}
+                            disabled={updatingUser === user.email || user.email === currentUser?.email}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={Role.Viewer}>Viewer</SelectItem>
+                              <SelectItem value={Role.Editor}>Editor</SelectItem>
+                              <SelectItem value={Role.Admin}>Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {isAdmin && user.email !== currentUser?.email && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-600 hover:bg-red-100 focus:bg-red-100 focus:ring-2 focus:ring-red-400 ml-auto"
+                                  title="Delete user"
+                                  onClick={() => setUserToDelete(user)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete <b>{userToDelete?.fullName}</b>? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel disabled={deleting} onClick={() => setUserToDelete(null)}>
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-red-600 hover:bg-red-700 focus:ring-red-400"
+                                    disabled={deleting}
+                                    onClick={() => handleDeleteUser(userToDelete!.id)}
+                                  >
+                                    {deleting ? 'Deleting...' : 'Delete'}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

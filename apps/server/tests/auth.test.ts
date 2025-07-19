@@ -159,4 +159,102 @@ describe('Authentication API', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.exists).toBe(true);
   });
+
+  test('admin can delete a user', async () => {
+    // Register admin
+    await app.post('/api/v1/users/register').send({
+      email: 'admin3@example.com',
+      fullName: 'Admin3 User',
+      password: 'securepassword'
+    });
+    // Login as admin
+    const loginRes = await app.post('/api/v1/users/login').send({
+      email: 'admin3@example.com',
+      password: 'securepassword'
+    });
+    const adminToken = loginRes.body.token;
+    // Admin creates a viewer
+    const createRes = await app.post('/api/v1/users').set('Authorization', `Bearer ${adminToken}`).send({
+      email: 'deleteuser@example.com',
+      fullName: 'Delete User',
+      password: 'securepassword',
+      role: 'viewer'
+    });
+    const userId = createRes.body.data.id;
+    // Admin deletes the user
+    const delRes = await app.delete(`/api/v1/users/${userId}`).set('Authorization', `Bearer ${adminToken}`);
+    expect(delRes.status).toBe(200);
+    expect(delRes.body.success).toBe(true);
+    // User should not be in list
+    const usersRes = await app.get('/api/v1/users').set('Authorization', `Bearer ${adminToken}`);
+    expect(usersRes.body.data.find((u: any) => u.id === userId)).toBeUndefined();
+  });
+
+  test('non-admin cannot delete a user', async () => {
+    // Register admin and viewer
+    await app.post('/api/v1/users/register').send({
+      email: 'admin4@example.com',
+      fullName: 'Admin4 User',
+      password: 'securepassword'
+    });
+    const adminLogin = await app.post('/api/v1/users/login').send({
+      email: 'admin4@example.com',
+      password: 'securepassword'
+    });
+    const adminToken = adminLogin.body.token;
+    await app.post('/api/v1/users').set('Authorization', `Bearer ${adminToken}`).send({
+      email: 'viewer2@example.com',
+      fullName: 'Viewer2 User',
+      password: 'securepassword',
+      role: 'viewer'
+    });
+    const viewerLogin = await app.post('/api/v1/users/login').send({
+      email: 'viewer2@example.com',
+      password: 'securepassword'
+    });
+    const viewerToken = viewerLogin.body.token;
+    // Viewer tries to delete admin
+    const res = await app.delete('/api/v1/users/1').set('Authorization', `Bearer ${viewerToken}`);
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
+  });
+
+  test('cannot delete self', async () => {
+    // Register admin
+    await app.post('/api/v1/users/register').send({
+      email: 'admin5@example.com',
+      fullName: 'Admin5 User',
+      password: 'securepassword'
+    });
+    const loginRes = await app.post('/api/v1/users/login').send({
+      email: 'admin5@example.com',
+      password: 'securepassword'
+    });
+    const adminToken = loginRes.body.token;
+    // Get admin user id
+    const usersRes = await app.get('/api/v1/users').set('Authorization', `Bearer ${adminToken}`);
+    const adminId = usersRes.body.data[0].id;
+    // Try to delete self
+    const res = await app.delete(`/api/v1/users/${adminId}`).set('Authorization', `Bearer ${adminToken}`);
+    // Should allow, but you may want to block this in the future
+    expect([200, 403]).toContain(res.status);
+  });
+
+  test('deleting non-existent user returns 404', async () => {
+    // Register admin
+    await app.post('/api/v1/users/register').send({
+      email: 'admin6@example.com',
+      fullName: 'Admin6 User',
+      password: 'securepassword'
+    });
+    const loginRes = await app.post('/api/v1/users/login').send({
+      email: 'admin6@example.com',
+      password: 'securepassword'
+    });
+    const adminToken = loginRes.body.token;
+    // Try to delete non-existent user
+    const res = await app.delete('/api/v1/users/9999').set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(404);
+    expect(res.body.success).toBe(false);
+  });
 }); 

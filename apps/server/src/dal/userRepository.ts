@@ -66,6 +66,19 @@ export class UserRepository {
         });
     }
 
+    async getUserById(id: number): Promise<User | null> {
+        return runAsync(() => {
+            const row = this.db.prepare('SELECT id, email, full_name, role, created_at FROM users WHERE id = ?').get(id) as UserRow | undefined;
+            return row ? this.toSharedUser(row) : null;
+        });
+    }
+
+    async deleteUser(id: number): Promise<void> {
+        return runAsync(() => {
+            this.db.prepare('DELETE FROM users WHERE id = ?').run(id);
+        });
+    }
+
     private toSharedUser = (row: UserRow): User => {
         return {
             id: row.id,

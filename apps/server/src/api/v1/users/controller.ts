@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { UserBL } from '../../../bl/users/user.bl';
-import {CreateUserSchema, LoginSchema, RegisterSchema, Role, UpdateUserRoleSchema} from '@service-peek/shared';
+import {CreateUserSchema, Logger, LoginSchema, RegisterSchema, Role, UpdateUserRoleSchema} from '@service-peek/shared';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest } from '../../../middleware/auth';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme-secret';
+const logger = new Logger('api/v1/users/controller');
 
 export class UsersController {
     constructor(private userBL: UserBL) {}
@@ -90,6 +91,27 @@ export class UsersController {
             const users = await this.userBL.getAllUsers();
             res.status(200).json({ success: true, data: users });
         } catch {
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    };
+
+    deleteUserHandler = async (req: AuthenticatedRequest, res: Response) => {
+        if (!req.user || req.user.role !== Role.Admin) {
+            return res.status(403).json({ success: false, error: 'Forbidden: Admins only' });
+        }
+        const userId = parseInt(req.params.id);
+        if (isNaN(userId)) {
+            return res.status(400).json({ success: false, error: 'Invalid user ID' });
+        }
+        try {
+            const user = await this.userBL.getUserById(userId);
+            if (!user) {
+                return res.status(404).json({ success: false, error: 'User not found' });
+            }
+            await this.userBL.deleteUser(userId);
+            res.status(200).json({ success: true, message: 'User deleted successfully' });
+        } catch (error) {
+            logger.error('Error deleting user:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     };
