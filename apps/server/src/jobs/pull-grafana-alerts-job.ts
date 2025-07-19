@@ -58,7 +58,9 @@ export class PullGrafanaAlertsJob {
                     starts_at: alert.startsAt ? new Date(alert.startsAt).toISOString() : '',
                     updated_at: alert.updatedAt ? new Date(alert.updatedAt).toISOString() : '', // if available
                     alert_url: alert.generatorURL || '', // or the correct field for the alert URL
-                    alert_name: alert.labels?.alertname || alert.annotations?.summary || '',
+                    alert_name: alert.labels?.rulename || alert.labels?.alertname || alert.annotations?.summary || '',
+                    summary: alert.annotations?.summary || '',
+                    runbook_url: alert.annotations?.runbook_url || '',
                 });
             } catch (err) {
                 logger.error('Failed to insert alert', err);
