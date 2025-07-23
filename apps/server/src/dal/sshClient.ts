@@ -3,13 +3,20 @@ import path from 'path';
 import fs from 'fs';
 
 import {DiscoveredService, Provider, Logger} from "@service-peek/shared";
+import { getSecurityConfig } from '../config/config';
 
 const logger = new Logger('dal/sshClient');
 
-const PRIVATE_KEYS_DIR = path.join(__dirname, '../../data/private-keys');
+function getPrivateKeysDir(): string {
+    const securityConfig = getSecurityConfig();
+    return path.isAbsolute(securityConfig.private_keys_path)
+        ? securityConfig.private_keys_path
+        : path.resolve(__dirname, '../../../', securityConfig.private_keys_path);
+}
 
 function getKeyPath(filename: string) {
-    const filePath = path.join(PRIVATE_KEYS_DIR, filename);
+    const privateKeysDir = getPrivateKeysDir();
+    const filePath = path.join(privateKeysDir, filename);
     if (!fs.existsSync(filePath)) {
         throw new Error(`Key not found: ${filePath}`);
     }

@@ -3,13 +3,20 @@ import {DiscoveredService, Logger, Provider} from "@service-peek/shared";
 import path from "path";
 import fs from "fs";
 import {ObjectCoreV1Api} from "@kubernetes/client-node/dist/gen/types/ObjectParamAPI";
+import { getSecurityConfig } from '../config/config';
 
-const PRIVATE_KEYS_DIR = path.join(__dirname, '../../data/private-keys');
+function getPrivateKeysDir(): string {
+    const securityConfig = getSecurityConfig();
+    return path.isAbsolute(securityConfig.private_keys_path)
+        ? securityConfig.private_keys_path
+        : path.resolve(__dirname, '../../../', securityConfig.private_keys_path);
+}
 
 const logger = new Logger('kubeConnector.ts');
 
 function getKeyPath(filename: string) {
-    const filePath = path.join(PRIVATE_KEYS_DIR, filename);
+    const privateKeysDir = getPrivateKeysDir();
+    const filePath = path.join(privateKeysDir, filename);
     if (!fs.existsSync(filePath)) {
         throw new Error(`Key not found: ${filePath}`);
     }
