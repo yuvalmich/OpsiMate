@@ -158,7 +158,10 @@ export function TagSelector({ selectedTags, onTagsChange, serviceId, className }
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowCreateDialog(true)}
+                      onClick={() => {
+                        setOpen(false);
+                        setShowCreateDialog(true);
+                      }}
                       className="gap-2"
                     >
                       <Plus className="h-4 w-4" />
@@ -191,7 +194,10 @@ export function TagSelector({ selectedTags, onTagsChange, serviceId, className }
                   ))}
                   {availableTags.length > 0 && (
                     <CommandItem
-                      onSelect={() => setShowCreateDialog(true)}
+                      onSelect={() => {
+                        setOpen(false);
+                        setShowCreateDialog(true);
+                      }}
                       className="flex items-center gap-2 text-muted-foreground"
                     >
                       <Plus className="h-4 w-4" />
