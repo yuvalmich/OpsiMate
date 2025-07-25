@@ -979,7 +979,7 @@ export function MyProviders() {
             />
 
             <Sheet open={isServiceDrawerOpen} onOpenChange={setIsServiceDrawerOpen}>
-                <SheetContent side="right" className="w-[400px] p-0">
+                <SheetContent side="right" className="w-[400px] p-0" closable={false}>
                     {selectedServiceForDrawer && (
                         <RightSidebarWithLogs
                             service={selectedServiceForDrawer}
