@@ -9,8 +9,7 @@ import { FilterPanel, Filters } from "@/components/FilterPanel"
 import { SavedViewsManager } from "@/components/SavedViewsManager"
 import { DashboardLayout } from "../components/DashboardLayout"
 import { SavedView } from "@/types/SavedView"
-import { getSavedViews, saveView, deleteView, getActiveViewId, setActiveViewId } from "@/lib/savedViews"
-import { useServices, useAlerts, useStartService, useStopService, useDismissAlert, useSaveView, useDeleteView } from "@/hooks/queries"
+import { useServices, useAlerts, useStartService, useStopService, useDismissAlert, useSaveView, useDeleteView, useViews, useActiveView } from "@/hooks/queries"
 import { Alert } from "@service-peek/shared"
 
 
@@ -26,6 +25,8 @@ const Dashboard = () => {
     // React Query hooks for data fetching
     const { data: services = [], isLoading: servicesLoading, error: servicesError } = useServices();
     const { data: alerts = [], error: alertsError } = useAlerts();
+    const { data: savedViews = [], error: viewsError } = useViews();
+    const { activeViewId, setActiveView, error: activeViewError } = useActiveView();
     
     // Mutations
     const startServiceMutation = useStartService();
@@ -50,8 +51,6 @@ const Dashboard = () => {
     const [filterPanelCollapsed, setFilterPanelCollapsed] = useState(false)
     const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
-    const [savedViews, setSavedViews] = useState<SavedView[]>([])
-    const [activeViewId, setActiveViewId] = useState<string | undefined>()
 
     // Enhanced alert calculation: each service gets alerts for ALL its tags
     const servicesWithAlerts = useMemo(() => {
@@ -91,20 +90,12 @@ const Dashboard = () => {
     useEffect(() => {
         const loadViews = async () => {
             try {
-                // Load saved views from API
-                const views = await getSavedViews();
-                setSavedViews(views);
-
-                // Get active view ID from API
-                const activeId = await getActiveViewId();
-                if (activeId) {
-                    const activeView = views.find(view => view.id === activeId);
+                if (activeViewId) {
+                    const activeView = savedViews.find(view => view.id === activeViewId);
                     if (activeView) {
-                        setActiveViewId(activeId);
                         applyView(activeView);
-                    } else if (activeId === 'default-view') {
+                    } else if (activeViewId === 'default-view') {
                         // If the active view is 'default-view' but it doesn't exist, create a default state
-                        setActiveViewId('default-view');
                         // Apply default filters and settings
                         setFilters({});
                         setSearchTerm('');
@@ -118,12 +109,12 @@ const Dashboard = () => {
                         });
                     } else {
                         // If the active view ID doesn't exist, fall back to the first available view or default
-                        const firstView = views[0];
+                        const firstView = savedViews[0];
                         if (firstView) {
-                            setActiveViewId(firstView.id);
+                            setActiveView(firstView.id);
                             applyView(firstView);
                         } else {
-                            setActiveViewId('default-view');
+                            setActiveView('default-view');
                         }
                     }
                 }
@@ -137,8 +128,10 @@ const Dashboard = () => {
             }
         };
 
-        loadViews();
-    }, [toast]);
+        if (savedViews.length > 0 && activeViewId) {
+            loadViews();
+        }
+    }, [savedViews, activeViewId, setActiveView, toast]);
 
     // Handle errors from React Query
     useEffect(() => {
@@ -150,6 +143,16 @@ const Dashboard = () => {
             });
         }
     }, [servicesError, toast]);
+
+    useEffect(() => {
+        if (viewsError) {
+            toast({
+                title: "Error loading views",
+                description: "Failed to load saved views",
+                variant: "destructive"
+            });
+        }
+    }, [viewsError, toast]);
 
     const filteredServices = useMemo(() => {
         const activeFilterKeys = Object.keys(filters).filter(key => filters[key].length > 0);
@@ -211,9 +214,7 @@ const Dashboard = () => {
     const handleSaveView = async (view: SavedView) => {
         try {
             await saveViewMutation.mutateAsync(view);
-            const updatedViews = await getSavedViews();
-            setSavedViews(updatedViews);
-            await setActiveViewId(view.id);
+            await setActiveView(view.id);
             return Promise.resolve();
         } catch (error) {
             console.error('Error saving view:', error);
@@ -224,11 +225,9 @@ const Dashboard = () => {
     const handleDeleteView = async (viewId: string) => {
         try {
             await deleteViewMutation.mutateAsync(viewId);
-            const updatedViews = await getSavedViews();
-            setSavedViews(updatedViews);
 
             if (activeViewId === viewId) {
-                await setActiveViewId(undefined);
+                await setActiveView(undefined);
             }
 
             toast({
@@ -254,7 +253,7 @@ const Dashboard = () => {
                 ...view.visibleColumns
             }));
             setSearchTerm(view.searchTerm);
-            await setActiveViewId(view.id);
+            await setActiveView(view.id);
 
             // Only show toast if not the default 'All Services' view
             if (view.name !== "All Services") {
