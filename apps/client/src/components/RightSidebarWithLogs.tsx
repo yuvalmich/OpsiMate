@@ -1,18 +1,16 @@
-import { useState, useEffect, useMemo, useCallback, memo } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { X, FileText, RefreshCw, Plus, ChevronDown, ChevronRight, Server, ExternalLink, Tag as TagIcon, AlertTriangle, Activity } from "lucide-react";
-import { Service } from "./ServiceTable";
-import { cn } from "@/lib/utils";
-import { providerApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { TagBadge } from "./ui/tag-badge";
-import { TagSelector } from "./TagSelector";
-import { Tag, Alert } from "@service-peek/shared";
-import { IntegrationDashboardDropdown } from "./IntegrationDashboardDropdown";
+import { providerApi } from "@/lib/api";
+import { cn } from "@/lib/utils";
+import { Alert, Tag } from "@service-peek/shared";
+import { Activity, AlertTriangle, ChevronDown, ChevronRight, ExternalLink, FileText, RefreshCw, Server, Tag as TagIcon, X } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { AlertsSection } from "./AlertsSection";
+import { IntegrationDashboardDropdown } from "./IntegrationDashboardDropdown";
+import { Service } from "./ServiceTable";
+import { TagSelector } from "./TagSelector";
 
 interface RightSidebarProps {
   service: Service | null;

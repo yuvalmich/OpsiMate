@@ -1,1 +1,2 @@
-export { useIntegrations } from './useIntegrations'; 
+export { useIntegrations } from './useIntegrations';
+export { useIntegrationUrls } from './useIntegrationUrls'; 
