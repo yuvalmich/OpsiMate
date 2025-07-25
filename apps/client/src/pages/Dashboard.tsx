@@ -10,7 +10,7 @@ import { SavedViewsManager } from "@/components/SavedViewsManager"
 import { DashboardLayout } from "../components/DashboardLayout"
 import { SavedView } from "@/types/SavedView"
 import { getSavedViews, saveView, deleteView, getActiveViewId, setActiveViewId } from "@/lib/savedViews"
-import { providerApi, alertsApi } from "@/lib/api"
+import { useServices, useAlerts, useStartService, useStopService, useDismissAlert, useSaveView, useDeleteView } from "@/hooks/queries"
 import { Alert } from "@service-peek/shared"
 
 
@@ -20,9 +20,20 @@ const Dashboard = () => {
             window.location.href = '/login';
         }
     }, []);
+    
     const {toast} = useToast()
-    const [services, setServices] = useState<Service[]>([])
-    const [loading, setLoading] = useState(true)
+    
+    // React Query hooks for data fetching
+    const { data: services = [], isLoading: servicesLoading, error: servicesError } = useServices();
+    const { data: alerts = [], error: alertsError } = useAlerts();
+    
+    // Mutations
+    const startServiceMutation = useStartService();
+    const stopServiceMutation = useStopService();
+    const dismissAlertMutation = useDismissAlert();
+    const saveViewMutation = useSaveView();
+    const deleteViewMutation = useDeleteView();
+    
     const [selectedService, setSelectedService] = useState<Service | null>(null)
     const [selectedServices, setSelectedServices] = useState<Service[]>([])
     const [showTableSettings, setShowTableSettings] = useState(false)
@@ -41,61 +52,6 @@ const Dashboard = () => {
     const [searchTerm, setSearchTerm] = useState("")
     const [savedViews, setSavedViews] = useState<SavedView[]>([])
     const [activeViewId, setActiveViewId] = useState<string | undefined>()
-    const [alerts, setAlerts] = useState<Alert[]>([])
-
-    // Fetch services from API
-    const fetchServices = useCallback(async () => {
-        try {
-            setLoading(true)
-            const response = await providerApi.getAllServices()
-
-            if (response.success && response.data) {
-                const transformedServices: Service[] = response.data.map((service: any) => ({
-                        id: service.id.toString(),
-                        name: service.name,
-                        serviceIP: service.serviceIP,
-                        serviceStatus: service.serviceStatus,
-                        serviceType: service.serviceType,
-                        createdAt: service.createdAt,
-                        provider: service.provider,
-                        containerDetails: service.containerDetails,
-                        tags: service.tags || [] // Include tags from backend
-                    }
-                ))
-
-                setServices(transformedServices)
-            } else {
-                toast({
-                    title: "Error loading services",
-                    description: response.error || "Failed to load services",
-                    variant: "destructive"
-                })
-            }
-        } catch (error) {
-            console.error("Error fetching services:", error)
-            toast({
-                title: "Error loading services",
-                description: "An unexpected error occurred",
-                variant: "destructive"
-            })
-        } finally {
-            setLoading(false)
-        }
-    }, [])
-
-    // Fetch alerts from API with enhanced tag-based logic
-    const fetchAlerts = useCallback(async () => {
-        try {
-            const response = await alertsApi.getAllAlerts()
-            if (response.success && response.data) {
-                setAlerts(response.data.alerts)
-            } else {
-                console.error('Error fetching alerts:', response.error)
-            }
-        } catch (error) {
-            console.error('Error fetching alerts:', error)
-        }
-    }, [])
 
     // Enhanced alert calculation: each service gets alerts for ALL its tags
     const servicesWithAlerts = useMemo(() => {
@@ -130,22 +86,6 @@ const Dashboard = () => {
             }
         })
     }, [services, alerts])
-
-    // Load services on component mount and set up periodic refresh
-    useEffect(() => {
-        fetchServices()
-        fetchAlerts()
-        
-        // Set up automatic refresh every 30 seconds (30000 ms)
-        const refreshInterval = setInterval(() => {
-            console.log('Auto-refreshing services and alerts data...')
-            fetchServices()
-            fetchAlerts()
-        }, 30000)
-        
-        // Clean up interval on component unmount
-        return () => clearInterval(refreshInterval)
-    }, [fetchServices, fetchAlerts])
 
     // Load saved views and active view on component mount
     useEffect(() => {
@@ -198,7 +138,18 @@ const Dashboard = () => {
         };
 
         loadViews();
-    }, []);
+    }, [toast]);
+
+    // Handle errors from React Query
+    useEffect(() => {
+        if (servicesError) {
+            toast({
+                title: "Error loading services",
+                description: servicesError.message || "Failed to load services",
+                variant: "destructive"
+            });
+        }
+    }, [servicesError, toast]);
 
     const filteredServices = useMemo(() => {
         const activeFilterKeys = Object.keys(filters).filter(key => filters[key].length > 0);
@@ -259,7 +210,7 @@ const Dashboard = () => {
 
     const handleSaveView = async (view: SavedView) => {
         try {
-            await saveView(view);
+            await saveViewMutation.mutateAsync(view);
             const updatedViews = await getSavedViews();
             setSavedViews(updatedViews);
             await setActiveViewId(view.id);
@@ -272,7 +223,7 @@ const Dashboard = () => {
 
     const handleDeleteView = async (viewId: string) => {
         try {
-            await deleteView(viewId);
+            await deleteViewMutation.mutateAsync(viewId);
             const updatedViews = await getSavedViews();
             setSavedViews(updatedViews);
 
@@ -330,7 +281,6 @@ const Dashboard = () => {
     }
 
     const handleAddService = (serviceData: any) => {
-        setServices(prev => [...prev, serviceData])
         toast({
             title: "Service Added",
             description: `${serviceData.name} has been added successfully.`
@@ -354,7 +304,6 @@ const Dashboard = () => {
     };
 
     const handleServiceUpdate = (updatedService: Service) => {
-        setServices(prev => prev.map(s => s.id === updatedService.id ? updatedService : s));
         if (selectedService && selectedService.id === updatedService.id) {
             setSelectedService(updatedService);
         }
@@ -375,18 +324,8 @@ const Dashboard = () => {
             for (const service of selectedServices) {
                 try {
                     const serviceId = parseInt(service.id);
-                    const response = await providerApi.startService(serviceId);
-
-                    if (response.success) {
-                        successCount++;
-                        // Update the service status in the local state
-                        setServices(prev => prev.map(s =>
-                            s.id === service.id ? {...s, serviceStatus: 'running'} : s
-                        ));
-                    } else {
-                        failureCount++;
-                        console.error(`Failed to start service ${service.name}:`, response.error);
-                    }
+                    await startServiceMutation.mutateAsync(serviceId);
+                    successCount++;
                 } catch (error) {
                     failureCount++;
                     console.error(`Error starting service ${service.name}:`, error);
@@ -412,9 +351,6 @@ const Dashboard = () => {
                     variant: "destructive"
                 });
             }
-
-            // Refresh the services list to get updated statuses
-            fetchServices();
         }
     }
 
@@ -433,18 +369,8 @@ const Dashboard = () => {
             for (const service of selectedServices) {
                 try {
                     const serviceId = parseInt(service.id);
-                    const response = await providerApi.stopService(serviceId);
-
-                    if (response.success) {
-                        successCount++;
-                        // Update the service status in the local state
-                        setServices(prev => prev.map(s =>
-                            s.id === service.id ? {...s, serviceStatus: 'stopped'} : s
-                        ));
-                    } else {
-                        failureCount++;
-                        console.error(`Failed to stop service ${service.name}:`, response.error);
-                    }
+                    await stopServiceMutation.mutateAsync(serviceId);
+                    successCount++;
                 } catch (error) {
                     failureCount++;
                     console.error(`Error stopping service ${service.name}:`, error);
@@ -470,9 +396,6 @@ const Dashboard = () => {
                     variant: "destructive"
                 });
             }
-
-            // Refresh the services list to get updated statuses
-            fetchServices();
         }
     }
 
@@ -493,25 +416,11 @@ const Dashboard = () => {
                     const serviceId = parseInt(service.id);
 
                     // First stop the service
-                    const stopResponse = await providerApi.stopService(serviceId);
-                    if (!stopResponse.success) {
-                        failureCount++;
-                        console.error(`Failed to stop service ${service.name} during restart:`, stopResponse.error);
-                        continue; // Skip to next service if stop fails
-                    }
-
+                    await stopServiceMutation.mutateAsync(serviceId);
+                    
                     // Then start the service
-                    const startResponse = await providerApi.startService(serviceId);
-                    if (startResponse.success) {
-                        successCount++;
-                        // Update the service status in the local state
-                        setServices(prev => prev.map(s =>
-                            s.id === service.id ? {...s, serviceStatus: 'running'} : s
-                        ));
-                    } else {
-                        failureCount++;
-                        console.error(`Failed to start service ${service.name} during restart:`, startResponse.error);
-                    }
+                    await startServiceMutation.mutateAsync(serviceId);
+                    successCount++;
                 } catch (error) {
                     failureCount++;
                     console.error(`Error restarting service ${service.name}:`, error);
@@ -537,9 +446,6 @@ const Dashboard = () => {
                     variant: "destructive"
                 });
             }
-
-            // Refresh the services list to get updated statuses
-            fetchServices();
         }
     }
 
@@ -559,17 +465,17 @@ const Dashboard = () => {
         }
     }
 
-    const handleAlertDismiss = (alertId: string) => {
-        // Update the alerts state to mark the alert as dismissed
-        setAlerts(prevAlerts => 
-            prevAlerts.map(alert => 
-                alert.id === alertId 
-                    ? { ...alert, isDismissed: true }
-                    : alert
-            )
-        )
-        // Optionally refresh alerts from server
-        fetchAlerts()
+    const handleAlertDismiss = async (alertId: string) => {
+        try {
+            await dismissAlertMutation.mutateAsync(alertId);
+        } catch (error) {
+            console.error('Error dismissing alert:', error);
+            toast({
+                title: "Error",
+                description: "Failed to dismiss alert",
+                variant: "destructive"
+            });
+        }
     }
 
     return (
@@ -607,7 +513,7 @@ const Dashboard = () => {
                                     visibleColumns={visibleColumns}
                                     searchTerm={searchTerm}
                                     onSearchChange={setSearchTerm}
-                                    loading={loading}
+                                    loading={servicesLoading}
                                 />
                             </div>
                             <div className="flex-shrink-0 p-4 border-t border-border">

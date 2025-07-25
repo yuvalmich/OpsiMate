@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,7 +28,7 @@ interface IntegrationDashboardDropdownProps {
   className?: string;
 }
 
-export function IntegrationDashboardDropdown({ 
+export const IntegrationDashboardDropdown = memo(function IntegrationDashboardDropdown({ 
   tags, 
   integrationType,
   className 
@@ -40,9 +40,10 @@ export function IntegrationDashboardDropdown({
   const [integrationUrl, setIntegrationUrl] = useState<string>('');
   const { toast } = useToast();
 
-  // Display properties based on integration type
-  const displayName = `${integrationType} Dashboards`;
-  const getIconComponent = () => {
+  // Memoize display properties to prevent unnecessary re-renders
+  const displayName = useMemo(() => `${integrationType} Dashboards`, [integrationType]);
+  
+  const getIconComponent = useCallback(() => {
     switch (integrationType) {
       case 'Kibana':
         return KibanaIcon;
@@ -52,20 +53,23 @@ export function IntegrationDashboardDropdown({
       default:
         return GrafanaIcon;
     }
-  };
+  }, [integrationType]);
+  
   const IconComponent = getIconComponent();
 
+  // Fetch integration only once when component mounts
   useEffect(() => {
     fetchIntegration();
-  }, [integrationType]);
+  }, []); // Empty dependency array - only run once
 
+  // Fetch dashboards only when tags or integrationId changes
   useEffect(() => {
     if (tags.length > 0 && integrationId) {
       fetchDashboards();
     }
-  }, [tags, integrationId]);
+  }, [tags, integrationId]); // Proper dependency array
 
-  const fetchIntegration = async () => {
+  const fetchIntegration = useCallback(async () => {
     try {
       const response = await integrationApi.getIntegrations();
       if (response.success && response.data) {
@@ -87,9 +91,11 @@ export function IntegrationDashboardDropdown({
       console.error('Error fetching integrations:', err);
       setError('Failed to fetch integrations');
     }
-  };
+  }, [integrationType]);
 
-  const fetchDashboards = async () => {
+  const fetchDashboards = useCallback(async () => {
+    if (!integrationId || tags.length === 0) return;
+    
     setLoading(true);
     setError(null);
     setDashboards([]);
@@ -102,7 +108,7 @@ export function IntegrationDashboardDropdown({
       // Make separate API calls for each tag
       const dashboardPromises = tagNames.map(async (tagName) => {
         try {
-          const response = await integrationApi.getIntegrationUrls(integrationId!, [tagName]);
+          const response = await integrationApi.getIntegrationUrls(integrationId, [tagName]);
           
           if (response.success && response.data) {
             return response.data;
@@ -142,15 +148,15 @@ export function IntegrationDashboardDropdown({
     } finally {
       setLoading(false);
     }
-  };
+  }, [integrationId, tags, integrationType]);
 
-  const handleDashboardClick = (url: string, name: string) => {
+  const handleDashboardClick = useCallback((url: string, name: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
     toast({
       title: 'Opening Dashboard',
       description: `Opening "${name}" in ${integrationType}`,
     });
-  };
+  }, [toast, integrationType]);
 
   // Don't render anything if there are no tags or no integration
   if (tags.length === 0 || !integrationId) {
@@ -229,4 +235,4 @@ export function IntegrationDashboardDropdown({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -23,13 +23,13 @@ interface RightSidebarProps {
   onAlertDismiss?: (alertId: string) => void;
 }
 
-export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpdate, alerts = [], onAlertDismiss }: RightSidebarProps) {
+export const RightSidebarWithLogs = memo(function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpdate, alerts = [], onAlertDismiss }: RightSidebarProps) {
   const { toast } = useToast();
   const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [serviceTags, setServiceTags] = useState<Tag[]>(service?.tags || []);
-  
+
   // Collapsible section states - Service Information expanded by default
   const [sectionsOpen, setSectionsOpen] = useState({
     details: true, // Expanded by default
@@ -40,14 +40,14 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
   });
 
   // Toggle section open/closed state
-  const toggleSection = (section: keyof typeof sectionsOpen) => {
+  const toggleSection = useCallback((section: keyof typeof sectionsOpen) => {
     setSectionsOpen(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
-  };
+  }, []);
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     if (!service) return;
 
     setLoading(true);
@@ -76,9 +76,9 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
     } finally {
       setLoading(false);
     }
-  };
+  }, [service, toast]);
 
-  const fetchTags = async () => {
+  const fetchTags = useCallback(async () => {
     if (!service) return;
     try {
       const response = await providerApi.getServiceTags(parseInt(service.id));
@@ -90,16 +90,14 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
     } catch (err) {
       setServiceTags([]);
     }
-  };
+  }, [service]);
 
   useEffect(() => {
-    if (service) {
-      fetchLogs();
-      fetchTags();
-    }
-  }, [service?.id]);
+    fetchLogs();
+    fetchTags();
+  }, [service?.id, fetchLogs, fetchTags]);
 
-  const handleTagsChange = (newTags: Tag[]) => {
+  const handleTagsChange = useCallback((newTags: Tag[]) => {
     setServiceTags(newTags);
     if (service && onServiceUpdate) {
       onServiceUpdate({
@@ -107,11 +105,11 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
         tags: newTags
       });
     }
-  };
+  }, [service, onServiceUpdate]);
 
-  const handleRemoveTag = async (tagToRemove: Tag) => {
+  const handleRemoveTag = useCallback(async (tagToRemove: Tag) => {
     if (!service) return;
-    
+
     try {
       const response = await providerApi.removeTagFromService(parseInt(service.id), tagToRemove.id);
       if (response.success) {
@@ -141,18 +139,47 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
         variant: "destructive"
       });
     }
-  };
+  }, [service, serviceTags, onServiceUpdate, toast]);
 
-  if (!service) return null;
-
-  const getStatusColor = (status: Service['serviceStatus']) => {
+  // Memoize status color calculation
+  const getStatusColor = useCallback((status: Service['serviceStatus']) => {
     switch (status) {
       case 'running': return 'bg-green-100 text-green-800 border-green-200';
       case 'stopped': return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'error': return 'bg-red-100 text-red-800 border-red-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
-  };
+  }, []);
+
+  // Memoize the integration dropdowns to prevent unnecessary re-renders
+  const integrationDropdowns = useMemo(() => {
+    // Only render if there are tags
+    if (serviceTags.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="space-y-2 pt-2">
+        <IntegrationDashboardDropdown
+          tags={serviceTags}
+          integrationType="Grafana"
+          className="w-full"
+        />
+        <IntegrationDashboardDropdown
+          tags={serviceTags}
+          integrationType="Kibana"
+          className="w-full"
+        />
+        <IntegrationDashboardDropdown
+          tags={serviceTags}
+          integrationType="Datadog"
+          className="w-full"
+        />
+      </div>
+    );
+  }, [serviceTags]);
+
+  if (!service) return null;
 
   if (collapsed) {
     return (
@@ -163,12 +190,12 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
   }
 
   // Reusable CollapsibleSection component
-  const CollapsibleSection = ({ 
-    title, 
-    icon: Icon, 
-    isOpen, 
-    onToggle, 
-    children, 
+  const CollapsibleSection = ({
+    title,
+    icon: Icon,
+    isOpen,
+    onToggle,
+    children,
     badge,
     className = ""
   }: {
@@ -182,8 +209,8 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
   }) => (
     <Collapsible open={isOpen} onOpenChange={onToggle}>
       <CollapsibleTrigger asChild>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className={cn(
             "w-full justify-between p-2 h-auto transition-colors text-foreground hover:text-foreground hover:bg-transparent",
             className
@@ -291,7 +318,7 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
               badge={service?.serviceAlerts?.filter(a => !a.isDismissed).length || 0}
               className="text-orange-600"
             >
-              <AlertsSection 
+              <AlertsSection
                 alerts={service?.serviceAlerts || []}
                 onAlertDismiss={onAlertDismiss}
               />
@@ -305,23 +332,7 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
             isOpen={sectionsOpen.externalLinks}
             onToggle={() => toggleSection('externalLinks')}
           >
-            <div className="space-y-2 pt-2">
-              <IntegrationDashboardDropdown 
-                tags={serviceTags} 
-                integrationType="Grafana"
-                className="w-full"
-              />
-              <IntegrationDashboardDropdown 
-                tags={serviceTags} 
-                integrationType="Kibana"
-                className="w-full"
-              />
-              <IntegrationDashboardDropdown 
-                tags={serviceTags} 
-                integrationType="Datadog"
-                className="w-full"
-              />
-            </div>
+            {integrationDropdowns}
           </CollapsibleSection>
 
           {/* Service Logs Section */}
@@ -384,4 +395,4 @@ export function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpd
       </div>
     </div>
   );
-}
+});
