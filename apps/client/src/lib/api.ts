@@ -431,6 +431,11 @@ export const alertsApi = {
     return await apiRequest<{ alert: SharedAlert }>(`/alerts/${alertId}/dismiss`, 'PATCH');
   },
 
+  // Undismiss an alert
+  async undismissAlert(alertId: string): Promise<ApiResponse<{ alert: SharedAlert }>> {
+    return await apiRequest<{ alert: SharedAlert }>(`/alerts/${alertId}/undismiss`, 'PATCH');
+  },
+
   // Get alerts by tag
   async getAlertsByTag(tag: string): Promise<ApiResponse<{ alerts: SharedAlert[] }>> {
     const response = await this.getAllAlerts();

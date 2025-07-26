@@ -1,4 +1,4 @@
-import { useAlerts, useDismissAlert } from "@/hooks/queries/alerts";
+import { useAlerts, useDismissAlert, useUndismissAlert } from "@/hooks/queries/alerts";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
 import { Alert } from "@service-peek/shared";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink, X, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Alerts() {
   const { data: alerts = [], isLoading } = useAlerts();
   const dismissAlertMutation = useDismissAlert();
+  const undismissAlertMutation = useUndismissAlert();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
 
@@ -43,11 +44,27 @@ export default function Alerts() {
     }
   };
 
+  const handleUndismissAlert = async (alertId: string) => {
+    try {
+      await undismissAlertMutation.mutateAsync(alertId);
+      toast({
+        title: "Alert undismissed",
+        description: "The alert has been reactivated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error undismissing alert",
+        description: "Failed to undismiss alert",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getStatusBadge = (alert: Alert) => {
     if (alert.isDismissed) {
       return <Badge variant="secondary">dismissed</Badge>
     }
-
+    
     return <Badge variant="destructive">firing</Badge>;
   };
 
@@ -133,12 +150,14 @@ export default function Alerts() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent"
-                            title="Dismiss Alert"
-                            onClick={() => handleDismissAlert(alert.id)}
-                            disabled={dismissAlertMutation.isPending}
+                            title={alert.isDismissed ? "Undismiss Alert" : "Dismiss Alert"}
+                            onClick={() => alert.isDismissed ? handleUndismissAlert(alert.id) : handleDismissAlert(alert.id)}
+                            disabled={dismissAlertMutation.isPending || undismissAlertMutation.isPending}
                           >
-                            {dismissAlertMutation.isPending ? (
+                            {(dismissAlertMutation.isPending || undismissAlertMutation.isPending) ? (
                               <div className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin" />
+                            ) : alert.isDismissed ? (
+                              <RotateCcw className="h-4 w-4" />
                             ) : (
                               <X className="h-4 w-4" />
                             )}

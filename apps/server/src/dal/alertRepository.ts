@@ -110,4 +110,14 @@ export class AlertRepository {
             return row ? this.toSharedAlert(row) : null;
         });
     }
+
+    async undismissAlert(id: string): Promise<SharedAlert | null> {
+        return runAsync(() => {
+            const updateStmt = this.db.prepare('UPDATE alerts SET is_dismissed = 0 WHERE id = ?');
+            updateStmt.run(id);
+            const selectStmt = this.db.prepare('SELECT * FROM alerts WHERE id = ?');
+            const row = selectStmt.get(id) as AlertRow | undefined;
+            return row ? this.toSharedAlert(row) : null;
+        });
+    }
 }

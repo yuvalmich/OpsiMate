@@ -33,4 +33,21 @@ export class AlertController {
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }
+
+    async undismissAlert(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            if (!id) {
+                return res.status(400).json({ success: false, error: 'Alert id is required' });
+            }
+            const alert = await this.alertBL.undismissAlert(id);
+            if (!alert) {
+                return res.status(404).json({ success: false, error: 'Alert not found' });
+            }
+            res.json({ success: true, data: { alert } });
+        } catch (error) {
+            logger.error('Error undismissing alert:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
 } 
