@@ -71,6 +71,34 @@ async function getServicePodLogs(coreV1: ObjectCoreV1Api, serviceName: string, n
     return logs.join("\n");
 }
 
+const restartK8RServicePods = async (provider: Provider, serviceName: string) => {
+    const k8sApi = createClient(provider)
+
+    // Step 1: Get the service
+    const serviceResp = await k8sApi.readNamespacedService({name: serviceName, namespace: 'default'});
+
+    const selector = serviceResp.spec?.selector;
+    if (!selector || Object.keys(selector).length === 0) {
+        throw new Error(`Service "${serviceName}" has no selector.`);
+    }
+
+    const labelSelector = Object.entries(selector)
+        .map(([key, val]) => `${key}=${val}`)
+        .join(',');
+
+    // Step 2: Get matching pods
+    const podsResp = await k8sApi.listNamespacedPod({namespace: 'default', labelSelector: labelSelector});
+    const pods = podsResp.items;
+
+    // Step 3: Delete each pod (it will be restarted by controller)
+    for (const pod of pods) {
+        const podName = pod.metadata?.name;
+        if (!podName) continue;
+
+        await k8sApi.deleteNamespacedPod({name: podName, namespace: 'default'})
+    }
+}
+
 const getK8RPods = async (_provider: Provider, service: Service): Promise<DiscoveredPod[]> => {
     const k8sApi = createClient(_provider)
     // Get the Service
@@ -136,7 +164,7 @@ const getK8SServices = async (_provider: Provider): Promise<DiscoveredService[]>
 
             return {
                 name,
-                serviceStatus: service.status?.loadBalancer?.ingress ? 'Running' : 'Pending',
+                serviceStatus: 'Running',
                 serviceIP: serviceIp || 'N/A',
                 namespace,
                 serviceType,
@@ -144,4 +172,4 @@ const getK8SServices = async (_provider: Provider): Promise<DiscoveredService[]>
         });
 }
 
-export {getK8SServices, getK8RLogs, deleteK8RPod, getK8RPods}
+export {getK8SServices, getK8RLogs, deleteK8RPod, getK8RPods, restartK8RServicePods}
