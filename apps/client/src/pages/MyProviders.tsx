@@ -22,6 +22,10 @@ import {
     DialogTitle
 } from "@/components/ui/dialog";
 import {
+    Sheet,
+    SheetContent
+} from "@/components/ui/sheet";
+import {
     Server,
     Cloud,
     Database,
@@ -974,43 +978,17 @@ export function MyProviders() {
                 onSave={handleUpdateProvider}
             />
 
-            {isServiceDrawerOpen && selectedServiceForDrawer && (
-                <>
-                    <div
-                        style={{
-                            position: 'fixed',
-                            top: 0,
-                            left: 0,
-                            width: '100vw',
-                            height: '100vh',
-                            background: 'rgba(0,0,0,0.2)',
-                            zIndex: 1000,
-                        }}
-                        onClick={() => setIsServiceDrawerOpen(false)}
-                    />
-                    <div
-                        style={{
-                            position: 'fixed',
-                            top: 0,
-                            right: 0,
-                            height: '100vh',
-                            width: 400,
-                            zIndex: 1001,
-                            background: 'white',
-                            boxShadow: '-2px 0 8px rgba(0,0,0,0.08)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                        }}
-                        onClick={e => e.stopPropagation()}
-                    >
+            <Sheet open={isServiceDrawerOpen} onOpenChange={setIsServiceDrawerOpen}>
+                <SheetContent side="right" className="w-[400px] p-0" closable={false}>
+                    {selectedServiceForDrawer && (
                         <RightSidebarWithLogs
                             service={selectedServiceForDrawer}
                             onClose={() => setIsServiceDrawerOpen(false)}
                             collapsed={false}
                         />
-                    </div>
-                </>
-            )}
+                    )}
+                </SheetContent>
+            </Sheet>
         </DashboardLayout>
     );
 }

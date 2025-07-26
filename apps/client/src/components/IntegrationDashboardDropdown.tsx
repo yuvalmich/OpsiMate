@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,10 +12,9 @@ import { KibanaIcon } from './icons/KibanaIcon';
 import { GrafanaIcon } from './icons/GrafanaIcon';
 import { DatadogIcon } from './icons/DatadogIcon';
 import { ChevronDown, ExternalLink, Loader2 } from 'lucide-react';
-import { integrationApi } from '@/lib/api';
 import { Tag } from '@service-peek/shared';
 import { useToast } from '@/hooks/use-toast';
-import { removeDuplicates } from '@/lib/utils';
+import { useIntegrations, useIntegrationUrls } from '@/hooks/queries';
 
 interface Dashboard {
   name: string;
@@ -28,21 +27,20 @@ interface IntegrationDashboardDropdownProps {
   className?: string;
 }
 
-export function IntegrationDashboardDropdown({ 
+export const IntegrationDashboardDropdown = memo(function IntegrationDashboardDropdown({ 
   tags, 
   integrationType,
   className 
 }: IntegrationDashboardDropdownProps) {
-  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [integrationId, setIntegrationId] = useState<number | null>(null);
-  const [integrationUrl, setIntegrationUrl] = useState<string>('');
   const { toast } = useToast();
 
-  // Display properties based on integration type
-  const displayName = `${integrationType} Dashboards`;
-  const getIconComponent = () => {
+  // Use React Query to fetch integrations
+  const { data: integrations = [], error: integrationsError } = useIntegrations();
+
+  // Memoize display properties to prevent unnecessary re-renders
+  const displayName = useMemo(() => `${integrationType} Dashboards`, [integrationType]);
+  
+  const getIconComponent = useCallback(() => {
     switch (integrationType) {
       case 'Kibana':
         return KibanaIcon;
@@ -52,109 +50,51 @@ export function IntegrationDashboardDropdown({
       default:
         return GrafanaIcon;
     }
-  };
+  }, [integrationType]);
+  
   const IconComponent = getIconComponent();
 
-  useEffect(() => {
-    fetchIntegration();
-  }, [integrationType]);
+  // Find the specific integration from cached data
+  const integration = useMemo(() => {
+    return integrations.find((integration: any) => integration.type === integrationType);
+  }, [integrations, integrationType]);
 
-  useEffect(() => {
-    if (tags.length > 0 && integrationId) {
-      fetchDashboards();
-    }
-  }, [tags, integrationId]);
+  const integrationId = integration?.id;
+  const integrationUrl = integration?.externalUrl || '';
 
-  const fetchIntegration = async () => {
-    try {
-      const response = await integrationApi.getIntegrations();
-      if (response.success && response.data) {
-        // Find the specific integration
-        const integration = response.data.integrations.find(
-          (integration: any) => integration.type === integrationType
-        );
-        if (integration) {
-          setIntegrationId(integration.id);
-          // Store the integration URL for the "Open" link
-          setIntegrationUrl(integration.externalUrl || '');
-        } else {
-          setError(`No ${integrationType} integration found`);
-        }
-      } else {
-        setError('Failed to fetch integrations');
-      }
-    } catch (err) {
-      console.error('Error fetching integrations:', err);
-      setError('Failed to fetch integrations');
-    }
-  };
+  // Use React Query to fetch dashboards
+  const tagNames = useMemo(() => tags.map(tag => tag.name), [tags]);
+  const { data: dashboards = [], isLoading: loading, error } = useIntegrationUrls(integrationId, tagNames);
 
-  const fetchDashboards = async () => {
-    setLoading(true);
-    setError(null);
-    setDashboards([]);
-    
-    try {
-      const tagNames = tags.map(tag => tag.name);
-      let allDashboards: Dashboard[] = [];
-      let hasError = false;
-      
-      // Make separate API calls for each tag
-      const dashboardPromises = tagNames.map(async (tagName) => {
-        try {
-          const response = await integrationApi.getIntegrationUrls(integrationId!, [tagName]);
-          
-          if (response.success && response.data) {
-            return response.data;
-          } else {
-            console.warn(`Failed to fetch dashboards for tag ${tagName}:`, response.error);
-            return [];
-          }
-        } catch (error) {
-          console.error(`Error fetching dashboards for tag ${tagName}:`, error);
-          return [];
-        }
-      });
-      
-      // Wait for all API calls to complete
-      const dashboardResults = await Promise.all(dashboardPromises);
-      
-      // Combine all results into a single array
-      dashboardResults.forEach(dashboards => {
-        allDashboards = [...allDashboards, ...dashboards];
-      });
-      
-      // Remove duplicates based on URL
-      const uniqueDashboards = removeDuplicates(allDashboards, 'url');
-      
-      // Sort dashboards alphabetically by name
-      uniqueDashboards.sort((a, b) => a.name.localeCompare(b.name));
-      
-      setDashboards(uniqueDashboards);
-      
-      if (uniqueDashboards.length === 0 && !hasError) {
-        setError('No dashboards found for the selected tags');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
-      console.error(`Error fetching ${integrationType} dashboards:`, err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDashboardClick = (url: string, name: string) => {
+  const handleDashboardClick = useCallback((url: string, name: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
     toast({
       title: 'Opening Dashboard',
       description: `Opening "${name}" in ${integrationType}`,
     });
-  };
+  }, [toast, integrationType]);
 
   // Don't render anything if there are no tags or no integration
   if (tags.length === 0 || !integrationId) {
     return null;
+  }
+
+  // Show error if integrations failed to load
+  if (integrationsError) {
+    return (
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className={`justify-between gap-2 h-7 text-xs px-2 ${className}`}
+        disabled
+      >
+        <div className="flex items-center gap-2">
+          <IconComponent className="h-3 w-3" />
+          <span>{displayName}</span>
+        </div>
+        <span className="text-red-500">Error</span>
+      </Button>
+    );
   }
 
   return (
@@ -192,7 +132,7 @@ export function IntegrationDashboardDropdown({
         
         {error && (
           <DropdownMenuItem disabled className="text-xs text-red-500">
-            <span>Error: {error}</span>
+            <span>Error: {error.message}</span>
           </DropdownMenuItem>
         )}
         
@@ -229,4 +169,4 @@ export function IntegrationDashboardDropdown({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});
