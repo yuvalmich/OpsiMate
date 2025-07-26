@@ -1,5 +1,5 @@
 import * as k8s from '@kubernetes/client-node';
-import {DiscoveredService, Logger, Provider} from "@service-peek/shared";
+import {DiscoveredPod, DiscoveredService, Logger, Provider} from "@service-peek/shared";
 import path from "path";
 import fs from "fs";
 import {ObjectCoreV1Api} from "@kubernetes/client-node/dist/gen/types/ObjectParamAPI";
@@ -71,6 +71,10 @@ async function getServicePodLogs(coreV1: ObjectCoreV1Api, serviceName: string, n
     return logs.join("\n");
 }
 
+const getK8RPods = async (_provider: Provider): Promise<DiscoveredPod[]> => {
+    return []
+}
+
 const deleteK8RPod = async (_provider: Provider, podName: string, namespace: string): Promise<void> => {
     const k8sApi = createClient(_provider)
 
@@ -112,4 +116,4 @@ const getK8SServices = async (_provider: Provider): Promise<DiscoveredService[]>
         });
 }
 
-export {getK8SServices, getK8RLogs, deleteK8RPod}
+export {getK8SServices, getK8RLogs, deleteK8RPod, getK8RPods}
