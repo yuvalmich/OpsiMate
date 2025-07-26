@@ -63,20 +63,22 @@ const deleteK8RPod = async (_provider: Provider, podName: string, namespace: str
 
 const getK8SServices = async (_provider: Provider): Promise<DiscoveredService[]> => {
     const k8sApi = createClient(_provider)
-    const servicesResp = await k8sApi.listPodForAllNamespaces();
+    const servicesResp = await k8sApi.listServiceForAllNamespaces();
 
     return servicesResp.items
         .filter(service => service.metadata?.namespace !== "kube-system")
-        .map(svc => {
-            const name = svc.metadata?.name || 'unknown';
-            const serviceIP = svc.status?.hostIP
-            const port = (svc.spec?.containers?.flatMap(i => i.ports?.map(i => i.containerPort)) || [])?.[0]
+        .map(service => {
+            const name = service.metadata?.name || 'unknown';
+            const namespace = service.metadata?.namespace || 'default';
+            const serviceType = service.spec?.type || 'ClusterIP';
+            const serviceIp = service.spec?.clusterIP;
 
             return {
                 name,
-                serviceStatus: svc.status?.phase || 'unknown',
-                serviceIP: serviceIP || ':' + port,
-                namespace: svc.metadata?.namespace || 'default'
+                serviceStatus: service.status?.loadBalancer?.ingress ? 'Running' : 'Pending',
+                serviceIP: serviceIp || 'N/A',
+                namespace,
+                serviceType,
             };
         });
 }
