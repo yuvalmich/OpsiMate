@@ -11,7 +11,7 @@ function getPrivateKeysDir(): string {
     const securityConfig = getSecurityConfig();
     return path.isAbsolute(securityConfig.private_keys_path)
         ? securityConfig.private_keys_path
-        : path.resolve(__dirname, '../../../', securityConfig.private_keys_path);
+        : path.resolve(__dirname, '../../../../', securityConfig.private_keys_path);
 }
 
 function getKeyPath(filename: string) {
