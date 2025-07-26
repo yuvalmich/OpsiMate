@@ -1,4 +1,4 @@
-import {Provider, DiscoveredService, Service, ServiceType, ContainerDetails} from "@service-peek/shared";
+import {Provider, DiscoveredService, Service, ServiceType, ContainerDetails, DiscoveredPod} from "@service-peek/shared";
 
 export interface ProviderConnector {
     discoverServices(provider: Provider): Promise<DiscoveredService[]>;
@@ -10,4 +10,6 @@ export interface ProviderConnector {
     getServiceLogs(provider: Provider, service: Service): Promise<string[]>;
 
     testConnection(provider: Provider): Promise<boolean>;
+
+    getPods(provider: Provider): Promise<DiscoveredPod[]>;
 }
