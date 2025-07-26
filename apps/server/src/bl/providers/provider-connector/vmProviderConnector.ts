@@ -1,4 +1,4 @@
-import {DiscoveredService, Provider, Service, ServiceType} from "@service-peek/shared";
+import {DiscoveredPod, DiscoveredService, Provider, Service, ServiceType} from "@service-peek/shared";
 import * as sshClient from "../../../dal/sshClient";
 import {ProviderConnector} from "./providerConnector";
 
@@ -34,7 +34,12 @@ export class VMProviderConnector implements ProviderConnector {
             return sshClient.getServiceLogs(provider, service.name);
         }
     }
+
     async testConnection(provider: Provider): Promise<boolean> {
         return sshClient.testConnection(provider);
+    }
+
+    getPods(provider: Provider): Promise<DiscoveredPod[]> {
+        throw new Error("Method not implemented.");
     }
 }
