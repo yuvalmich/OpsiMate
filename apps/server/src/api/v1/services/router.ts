@@ -30,6 +30,10 @@ export default function createServiceRouter(serviceController: ServiceController
     // DELETE /api/v1/integration/services/:serviceId
     router.delete('/:serviceId', serviceController.deleteServiceHandler);
 
+    // GET /api/v1/integration/services/:serviceId/pods
+    router.get('/:serviceId/pods', serviceController.getServicePodsHandler);
+
+
     // Service tag association routes
     router.post('/:serviceId/tags', tagController.addTagToServiceHandler);
     router.delete('/:serviceId/tags/:tagId', tagController.removeTagFromServiceHandler);

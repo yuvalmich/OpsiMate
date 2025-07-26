@@ -11,5 +11,5 @@ export interface ProviderConnector {
 
     testConnection(provider: Provider): Promise<boolean>;
 
-    getPods(provider: Provider): Promise<DiscoveredPod[]>;
+    getServicePods(provider: Provider, service: Service): Promise<DiscoveredPod[]>;
 }

@@ -1,5 +1,5 @@
 import * as k8s from '@kubernetes/client-node';
-import {DiscoveredPod, DiscoveredService, Logger, Provider} from "@service-peek/shared";
+import {DiscoveredPod, DiscoveredService, Logger, Provider, Service} from "@service-peek/shared";
 import path from "path";
 import fs from "fs";
 import {ObjectCoreV1Api} from "@kubernetes/client-node/dist/gen/types/ObjectParamAPI";
@@ -71,24 +71,36 @@ async function getServicePodLogs(coreV1: ObjectCoreV1Api, serviceName: string, n
     return logs.join("\n");
 }
 
-const getK8RPods = async (_provider: Provider): Promise<DiscoveredPod[]> => {
+const getK8RPods = async (_provider: Provider, service: Service): Promise<DiscoveredPod[]> => {
     const k8sApi = createClient(_provider)
-    const servicesResp = await k8sApi.listPodForAllNamespaces();
+    // Get the Service
+    const serviceResp = await k8sApi.readNamespacedService({
+        name: service.name,
+        namespace: service.containerDetails?.namespace || 'default'
+    });
 
-    return servicesResp.items
-        .filter(service => service.metadata?.namespace !== "kube-system")
-        .map(svc => {
-            const name = svc.metadata?.name || 'unknown';
-            const serviceIP = svc.status?.hostIP
-            const port = (svc.spec?.containers?.flatMap(i => i.ports?.map(i => i.containerPort)) || [])?.[0]
+    const selector = serviceResp.spec?.selector;
+    if (!selector || Object.keys(selector).length === 0) {
+        return []; // No selector, no pods
+    }
 
-            return {
-                name,
-                serviceStatus: svc.status?.phase || 'unknown',
-                serviceIP: serviceIP || ':' + port,
-                namespace: svc.metadata?.namespace || 'default'
-            };
-        });
+    // Build label selector string
+    const labelSelector = Object.entries(selector)
+        .map(([key, value]) => `${key}=${value}`)
+        .join(',');
+
+    // Query Pods using the selector
+    const podsResp = await k8sApi.listNamespacedPod({
+        labelSelector: labelSelector,
+        namespace: service.containerDetails?.namespace || 'default',
+    });
+    const pods = podsResp.items;
+
+    // Return list of { name } objects
+    return pods
+        .map(pod => pod.metadata?.name || 'No-Name')
+        .filter(Boolean)
+        .map(name => ({name}));
 }
 
 const deleteK8RPod = async (_provider: Provider, podName: string, namespace: string): Promise<void> => {

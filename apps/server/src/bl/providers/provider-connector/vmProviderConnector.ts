@@ -39,7 +39,7 @@ export class VMProviderConnector implements ProviderConnector {
         return sshClient.testConnection(provider);
     }
 
-    getPods(provider: Provider): Promise<DiscoveredPod[]> {
+    getServicePods(_: Provider, _2: Service): Promise<DiscoveredPod[]> {
         throw new Error("Method not implemented.");
     }
 }
