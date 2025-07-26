@@ -53,6 +53,8 @@ export class AlertRepository {
                     alert_url TEXT,
                     alert_name TEXT,
                     is_dismissed BOOLEAN DEFAULT 0,
+                    summary TEXT,
+                    runbook_url TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             `).run();
