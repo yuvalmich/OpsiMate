@@ -1,6 +1,7 @@
 import {ProviderConnector} from "./providerConnector";
 import {ContainerDetails, DiscoveredService, Provider, Service, ServiceType} from "@service-peek/shared";
-import {deleteK8RPod, getK8RLogs, getK8SServices} from "../../../dal/kubeConnector";
+import {deleteK8RPod, getK8RLogs, getK8SServices, getK8RPods} from "../../../dal/kubeConnector";
+import { DiscoveredPod } from "@service-peek/shared/src/types";
 
 export class K8SProviderConnector implements ProviderConnector {
     async getServiceLogs(provider: Provider, service: Service): Promise<string[]> {
@@ -9,6 +10,10 @@ export class K8SProviderConnector implements ProviderConnector {
 
     startService(_: Provider, _2: string, _3?: ServiceType): Promise<void> {
         throw new Error("Method not implemented.");
+    }
+
+    getPods(provider: Provider): Promise<DiscoveredPod[]> {
+        return getK8RPods(provider);
     }
 
     stopService(provider: Provider, serviceName: string, _3?: ServiceType, containerDetails?: ContainerDetails): Promise<void> {
