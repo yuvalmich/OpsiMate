@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Settings, Layers, LayoutDashboard, Database, Puzzle } from "lucide-react"
+import { Settings, Layers, LayoutDashboard, Database, Puzzle, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
 import { AppIcon } from "./icons/AppIcon"
@@ -85,6 +85,21 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
           <Link to="/integrations">
             <Puzzle className="h-5 w-5 flex-shrink-0" />
             <span className={cn("font-medium", collapsed && "sr-only")}>Integrations</span>
+          </Link>
+        </Button>
+        
+        <Button 
+          variant={location.pathname === "/alerts" ? "default" : "ghost"}
+          className={cn(
+            "gap-3 h-10", 
+            collapsed ? "w-10 justify-center p-0" : "w-full justify-start px-3",
+            location.pathname === "/alerts" && "text-primary-foreground"
+          )}
+          asChild
+        >
+          <Link to="/alerts">
+            <Bell className="h-5 w-5 flex-shrink-0" />
+            <span className={cn("font-medium", collapsed && "sr-only")}>Alerts</span>
           </Link>
         </Button>
       </div>

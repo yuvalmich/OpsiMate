@@ -54,17 +54,17 @@ const Dashboard = () => {
 
     // Enhanced alert calculation: each service gets alerts for ALL its tags
     const servicesWithAlerts = useMemo(() => {
-        console.log('🔍 Debug - Services:', services.length, 'Alerts:', alerts.length)
+        console.log('Debug - Services:', services.length, 'Alerts:', alerts.length)
         return services.map(service => {
-            console.log(`🏷️  Service ${service.name} tags:`, service.tags?.map(t => t.name) || [])
+            console.log(`Service ${service.name} tags:`, service.tags?.map(t => t.name) || [])
             
             // Get all unique alerts that match any of the service's tags (including dismissed)
             const serviceAlerts = alerts.filter(alert => {
-                console.log(`🚨 Checking alert ${alert.id} (tag: ${alert.tag}) against service ${service.name}`)
+                console.log(`Checking alert ${alert.id} (tag: ${alert.tag}) against service ${service.name}`)
                 
                 // Check if alert tag matches any of the service's tags
                 const matches = service.tags?.some(tag => tag.name === alert.tag)
-                console.log(`   Match result: ${matches}`)
+                console.log(`Match result: ${matches}`)
                 return matches
             })
             
@@ -76,7 +76,7 @@ const Dashboard = () => {
             // Count only non-dismissed alerts for the badge count
             const activeAlerts = uniqueAlerts.filter(alert => !alert.isDismissed);
             
-            console.log(`✅ Service ${service.name} final result: ${activeAlerts.length} active, ${uniqueAlerts.length - activeAlerts.length} dismissed`)
+            console.log(`Service ${service.name} final result: ${activeAlerts.length} active, ${uniqueAlerts.length - activeAlerts.length} dismissed`)
             
             return {
                 ...service,
