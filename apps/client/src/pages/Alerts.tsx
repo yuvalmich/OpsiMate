@@ -1,13 +1,18 @@
-import { useAlerts } from "@/hooks/queries/alerts";
+import { useAlerts, useDismissAlert } from "@/hooks/queries/alerts";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
 import { Alert } from "@service-peek/shared";
+import { ExternalLink, X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Alerts() {
   const { data: alerts = [], isLoading } = useAlerts();
+  const dismissAlertMutation = useDismissAlert();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
 
   const filteredAlerts = useMemo(() => {
@@ -21,6 +26,30 @@ export default function Alerts() {
         a.tag.toLowerCase().includes(lower)
     );
   }, [alerts, search]);
+
+  const handleDismissAlert = async (alertId: string) => {
+    try {
+      await dismissAlertMutation.mutateAsync(alertId);
+      toast({
+        title: "Alert dismissed",
+        description: "The alert has been marked as dismissed.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error dismissing alert",
+        description: "Failed to dismiss alert",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getStatusBadge = (alert: Alert) => {
+    if (alert.isDismissed) {
+      return <Badge variant="secondary">dismissed</Badge>
+    }
+
+    return <Badge variant="destructive">firing</Badge>;
+  };
 
   return (
     <DashboardLayout>
@@ -47,18 +76,19 @@ export default function Alerts() {
                   <TableHead>Tag</TableHead>
                   <TableHead>Summary</TableHead>
                   <TableHead>Started</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
+                    <TableCell colSpan={6} className="text-center py-8">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : filteredAlerts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No alerts found.
                     </TableCell>
                   </TableRow>
@@ -67,17 +97,7 @@ export default function Alerts() {
                     <TableRow key={alert.id}>
                       <TableCell className="font-medium">{alert.alertName}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            alert.status === "firing"
-                              ? "destructive"
-                              : alert.status === "pending"
-                              ? "secondary"
-                              : "default"
-                          }
-                        >
-                          {alert.status}
-                        </Badge>
+                        {getStatusBadge(alert)}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{alert.tag}</Badge>
@@ -85,6 +105,45 @@ export default function Alerts() {
                       <TableCell className="max-w-xs truncate">{alert.summary || "-"}</TableCell>
                       <TableCell>
                         {new Date(alert.startsAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent"
+                            title="Open Runbook"
+                            onClick={() => window.open(alert.runbookUrl, '_blank', 'noopener,noreferrer')}
+                            disabled={!alert.runbookUrl}
+                          >
+                            <span className="sr-only">Open Runbook</span>
+                            📖
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent"
+                            title="View in Grafana"
+                            onClick={() => window.open(alert.alertUrl, '_blank', 'noopener,noreferrer')}
+                            disabled={!alert.alertUrl}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent"
+                            title="Dismiss Alert"
+                            onClick={() => handleDismissAlert(alert.id)}
+                            disabled={dismissAlertMutation.isPending}
+                          >
+                            {dismissAlertMutation.isPending ? (
+                              <div className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin" />
+                            ) : (
+                              <X className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))

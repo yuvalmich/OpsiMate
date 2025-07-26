@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, X, Eye, EyeOff, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { X, ExternalLink } from "lucide-react";
 import { GrafanaIcon } from "@/components/icons/GrafanaIcon";
 import { Alert as SharedAlert } from '@service-peek/shared';
 import { cn } from "@/lib/utils";
 import { alertsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface AlertsSectionProps {
   alerts: SharedAlert[];
@@ -19,10 +16,8 @@ interface AlertsSectionProps {
 export function AlertsSection({ alerts, onAlertDismiss, className }: AlertsSectionProps) {
   const { toast } = useToast();
   const [dismissingAlerts, setDismissingAlerts] = useState<Set<string>>(new Set());
-  const [expandedAlerts, setExpandedAlerts] = useState<Set<string>>(new Set());
 
   const activeAlerts = alerts.filter(alert => !alert.isDismissed);
-  // Remove dismissedAlerts, showDismissed, and displayAlerts logic
 
   const handleDismissAlert = async (alertId: string) => {
     try {
@@ -62,35 +57,9 @@ export function AlertsSection({ alerts, onAlertDismiss, className }: AlertsSecti
     }
   };
 
-  const toggleAlertExpansion = (alertId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setExpandedAlerts(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(alertId)) {
-        newSet.delete(alertId);
-      } else {
-        newSet.add(alertId);
-      }
-      return newSet;
-    });
-  };
-
   const handleAlertClick = (alertUrl: string) => {
     if (alertUrl) {
       window.open(alertUrl, '_blank', 'noopener,noreferrer');
-    }
-  };
-
-  const getAlertStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'firing':
-        return 'bg-red-500 hover:bg-red-600';
-      case 'pending':
-        return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'resolved':
-        return 'bg-green-500 hover:bg-green-600';
-      default:
-        return 'bg-gray-500 hover:bg-gray-600';
     }
   };
 
