@@ -72,7 +72,23 @@ async function getServicePodLogs(coreV1: ObjectCoreV1Api, serviceName: string, n
 }
 
 const getK8RPods = async (_provider: Provider): Promise<DiscoveredPod[]> => {
-    return []
+    const k8sApi = createClient(_provider)
+    const servicesResp = await k8sApi.listPodForAllNamespaces();
+
+    return servicesResp.items
+        .filter(service => service.metadata?.namespace !== "kube-system")
+        .map(svc => {
+            const name = svc.metadata?.name || 'unknown';
+            const serviceIP = svc.status?.hostIP
+            const port = (svc.spec?.containers?.flatMap(i => i.ports?.map(i => i.containerPort)) || [])?.[0]
+
+            return {
+                name,
+                serviceStatus: svc.status?.phase || 'unknown',
+                serviceIP: serviceIP || ':' + port,
+                namespace: svc.metadata?.namespace || 'default'
+            };
+        });
 }
 
 const deleteK8RPod = async (_provider: Provider, podName: string, namespace: string): Promise<void> => {
