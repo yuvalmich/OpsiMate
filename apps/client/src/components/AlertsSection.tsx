@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { AlertTriangle, X, Eye, EyeOff, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { GrafanaIcon } from "@/components/icons/GrafanaIcon";
 import { Alert as SharedAlert } from '@service-peek/shared';
 import { cn } from "@/lib/utils";
-import { alertsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface AlertsSectionProps {
   alerts: SharedAlert[];
@@ -16,6 +18,7 @@ interface AlertsSectionProps {
 export function AlertsSection({ alerts, onAlertDismiss, className }: AlertsSectionProps) {
   const { toast } = useToast();
   const [dismissingAlerts, setDismissingAlerts] = useState<Set<string>>(new Set());
+  const [expandedAlerts, setExpandedAlerts] = useState<Set<string>>(new Set());
 
   const activeAlerts = alerts.filter(alert => !alert.isDismissed);
 
@@ -23,22 +26,11 @@ export function AlertsSection({ alerts, onAlertDismiss, className }: AlertsSecti
     try {
       setDismissingAlerts(prev => new Set(prev).add(alertId));
       
-      const response = await alertsApi.dismissAlert(alertId);
-      
-      if (response.success) {
+      if (onAlertDismiss) {
+        await onAlertDismiss(alertId);
         toast({
           title: "Alert dismissed",
           description: "The alert has been marked as dismissed.",
-        });
-        
-        if (onAlertDismiss) {
-          onAlertDismiss(alertId);
-        }
-      } else {
-        toast({
-          title: "Error dismissing alert",
-          description: response.error || "Failed to dismiss alert",
-          variant: "destructive"
         });
       }
     } catch (error) {

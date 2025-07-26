@@ -86,6 +86,16 @@ const Dashboard = () => {
         })
     }, [services, alerts])
 
+    // Update selectedService when servicesWithAlerts changes
+    useEffect(() => {
+        if (selectedService) {
+            const updatedService = servicesWithAlerts.find(s => s.id === selectedService.id)
+            if (updatedService) {
+                setSelectedService(updatedService)
+            }
+        }
+    }, [servicesWithAlerts, selectedService])
+
     // Load saved views and active view on component mount
     useEffect(() => {
         const loadViews = async () => {
@@ -289,7 +299,9 @@ const Dashboard = () => {
     const handleServicesSelect = (services: Service[]) => {
         setSelectedServices(services)
         if (services.length === 1) {
-            setSelectedService(services[0])
+            // Find the service with alerts from servicesWithAlerts
+            const serviceWithAlerts = servicesWithAlerts.find(s => s.id === services[0].id)
+            setSelectedService(serviceWithAlerts || services[0])
         } else {
             setSelectedService(null)
         }
