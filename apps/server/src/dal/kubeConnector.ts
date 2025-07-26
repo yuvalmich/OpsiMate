@@ -3,7 +3,7 @@ import {DiscoveredService, Logger, Provider} from "@service-peek/shared";
 import path from "path";
 import fs from "fs";
 import {ObjectCoreV1Api} from "@kubernetes/client-node/dist/gen/types/ObjectParamAPI";
-import { getSecurityConfig } from '../config/config';
+import {getSecurityConfig} from '../config/config';
 
 function getPrivateKeysDir(): string {
     const securityConfig = getSecurityConfig();
@@ -34,12 +34,41 @@ const createClient = (_provider: Provider): ObjectCoreV1Api => {
 
 const getK8RLogs = async (_provider: Provider, serviceName: string, namespace: string) => {
     const k8sApi = createClient(_provider)
-    return k8sApi.readNamespacedPodLog(
-        {
-            name: serviceName,
-            namespace: namespace,
-            pretty: 'true'
-        })
+    return getServicePodLogs(k8sApi, serviceName, namespace)
+}
+
+async function getServicePodLogs(coreV1: ObjectCoreV1Api, serviceName: string, namespace: string): Promise<string> {
+    // Get the Service
+    const service = await coreV1.readNamespacedService({name: serviceName, namespace: namespace});
+
+    const selector = service.spec?.selector;
+    if (!selector || Object.keys(selector).length === 0) {
+        return `Service "${serviceName}" in namespace "${namespace}" has no selector.`
+    }
+
+    // Convert selector to label query string
+    const labelSelector = Object.entries(selector)
+        .map(([key, val]) => `${key}=${val}`)
+        .join(',');
+
+    // Get the matching Pods
+    const podsResp = await coreV1.listNamespacedPod({namespace, labelSelector}, {});
+    const pods = podsResp.items;
+
+    if (pods.length === 0) {
+        return "No logs available for service.";
+    }
+
+    const logs: string[] = [];
+    // Get logs for each Pod
+    for (const pod of pods) {
+        const podName = pod.metadata?.name;
+        if (!podName) continue;
+
+        logs.push(await coreV1.readNamespacedPodLog({name: podName, namespace}))
+    }
+
+    return logs.join("\n");
 }
 
 const deleteK8RPod = async (_provider: Provider, podName: string, namespace: string): Promise<void> => {
