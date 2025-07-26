@@ -90,7 +90,7 @@ export interface DiscoveredService {
     namespace?: string;
 }
 
-export type DiscoveredPod = {
+export interface DiscoveredPod {
     name: string;
 }
 
