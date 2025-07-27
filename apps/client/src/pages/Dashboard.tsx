@@ -14,12 +14,6 @@ import { Alert } from "@service-peek/shared"
 
 
 const Dashboard = () => {
-    useEffect(() => {
-        if (!localStorage.getItem('jwt')) {
-            window.location.href = '/login';
-        }
-    }, []);
-    
     const {toast} = useToast()
     
     // React Query hooks for data fetching

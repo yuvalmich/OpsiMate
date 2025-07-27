@@ -5,6 +5,7 @@ export * from './providers';
 export * from './tags';
 export * from './integrations';
 export * from './views';
+export * from './users';
 export * from './audit';
 
 // Export query keys

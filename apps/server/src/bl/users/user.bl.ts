@@ -58,6 +58,7 @@ export class UserBL {
      */
     async usersExist(): Promise<boolean> {
         const count = await this.userRepo.countUsers();
+        console.error('count', count);
         return count > 0;
     }
 } 
