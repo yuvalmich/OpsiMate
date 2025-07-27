@@ -78,9 +78,6 @@ const Login: React.FC = () => {
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Logging in...' : 'Login'}
         </Button>
-        <div className="mt-4 text-center">
-          <a href="/register" className="text-blue-600 hover:underline text-sm">Don't have an account? Register</a>
-        </div>
       </form>
     </div>
   );
