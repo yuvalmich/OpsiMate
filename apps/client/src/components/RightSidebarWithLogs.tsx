@@ -5,7 +5,19 @@ import { useToast } from "@/hooks/use-toast";
 import { providerApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Alert, Tag } from "@service-peek/shared";
-import { Activity, AlertTriangle, ChevronDown, ChevronRight, ExternalLink, FileText, RefreshCw, Server, Tag as TagIcon, X } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  Package,
+  RefreshCw,
+  Server,
+  Tag as TagIcon,
+  X
+} from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { AlertsSection } from "./AlertsSection";
 import { IntegrationDashboardDropdown } from "./IntegrationDashboardDropdown";
@@ -24,6 +36,7 @@ interface RightSidebarProps {
 export const RightSidebarWithLogs = memo(function RightSidebarWithLogs({ service, onClose, collapsed, onServiceUpdate, alerts = [], onAlertDismiss }: RightSidebarProps) {
   const { toast } = useToast();
   const [logs, setLogs] = useState<string[]>([]);
+  const [pods, setPods] = useState<{ name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [serviceTags, setServiceTags] = useState<Tag[]>(service?.tags || []);
@@ -34,7 +47,8 @@ export const RightSidebarWithLogs = memo(function RightSidebarWithLogs({ service
     alerts: false, // Collapsed by default
     externalLinks: false, // Collapsed by default
     logs: false, // Collapsed by default
-    tags: false // Collapsed by default
+    tags: false, // Collapsed by default
+    pods: false // Collapsed by default
   });
 
   // Toggle section open/closed state
@@ -68,6 +82,37 @@ export const RightSidebarWithLogs = memo(function RightSidebarWithLogs({ service
       setError(errorMessage);
       toast({
         title: "Error fetching logs",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [service, toast]);
+
+  const fetchPods = useCallback(async () => {
+    if (!service) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await providerApi.getServicePods(parseInt(service.id));
+
+      if (response.success && response.data) {
+          setPods(response.data);
+      } else {
+        setError(response.error || "Failed to fetch pods");
+        toast({
+          title: "Error fetching pods",
+          description: response.error || "Failed to fetch pods",
+          variant: "destructive"
+        });
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+      setError(errorMessage);
+      toast({
+        title: "Error fetching pods",
         description: errorMessage,
         variant: "destructive"
       });
@@ -366,6 +411,45 @@ export const RightSidebarWithLogs = memo(function RightSidebarWithLogs({ service
                 <div className="bg-muted rounded-md p-3 overflow-auto max-h-[200px] border">
                   <pre className="text-xs font-mono whitespace-pre-wrap text-foreground">
                     {logs.join('\n')}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          {/* Service Pods Section */}
+          <CollapsibleSection
+            title="Service Pods"
+            icon={Package}
+            isOpen={sectionsOpen.pods}
+            onToggle={() => fetchPods() && toggleSection('pods') }
+          >
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-muted-foreground text-xs">Pods List</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={fetchPods}
+                  disabled={loading}
+                  className="h-6 w-6 p-0"
+                >
+                  <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+
+              {loading ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-pulse text-muted-foreground text-xs">Loading pods...</div>
+                </div>
+              ) : error ? (
+                <div className="text-red-500 py-2 text-xs bg-red-50 rounded p-2">{error}</div>
+              ) : logs.length === 0 ? (
+                <div className="text-muted-foreground py-2 text-xs bg-muted/30 rounded p-2 text-center">No pods available</div>
+              ) : (
+                <div className="bg-muted rounded-md p-3 overflow-auto max-h-[200px] border">
+                  <pre className="text-xs font-mono whitespace-pre-wrap text-foreground">
+                   {pods.map(i=>i.name).join( "\n")}
                   </pre>
                 </div>
               )}

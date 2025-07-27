@@ -49,8 +49,11 @@ const Register: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-md w-80">
-        <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+      <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-md w-80 min-w-[350px]">
+        <h2 className="text-2xl font-bold mb-6 text-center">Create First Admin User</h2>
+        <p className="text-sm text-gray-600 mb-6 text-center">
+          This will be the first user in the system with admin privileges.
+        </p>
         <div className="mb-4">
           <Input
             type="email"
@@ -83,11 +86,8 @@ const Register: React.FC = () => {
         </div>
         {generalError && <ErrorAlert message={generalError} className="mb-4" />}
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Registering...' : 'Register'}
+          {loading ? 'Creating Admin User...' : 'Create Admin User'}
         </Button>
-        <div className="mt-4 text-center">
-          <a href="/login" className="text-blue-600 hover:underline text-sm">Already have an account? Login</a>
-        </div>
       </form>
     </div>
   );

@@ -40,7 +40,7 @@ async function apiRequest<T>(
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API Error (${response.status}):`, errorText);
-      
+
       // Try to parse the error as JSON to handle validation errors properly
       try {
         const errorJson = JSON.parse(errorText);
@@ -286,6 +286,13 @@ export const providerApi = {
     return apiRequest<string[]>(`/services/${serviceId}/logs`, 'GET');
   },
 
+  // Get service logs
+  getServicePods: (serviceId: number) => {
+    console.log('API getServicePods called with ID:', serviceId);
+    // Make sure we're using the correct path
+    return apiRequest<{ name: string }[]>(`/services/${serviceId}/pods`, 'GET');
+  },
+
   // Tag APIs
 
   // Get all tags
@@ -453,11 +460,11 @@ export const alertsApi = {
   async getAlertsByTags(tags: string[]): Promise<ApiResponse<{ alerts: SharedAlert[] }>> {
     const response = await this.getAllAlerts();
     if (response.success && response.data) {
-      const filteredAlerts = response.data.alerts.filter(alert => 
+      const filteredAlerts = response.data.alerts.filter(alert =>
         tags.includes(alert.tag)
       );
       // Remove duplicates
-      const uniqueAlerts = filteredAlerts.filter((alert, index, self) => 
+      const uniqueAlerts = filteredAlerts.filter((alert, index, self) =>
         index === self.findIndex(a => a.id === alert.id)
       );
       return {
