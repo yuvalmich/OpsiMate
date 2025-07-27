@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
 import { AppIcon } from "./icons/AppIcon"
 import { ThemeButton } from "./ThemeButton"
-import { LogoutButton } from "./LogoutButton"
+import { ProfileButton } from "./ProfileButton"
 import { isAdmin } from "../lib/auth"
 
 interface LeftSidebarProps {
@@ -97,7 +97,7 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
               variant={location.pathname === "/settings" ? "default" : "ghost"}
               className={cn(
                 "gap-3 h-10 items-center", 
-                collapsed ? "w-10 justify-center p-0" : "w-full justify-center px-3",
+                collapsed ? "w-10 justify-center p-0" : "w-full justify-start px-3",
                 location.pathname === "/settings" && "text-primary-foreground"
               )}
               asChild
@@ -108,13 +108,7 @@ export function LeftSidebar({ collapsed }: LeftSidebarProps) {
               </Link>
             </Button>
           )}
-          <LogoutButton 
-            collapsed={collapsed} 
-            onLogout={() => {
-              localStorage.removeItem('jwt');
-              window.location.href = '/login';
-            }} 
-          />
+          <ProfileButton collapsed={collapsed} />
         </div>
         <p className={cn("text-xs text-muted-foreground", collapsed && "sr-only")}>© 2024 OpsiMate</p>
       </div>
