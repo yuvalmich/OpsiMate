@@ -36,38 +36,6 @@ const providers: Provider[] = [
     description: "Connect to a Kubernetes cluster using kubeconfig",
     icon: <Globe className="h-6 w-6" />,
     category: "kubernetes"
-  },
-  {
-    id: "aws-ec2",
-    type: "aws-ec2",
-    name: "AWS EC2",
-    description: "Connect to Amazon EC2 instances",
-    icon: <Cloud className="h-6 w-6" />,
-    category: "cloud"
-  },
-  {
-    id: "aws-eks",
-    type: "aws-eks",
-    name: "AWS EKS",
-    description: "Connect to Amazon Elastic Kubernetes Service",
-    icon: <Cloud className="h-6 w-6" />,
-    category: "cloud"
-  },
-  {
-    id: "gcp-compute",
-    type: "gcp-compute",
-    name: "GCP Compute",
-    description: "Connect to Google Cloud Platform Compute instances",
-    icon: <Cloud className="h-6 w-6" />,
-    category: "cloud"
-  },
-  {
-    id: "azure-vm",
-    type: "azure-vm",
-    name: "Azure VM",
-    description: "Connect to Microsoft Azure Virtual Machines",
-    icon: <Cloud className="h-6 w-6" />,
-    category: "cloud"
   }
 ];
 
@@ -97,7 +65,6 @@ export function Providers() {
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="server">Servers</TabsTrigger>
           <TabsTrigger value="kubernetes">Kubernetes</TabsTrigger>
-          <TabsTrigger value="cloud">Cloud Services</TabsTrigger>
         </TabsList>
         <TabsContent value={activeTab} className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
