@@ -6,3 +6,4 @@ export { default as NotFound } from "./NotFound";
 export { default as Providers } from "./Providers";
 export { default as Register } from "./Register";
 export { default as Settings } from "./Settings";
+export { default as Alerts } from "./Alerts";
