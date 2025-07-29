@@ -224,6 +224,72 @@ describe('Alerts API', () => {
     });
   });
 
+  describe('PATCH /api/v1/alerts/:id/undismiss', () => {
+    test('should undismiss a dismissed alert successfully', async () => {
+      const alertId = testAlerts[2].id; // 'alert-3' (already dismissed)
+
+      const response = await app.patch(`/api/v1/alerts/${alertId}/undismiss`).set('Authorization', `Bearer ${jwtToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data?.alert.isDismissed).toBe(false);
+      expect(response.body.data?.alert.id).toBe(alertId);
+    });
+
+    test('should update the database when undismissing an alert', async () => {
+      const alertId = testAlerts[2].id; // 'alert-3' (already dismissed)
+
+      // Verify initial state
+      const beforeStmt = db.prepare('SELECT is_dismissed FROM alerts WHERE id = ?');
+      const beforeResult = beforeStmt.get(alertId) as { is_dismissed: number };
+      expect(beforeResult.is_dismissed).toBe(1);
+
+      // Undismiss the alert
+      await app.patch(`/api/v1/alerts/${alertId}/undismiss`).set('Authorization', `Bearer ${jwtToken}`);
+
+      // Verify updated state
+      const afterStmt = db.prepare('SELECT is_dismissed FROM alerts WHERE id = ?');
+      const afterResult = afterStmt.get(alertId) as { is_dismissed: number };
+      expect(afterResult.is_dismissed).toBe(0);
+    });
+
+    test('should handle undismissing an already active alert', async () => {
+      const alertId = testAlerts[0].id; // 'alert-1' (not dismissed)
+
+      const response = await app.patch(`/api/v1/alerts/${alertId}/undismiss`).set('Authorization', `Bearer ${jwtToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data?.alert.isDismissed).toBe(false);
+    });
+
+    test('should return 404 for non-existent alert', async () => {
+      const response = await app.patch('/api/v1/alerts/nonexistent-id-123/undismiss').set('Authorization', `Bearer ${jwtToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('should handle dismiss and undismiss cycle correctly', async () => {
+      const alertId = testAlerts[0].id; // 'alert-1'
+
+      // First dismiss the alert
+      const dismissResponse = await app.patch(`/api/v1/alerts/${alertId}/dismiss`).set('Authorization', `Bearer ${jwtToken}`);
+      expect(dismissResponse.status).toBe(200);
+      expect(dismissResponse.body.data?.alert.isDismissed).toBe(true);
+
+      // Then undismiss the alert
+      const undismissResponse = await app.patch(`/api/v1/alerts/${alertId}/undismiss`).set('Authorization', `Bearer ${jwtToken}`);
+      expect(undismissResponse.status).toBe(200);
+      expect(undismissResponse.body.data?.alert.isDismissed).toBe(false);
+
+      // Verify final state in database
+      const finalStmt = db.prepare('SELECT is_dismissed FROM alerts WHERE id = ?');
+      const finalResult = finalStmt.get(alertId) as { is_dismissed: number };
+      expect(finalResult.is_dismissed).toBe(0);
+    });
+  });
+
   describe('Edge cases and error handling', () => {
     test('should handle malformed requests gracefully', async () => {
       const response = await app.get('/api/v1/alerts/invalid-endpoint').set('Authorization', `Bearer ${jwtToken}`);

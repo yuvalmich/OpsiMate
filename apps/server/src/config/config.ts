@@ -61,7 +61,7 @@ function getDefaultConfig(): ServicePeekConfig {
             api_url: 'http://localhost:3001/api/v1'
         },
         database: {
-            path: '../../service_peek.db'
+            path: '../../data/service_peek.db'
         },
         security: {
             private_keys_path: 'apps/server/data/private-keys'

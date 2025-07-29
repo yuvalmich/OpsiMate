@@ -52,6 +52,7 @@ import {
 
 interface Integration {
   id: string;
+  supported: boolean;
   name: string;
   description: string;
   logo: string;
@@ -69,6 +70,7 @@ interface Integration {
 const INTEGRATIONS: Integration[] = [
   {
     id: 'grafana',
+    supported: true,
     name: 'Grafana',
     description: 'Open source analytics & monitoring solution for every database.',
     logo: 'https://grafana.com/static/img/menu/grafana2.svg',
@@ -80,6 +82,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: 'kibana',
+    supported: true,
     name: 'Kibana',
     description: 'Visualize and explore data from Elasticsearch.',
     logo: 'https://static-www.elastic.co/v3/assets/bltefdd0b53724fa2ce/blt8781708f8f37ed16/5c11ec2edf09df047814db23/logo-elastic-kibana-lt.svg',
@@ -91,6 +94,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: 'datadog',
+    supported: true,
     name: 'Datadog',
     description: 'Cloud monitoring and analytics platform for infrastructure, applications, and logs.',
     logo: 'https://imgix.datadoghq.com/img/dd_logo_n_70x75.png',
@@ -103,9 +107,10 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: 'prometheus',
+    supported: false,
     name: 'Prometheus',
     description: 'Open-source systems monitoring and alerting toolkit.',
-    logo: 'https://prometheus.io/assets/prometheus_logo_orange_circle.svg',
+    logo: 'https://icon.icepanel.io/Technology/svg/Prometheus.svg',
     tags: ['Monitoring', 'Metrics', 'Alerts'],
     configFields: [
       { name: 'url', label: 'Prometheus URL', type: 'text', placeholder: 'http://prometheus:9090', required: true },
@@ -113,9 +118,10 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: 'coralogix',
+    supported: false,
     name: 'Coralogix',
     description: 'Log analytics platform powered by machine learning.',
-    logo: 'https://coralogix.com/wp-content/uploads/2021/06/Coralogix-Logo-White-1024x187.png',
+    logo: 'https://cdn.brandfetch.io/idCh7aU0wN/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1667744703603',
     tags: ['Logging', 'Analytics', 'Monitoring'],
     configFields: [
       { name: 'apiKey', label: 'API Key', type: 'password', required: true },
@@ -125,6 +131,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: 'loki',
+    supported: false,
     name: 'Loki',
     description: 'Horizontally-scalable, highly-available log aggregation system.',
     logo: 'https://grafana.com/static/img/logos/logo-loki.svg',
@@ -135,9 +142,10 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: 'victoriaMetrics',
+    supported: false,
     name: 'VictoriaMetrics',
     description: 'Fast, cost-effective and scalable time series database.',
-    logo: 'https://victoriametrics.com/assets/images/vm_logo.svg',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c6/VictoriaMetrics_logo.svg',
     tags: ['Metrics', 'Monitoring', 'Storage'],
     configFields: [
       { name: 'url', label: 'VictoriaMetrics URL', type: 'text', placeholder: 'http://victoria-metrics:8428', required: true },
@@ -145,9 +153,10 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: 'cloudwatch',
+    supported: false,
     name: 'AWS CloudWatch',
     description: 'Monitoring and observability service for AWS resources.',
-    logo: 'https://d1.awsstatic.com/product-marketing/CloudWatch/product-page-diagram_CloudWatch_how-it-works.d2f51f6e3ec3ea3663536d4f1c0d2ea7b33cf32e.png',
+    logo: 'https://icon.icepanel.io/AWS/svg/Management-Governance/CloudWatch.svg',
     tags: ['Monitoring', 'Metrics', 'Logs', 'AWS'],
     configFields: [
       { name: 'accessKeyId', label: 'AWS Access Key ID', type: 'text', required: true },
@@ -158,6 +167,7 @@ const INTEGRATIONS: Integration[] = [
   // Removed duplicate datadog entry
   {
     id: 'newrelic',
+    supported: false,
     name: 'New Relic',
     description: 'Observability platform built to help engineers create perfect software.',
     logo: 'https://newrelic.com/themes/custom/erno/assets/mediakit/new_relic_logo_vertical.svg',
@@ -173,58 +183,58 @@ const ALL_TAGS = Array.from(new Set(INTEGRATIONS.flatMap(integration => integrat
 
 // Tag color mapping
 const TAG_COLORS: Record<string, { bg: string, text: string, icon: React.ReactNode }> = {
-  'Monitoring': { 
-    bg: 'bg-blue-100 dark:bg-blue-900/40', 
+  'Monitoring': {
+    bg: 'bg-blue-100 dark:bg-blue-900/40',
     text: 'text-blue-700 dark:text-blue-300',
     icon: <Activity className="h-3 w-3 mr-1" />
   },
-  'Visualization': { 
-    bg: 'bg-purple-100 dark:bg-purple-900/40', 
+  'Visualization': {
+    bg: 'bg-purple-100 dark:bg-purple-900/40',
     text: 'text-purple-700 dark:text-purple-300',
     icon: <BarChart3 className="h-3 w-3 mr-1" />
   },
-  'Alerts': { 
-    bg: 'bg-red-100 dark:bg-red-900/40', 
+  'Alerts': {
+    bg: 'bg-red-100 dark:bg-red-900/40',
     text: 'text-red-700 dark:text-red-300',
     icon: <Bell className="h-3 w-3 mr-1" />
   },
-  'Metrics': { 
-    bg: 'bg-green-100 dark:bg-green-900/40', 
+  'Metrics': {
+    bg: 'bg-green-100 dark:bg-green-900/40',
     text: 'text-green-700 dark:text-green-300',
     icon: <LineChart className="h-3 w-3 mr-1" />
   },
-  'Logging': { 
-    bg: 'bg-yellow-100 dark:bg-yellow-900/40', 
+  'Logging': {
+    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
     text: 'text-yellow-700 dark:text-yellow-300',
     icon: <FileText className="h-3 w-3 mr-1" />
   },
-  'Analytics': { 
-    bg: 'bg-indigo-100 dark:bg-indigo-900/40', 
+  'Analytics': {
+    bg: 'bg-indigo-100 dark:bg-indigo-900/40',
     text: 'text-indigo-700 dark:text-indigo-300',
     icon: <Eye className="h-3 w-3 mr-1" />
   },
-  'Storage': { 
-    bg: 'bg-pink-100 dark:bg-pink-900/40', 
+  'Storage': {
+    bg: 'bg-pink-100 dark:bg-pink-900/40',
     text: 'text-pink-700 dark:text-pink-300',
     icon: <Database className="h-3 w-3 mr-1" />
   },
-  'AWS': { 
-    bg: 'bg-orange-100 dark:bg-orange-900/40', 
+  'AWS': {
+    bg: 'bg-orange-100 dark:bg-orange-900/40',
     text: 'text-orange-700 dark:text-orange-300',
     icon: <Cloud className="h-3 w-3 mr-1" />
   },
-  'APM': { 
-    bg: 'bg-cyan-100 dark:bg-cyan-900/40', 
+  'APM': {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/40',
     text: 'text-cyan-700 dark:text-cyan-300',
     icon: <Activity className="h-3 w-3 mr-1" />
   },
-  'Logs': { 
-    bg: 'bg-amber-100 dark:bg-amber-900/40', 
+  'Logs': {
+    bg: 'bg-amber-100 dark:bg-amber-900/40',
     text: 'text-amber-700 dark:text-amber-300',
     icon: <FileText className="h-3 w-3 mr-1" />
   },
-  'Observability': { 
-    bg: 'bg-teal-100 dark:bg-teal-900/40', 
+  'Observability': {
+    bg: 'bg-teal-100 dark:bg-teal-900/40',
     text: 'text-teal-700 dark:text-teal-300',
     icon: <Eye className="h-3 w-3 mr-1" />
   },
@@ -242,7 +252,7 @@ export default function Integrations() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [integrationToDelete, setIntegrationToDelete] = useState<any>(null);
   const { toast } = useToast();
-  
+
   // Fetch saved integrations on component mount
   useEffect(() => {
     const fetchIntegrations = async () => {
@@ -250,7 +260,7 @@ export default function Integrations() {
         const response = await integrationApi.getIntegrations();
         if (response.success && response.data?.integrations) {
           setSavedIntegrations(response.data.integrations);
-          
+
           // Update configured instances based on saved integrations
           const instances: Record<string, number> = {};
           response.data.integrations.forEach(integration => {
@@ -269,26 +279,26 @@ export default function Integrations() {
         console.error('Failed to fetch integrations:', error);
       }
     };
-    
+
     fetchIntegrations();
   }, []);
 
   const filteredIntegrations = useMemo(() => {
     return INTEGRATIONS.filter(integration => {
-      const matchesSearch = integration.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      const matchesSearch = integration.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            integration.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesTags = selectedTags.length === 0 || 
+
+      const matchesTags = selectedTags.length === 0 ||
                          selectedTags.every(tag => integration.tags.includes(tag));
-      
+
       return matchesSearch && matchesTags;
     });
   }, [searchQuery, selectedTags]);
 
   const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag) 
+    setSelectedTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
         : [...prev, tag]
     );
   };
@@ -307,7 +317,7 @@ export default function Integrations() {
             <span>Request Integration</span>
           </Button>
         </div>
-        
+
         <div className="bg-card rounded-lg border shadow-sm p-6">
           <div className="flex flex-col gap-5">
             <div className="flex gap-4 items-center">
@@ -321,15 +331,15 @@ export default function Integrations() {
                 />
               </div>
             </div>
-            
+
             <Separator />
-            
+
             <div>
               <h3 className="text-sm font-medium mb-3">Filter by category</h3>
               <div className="flex flex-wrap gap-2">
                 {ALL_TAGS.map(tag => (
-                  <Badge 
-                    key={tag} 
+                  <Badge
+                    key={tag}
                     variant={selectedTags.includes(tag) ? "default" : "outline"}
                     className={cn(
                       "cursor-pointer transition-all hover:shadow-sm",
@@ -341,8 +351,8 @@ export default function Integrations() {
                   </Badge>
                 ))}
                 {selectedTags.length > 0 && (
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className="cursor-pointer flex items-center gap-1 hover:bg-accent transition-all"
                     onClick={() => setSelectedTags([])}
                   >
@@ -353,18 +363,18 @@ export default function Integrations() {
             </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredIntegrations.map(integration => (
-            <Card 
-              key={integration.id} 
+            <Card
+              key={integration.id}
               className={cn(
                 "transition-all duration-200 overflow-hidden",
-                hoveredCard === integration.id && configuredInstances[integration.id] && configuredInstances[integration.id] > 0 
-                  ? "border-primary shadow-md" 
+                hoveredCard === integration.id && configuredInstances[integration.id] && configuredInstances[integration.id] > 0
+                  ? "border-primary shadow-md"
                   : "",
-                configuredInstances[integration.id] && configuredInstances[integration.id] > 0 
-                  ? "border-muted/60 hover:shadow-md" 
+                configuredInstances[integration.id] && configuredInstances[integration.id] > 0
+                  ? "border-muted/60 hover:shadow-md"
                   : "border-muted/20 bg-gray-100 dark:bg-gray-800/40"
               )}
               onMouseEnter={() => setHoveredCard(integration.id)}
@@ -372,45 +382,50 @@ export default function Integrations() {
             >
               <CardHeader className={cn(
                 "pb-2",
-                configuredInstances[integration.id] && configuredInstances[integration.id] > 0 
-                  ? "" 
+                configuredInstances[integration.id] && configuredInstances[integration.id] > 0
+                  ? ""
                   : "opacity-75"
               )}>
+                {!integration.supported && (
+                    <div className="text-center bg-yellow-100 text-yellow-800 text-xs font-medium py-1 border-b border-yellow-300">
+                      🚧 Coming Soon
+                    </div>
+                )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "h-10 w-10 rounded-md overflow-hidden border flex items-center justify-center",
-                      configuredInstances[integration.id] && configuredInstances[integration.id] > 0 
-                        ? "bg-background" 
+                      configuredInstances[integration.id] && configuredInstances[integration.id] > 0
+                        ? "bg-background"
                         : "bg-gray-200 dark:bg-gray-700"
                     )}>
-                      <img 
-                        src={integration.logo} 
-                        alt={`${integration.name} logo`} 
+                      <img
+                        src={integration.logo}
+                        alt={`${integration.name} logo`}
                         className={cn(
                           "h-8 w-8 object-contain",
-                          configuredInstances[integration.id] && configuredInstances[integration.id] > 0 
-                            ? "" 
+                          configuredInstances[integration.id] && configuredInstances[integration.id] > 0
+                            ? ""
                             : "opacity-50 grayscale"
                         )}
                       />
                     </div>
                     <CardTitle className="text-base">{integration.name}</CardTitle>
                   </div>
+                  <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full h-8 w-8"
+                      onClick={() => window.open(`https://www.google.com/search?q=${integration.name}`, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full h-8 w-8"
-                  onClick={() => window.open(`https://www.google.com/search?q=${integration.name}`, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
               </CardHeader>
               <CardContent className={cn(
                 "pb-2",
-                configuredInstances[integration.id] && configuredInstances[integration.id] > 0 
-                  ? "" 
+                configuredInstances[integration.id] && configuredInstances[integration.id] > 0
+                  ? ""
                   : "opacity-75"
               )}>
                 <CardDescription className="line-clamp-2 text-sm">
@@ -418,15 +433,15 @@ export default function Integrations() {
                 </CardDescription>
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {integration.tags.map(tag => (
-                    <Badge 
-                      key={tag} 
-                      variant="outline" 
+                    <Badge
+                      key={tag}
+                      variant="outline"
                       className={cn(
                         "text-xs px-2 py-0.5 flex items-center",
-                        configuredInstances[integration.id] && configuredInstances[integration.id] > 0 
+                        configuredInstances[integration.id] && configuredInstances[integration.id] > 0
                           ? TAG_COLORS[tag]?.bg || "bg-gray-100 dark:bg-gray-800"
                           : "bg-gray-200 dark:bg-gray-700",
-                        configuredInstances[integration.id] && configuredInstances[integration.id] > 0 
+                        configuredInstances[integration.id] && configuredInstances[integration.id] > 0
                           ? TAG_COLORS[tag]?.text || "text-gray-700 dark:text-gray-300"
                           : "text-gray-500 dark:text-gray-400"
                       )}
@@ -438,7 +453,8 @@ export default function Integrations() {
                 </div>
               </CardContent>
               <CardFooter className="pt-2 flex gap-2">
-                <Button 
+                <Button
+                    disabled={!integration.supported}
                   variant={configuredInstances[integration.id] && configuredInstances[integration.id] > 0 ? "default" : "secondary"}
                   className={cn(
                     "w-full transition-all",
@@ -450,7 +466,7 @@ export default function Integrations() {
                     const existingIntegration = savedIntegrations.find(
                       integration2 => integration2.type === integration.id.charAt(0).toUpperCase() + integration.id.slice(1)
                     );
-                    
+
                     // If integration exists, pre-fill form data
                     if (existingIntegration) {
                       // Handle different credential formats based on integration type
@@ -471,11 +487,11 @@ export default function Integrations() {
                       // Clear form data for new integration
                       setFormData({});
                     }
-                    
+
                     setSelectedIntegration(integration);
                   }}
-                  title={configuredInstances[integration.id] && configuredInstances[integration.id] > 0 ? 
-                    `Configure ${integration.name} integration` : 
+                  title={configuredInstances[integration.id] && configuredInstances[integration.id] > 0 ?
+                    `Configure ${integration.name} integration` :
                     `Add ${integration.name} integration`}
                 >
                   <Settings className="mr-2 h-4 w-4" />
@@ -495,12 +511,12 @@ export default function Integrations() {
               )}
             </Card>
           ))}
-          
+
           {filteredIntegrations.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center p-8 text-center">
               <p className="text-muted-foreground">No integrations found matching your criteria.</p>
-              <Button 
-                variant="link" 
+              <Button
+                variant="link"
                 onClick={() => {
                   setSearchQuery('');
                   setSelectedTags([]);
@@ -512,7 +528,7 @@ export default function Integrations() {
           )}
         </div>
       </div>
-      
+
       <Sheet open={!!selectedIntegration} onOpenChange={(open) => !open && setSelectedIntegration(null)}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           {selectedIntegration && (
@@ -520,16 +536,16 @@ export default function Integrations() {
               <SheetHeader className="pb-6">
                 <div className="flex items-center gap-4">
                   <div className="h-16 w-16 overflow-hidden flex items-center justify-center bg-muted rounded-lg p-2 border">
-                    <img 
-                      src={selectedIntegration.logo} 
-                      alt={`${selectedIntegration.name} logo`} 
-                      className="max-h-12 max-w-12 object-contain" 
+                    <img
+                      src={selectedIntegration.logo}
+                      alt={`${selectedIntegration.name} logo`}
+                      className="max-h-12 max-w-12 object-contain"
                     />
                   </div>
                   <div>
                     <SheetTitle>
-                      {configuredInstances[selectedIntegration.id] && configuredInstances[selectedIntegration.id] > 0 
-                        ? `Configure ${selectedIntegration.name} Integration` 
+                      {configuredInstances[selectedIntegration.id] && configuredInstances[selectedIntegration.id] > 0
+                        ? `Configure ${selectedIntegration.name} Integration`
                         : `Add ${selectedIntegration.name} Integration`
                       }
                     </SheetTitle>
@@ -540,13 +556,13 @@ export default function Integrations() {
                   </div>
                 </div>
                 <SheetDescription className="mt-4">
-                  {configuredInstances[selectedIntegration.id] && configuredInstances[selectedIntegration.id] > 0 
-                    ? `Update your ${selectedIntegration.name} integration settings or remove the integration.` 
+                  {configuredInstances[selectedIntegration.id] && configuredInstances[selectedIntegration.id] > 0
+                    ? `Update your ${selectedIntegration.name} integration settings or remove the integration.`
                     : selectedIntegration.description
                   }
                 </SheetDescription>
               </SheetHeader>
-              
+
               <Tabs defaultValue="configuration" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="configuration" className="flex items-center gap-2">
@@ -558,7 +574,7 @@ export default function Integrations() {
                     About
                   </TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="configuration" className="space-y-6 py-4">
                   <div className="bg-muted/50 rounded-lg p-4 border border-muted">
                     <div className="flex items-start gap-3">
@@ -569,18 +585,18 @@ export default function Integrations() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <form className="space-y-5" onSubmit={async (e) => {
                     e.preventDefault();
                     if (!selectedIntegration) return;
-                    
+
                     setIsSubmitting(true);
                     try {
                       // Check if an integration of this type already exists
                       const existingIntegration = savedIntegrations.find(
                         integration => integration.type === selectedIntegration.id.charAt(0).toUpperCase() + selectedIntegration.id.slice(1)
                       );
-                      
+
                       // Map integration id to the correct IntegrationType
                       const typeMapping = {
                         'grafana': IntegrationType.Grafana,
@@ -588,10 +604,10 @@ export default function Integrations() {
                         'datadog': IntegrationType.Datadog,
                         // Add other integration types as needed
                       };
-                      
+
                       // Prepare the integration data
                       let credentials = {};
-                      
+
                       // Handle different credential formats based on integration type
                       if (selectedIntegration.id === 'datadog') {
                         credentials = {
@@ -604,20 +620,20 @@ export default function Integrations() {
                           apiKey: formData.apiKey || ''
                         };
                       }
-                      
+
                       const integrationData = {
                         name: selectedIntegration.name,
                         type: typeMapping[selectedIntegration.id as keyof typeof typeMapping] || IntegrationType.Grafana,
                         externalUrl: formData.url || '',
                         credentials
                       };
-                      
+
                       let response;
-                      
+
                       if (existingIntegration) {
                         // Update existing integration
                         response = await integrationApi.updateIntegration(existingIntegration.id, integrationData);
-                        
+
                         if (response.success) {
                           toast({
                             title: 'Integration updated',
@@ -633,13 +649,13 @@ export default function Integrations() {
                       } else {
                         // Create new integration
                         response = await integrationApi.createIntegration(integrationData);
-                        
+
                         if (response.success) {
                           toast({
                             title: 'Integration created',
                             description: `${selectedIntegration.name} integration has been successfully created.`,
                           });
-                          
+
                           // Update configured instances
                           setConfiguredInstances(prev => ({
                             ...prev,
@@ -653,14 +669,14 @@ export default function Integrations() {
                           });
                         }
                       }
-                      
+
                       if (response.success) {
                         // Fetch updated integrations
                         const updatedIntegrations = await integrationApi.getIntegrations();
                         if (updatedIntegrations.success && updatedIntegrations.data?.integrations) {
                           setSavedIntegrations(updatedIntegrations.data.integrations);
                         }
-                        
+
                         // Close the sheet
                         setSelectedIntegration(null);
                       }
@@ -681,7 +697,7 @@ export default function Integrations() {
                           {field.label} {field.required && <span className="text-destructive">*</span>}
                         </label>
                         {field.type === 'select' ? (
-                          <select 
+                          <select
                             id={`${selectedIntegration.id}-${field.name}`}
                             name={field.name}
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -697,7 +713,7 @@ export default function Integrations() {
                             ))}
                           </select>
                         ) : (
-                          <Input 
+                          <Input
                             id={`${selectedIntegration.id}-${field.name}`}
                             name={field.name}
                             type={field.type}
@@ -711,22 +727,22 @@ export default function Integrations() {
                         )}
                       </div>
                     ))}
-                    
+
                     <div className="pt-4 space-y-3">
                       <div className="flex justify-between mt-6">
                       {/* Delete button - only show for existing integrations */}
                       {canDelete() && savedIntegrations.find(
                         integration => integration.type === selectedIntegration.id.charAt(0).toUpperCase() + selectedIntegration.id.slice(1)
                       ) && (
-                        <Button 
-                          type="button" 
+                        <Button
+                          type="button"
                           variant="destructive"
                           disabled={isSubmitting}
                           onClick={() => {
                             const existingIntegration = savedIntegrations.find(
                               integration => integration.type === selectedIntegration.id.charAt(0).toUpperCase() + selectedIntegration.id.slice(1)
                             );
-                            
+
                             if (!existingIntegration) {
                               toast({
                                 title: 'Error',
@@ -735,7 +751,7 @@ export default function Integrations() {
                               });
                               return;
                             }
-                            
+
                             setIntegrationToDelete(existingIntegration);
                             setDeleteDialogOpen(true);
                           }}
@@ -750,7 +766,7 @@ export default function Integrations() {
                           )}
                         </Button>
                       )}
-                      
+
                       {canManageIntegrations() ? (
                         <Button type="submit" disabled={isSubmitting}>
                           {isSubmitting ? (
@@ -774,7 +790,7 @@ export default function Integrations() {
                     </div>
                   </form>
                 </TabsContent>
-                
+
                 <TabsContent value="about" className="space-y-6 py-4">
                   <div className="space-y-5">
                     <div>
@@ -783,15 +799,15 @@ export default function Integrations() {
                         {selectedIntegration.description}
                       </p>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <h4 className="text-sm font-medium mb-3">Features</h4>
                       <div className="grid grid-cols-2 gap-3">
                         {selectedIntegration.tags.map(tag => (
-                          <div 
-                            key={tag} 
+                          <div
+                            key={tag}
                             className={cn(
                               "flex items-center gap-2 p-2 rounded-md border",
                               TAG_COLORS[tag]?.bg || "bg-muted/50",
@@ -804,9 +820,9 @@ export default function Integrations() {
                         ))}
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <h4 className="text-sm font-medium mb-3">Documentation</h4>
                       <Button variant="outline" className="w-full justify-start gap-2">
@@ -837,30 +853,30 @@ export default function Integrations() {
             <AlertDialogAction
               onClick={async () => {
                 if (!integrationToDelete) return;
-                
+
                 setIsSubmitting(true);
                 try {
                   const response = await integrationApi.deleteIntegration(integrationToDelete.id);
-                  
+
                   if (response.success) {
                     toast({
                       title: 'Integration deleted',
                       description: `${integrationToDelete.type} integration has been successfully deleted.`,
                     });
-                    
+
                     // Update configured instances
                     const integrationType = integrationToDelete.type.toLowerCase();
                     setConfiguredInstances(prev => ({
                       ...prev,
                       [integrationType]: 0
                     }));
-                    
+
                     // Fetch updated integrations
                     const updatedIntegrations = await integrationApi.getIntegrations();
                     if (updatedIntegrations.success && updatedIntegrations.data?.integrations) {
                       setSavedIntegrations(updatedIntegrations.data.integrations);
                     }
-                    
+
                     // Close the sheet
                     setSelectedIntegration(null);
                   } else {
