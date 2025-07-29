@@ -48,10 +48,11 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
   const { toast } = useToast();
   
   // For Kubernetes providers, we only show the container tab (which shows pods)
-  // For other providers, we default to container tab (removed manual)
-  const [activeTab, setActiveTab] = useState<"container" | "systemd">(isKubernetes ? "container" : "container");
+  // For other providers, we default to manual tab
+  const [activeTab, setActiveTab] = useState<"manual" | "container" | "systemd">(isKubernetes ? "container" : "manual");
   
   const [serviceName, setServiceName] = useState("");
+  const [servicePort, setServicePort] = useState("");
   const [loading, setLoading] = useState(false);
   const [containers, setContainers] = useState<Array<Container & { 
     id: string; 
@@ -148,6 +149,7 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
   useEffect(() => {
     if (!open) {
       setServiceName("");
+      setServicePort("");
       setSelectedContainer(null);
       setContainers(containers.map(container => ({ ...container, selected: false })));
     }
@@ -217,7 +219,71 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
     }
   };
 
+  const handleAddManualService = async () => {
+    if (!serviceName) {
+      toast({
+        title: "Service name required",
+        description: "Please enter a name for the service",
+        variant: "destructive"
+      });
+      return;
+    }
 
+    setLoading(true);
+    const serviceData = {
+      providerId: parseInt(serverId),
+      name: serviceName,
+      serviceType: "MANUAL" as const,
+      serviceIP: servicePort ? `localhost:${servicePort}` : undefined,
+      serviceStatus: "running" as const
+    };
+
+    console.log('Creating service with data:', serviceData);
+
+    try {
+      // Create service using the new API
+      const response = await providerApi.createService(serviceData);
+
+      console.log('Create service response:', response);
+
+      if (response.success && response.data) {
+        // Create UI service object from API response
+        const newService: ServiceConfig = {
+          id: response.data.id.toString(),
+          name: response.data.name,
+          type: "MANUAL", // Match the API service_type
+          status: response.data.serviceStatus as "running" | "stopped" | "error" | "unknown",
+          serviceIP: response.data.serviceIP,
+          containerDetails: response.data.containerDetails
+        };
+
+        onServiceAdded(newService);
+        setServiceName("");
+        setServicePort("");
+        onClose();
+
+        toast({
+          title: "Service added",
+          description: `${serviceName} has been added to ${isKubernetes ? 'Kubernetes cluster' : 'server'} ${serverName}`
+        });
+      } else {
+        toast({
+          title: "Failed to add service",
+          description: response.error || "An error occurred while adding the service",
+          variant: "destructive"
+        });
+      }
+    } catch (err) {
+      console.error("Error adding service:", err);
+      toast({
+        title: "Error adding service",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddContainersOrPods = async () => {
     const selectedContainers = containers.filter(container => container.selected);
@@ -454,11 +520,9 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
                       <div
                         key={container.id}
                         className={cn(
-                          "flex items-center space-x-3 border rounded-lg p-4 transition-all duration-200 shadow-sm",
-                          container.selected && "border-primary bg-primary/5 shadow-md",
-                          container.alreadyAdded 
-                            ? "opacity-60 cursor-not-allowed bg-gray-50" 
-                            : "hover:bg-slate-50 hover:border-slate-300 hover:shadow-md cursor-pointer"
+                          "flex items-center space-x-3 border rounded-md p-3",
+                          container.selected && "border-primary bg-primary/5",
+                          container.alreadyAdded ? "opacity-60 cursor-not-allowed" : "hover:bg-accent cursor-pointer"
                         )}
                         onClick={() => toggleContainerSelection(container.id)}
                       >
@@ -494,8 +558,11 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
           </div>
         ) : (
           // For other providers, show all tabs
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "container" | "systemd")} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "manual" | "container" | "systemd")} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="manual">
+                Manual Service
+              </TabsTrigger>
               <TabsTrigger value="container">
                 Docker Containers
               </TabsTrigger>
@@ -504,7 +571,55 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="container" className="space-y-4 py-4">
+            <TabsContent value="manual" className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="serviceName">Service Name</Label>
+                <Input
+                  id="serviceName"
+                  placeholder="Enter service name"
+                  value={serviceName}
+                  onChange={(e) => setServiceName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="servicePort">Port (Optional)</Label>
+                <Input
+                  id="servicePort"
+                  placeholder="e.g. 8080"
+                  value={servicePort}
+                  onChange={(e) => setServicePort(e.target.value)}
+                />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="systemd" className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="systemdServiceName">Systemd Service Name</Label>
+                <Input
+                  id="systemdServiceName"
+                  placeholder="Enter systemd service name (e.g. nginx.service)"
+                  value={serviceName}
+                  onChange={(e) => setServiceName(e.target.value)}
+                />
+              </div>
+              <div className="text-sm text-muted-foreground mt-2">
+                <p>Enter the exact name of the systemd service as it appears in the system.</p>
+                <p className="mt-1">Example: nginx.service, docker.service, etc.</p>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mt-4">
+                <div className="flex items-start">
+                  <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-amber-800">Manual Entry Only</h4>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Systemd services must be added manually. Auto-discovery has been disabled for systemd services.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="container" className="py-4">
               {/* Container UI for non-Kubernetes providers */}
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-medium">Available Containers</h4>
@@ -558,11 +673,9 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
                         <div
                           key={container.id}
                           className={cn(
-                            "flex items-center space-x-3 border rounded-lg p-4 transition-all duration-200 shadow-sm",
-                            container.selected && "border-primary bg-primary/5 shadow-md",
-                            container.alreadyAdded 
-                              ? "opacity-60 cursor-not-allowed bg-gray-50" 
-                              : "hover:bg-slate-50 hover:border-slate-300 hover:shadow-md cursor-pointer"
+                            "flex items-center space-x-3 border rounded-md p-3",
+                            container.selected && "border-primary bg-primary/5",
+                            container.alreadyAdded ? "opacity-60 cursor-not-allowed" : "hover:bg-accent cursor-pointer"
                           )}
                           onClick={() => toggleContainerSelection(container.id)}
                         >
@@ -596,33 +709,6 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
                 )}
               </div>
             </TabsContent>
-
-            <TabsContent value="systemd" className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="systemdServiceName">Systemd Service Name</Label>
-                <Input
-                  id="systemdServiceName"
-                  placeholder="Enter systemd service name (e.g. nginx.service)"
-                  value={serviceName}
-                  onChange={(e) => setServiceName(e.target.value)}
-                />
-              </div>
-              <div className="text-sm text-muted-foreground mt-2">
-                <p>Enter the exact name of the systemd service as it appears in the system.</p>
-                <p className="mt-1">Example: nginx.service, docker.service, etc.</p>
-              </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mt-4">
-                <div className="flex items-start">
-                  <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-amber-800">Manual Entry Only</h4>
-                    <p className="text-sm text-amber-700 mt-1">
-                      Systemd services must be added manually. Auto-discovery has been disabled for systemd services.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
           </Tabs>
         )}
 
@@ -635,15 +721,20 @@ export function AddServiceDialog({ serverId, serverName, providerType, open, onC
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Add Selected Pods
             </Button>
-          ) : activeTab === "container" ? (
-            <Button type="button" onClick={handleAddContainersOrPods} disabled={loading}>
+          ) : activeTab === "manual" ? (
+            <Button type="button" onClick={handleAddManualService} disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Add Selected Containers
+              Add Service
             </Button>
-          ) : (
+          ) : activeTab === "systemd" ? (
             <Button type="button" onClick={handleAddSystemdService} disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Add Systemd Service
+            </Button>
+          ) : (
+            <Button type="button" onClick={handleAddContainersOrPods} disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Add Selected Containers
             </Button>
           )}
         </DialogFooter>
