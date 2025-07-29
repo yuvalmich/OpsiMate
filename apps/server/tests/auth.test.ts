@@ -257,4 +257,135 @@ describe('Authentication API', () => {
     expect(res.status).toBe(404);
     expect(res.body.success).toBe(false);
   });
+
+  test('should return 401 for invalid token', async () => {
+      const response = await app
+          .get('/api/v1/alerts')
+          .set('Authorization', 'Bearer invalid-token');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+  });
+
+  test('should update user profile successfully', async () => {
+      // Register user first
+      await app
+          .post('/api/v1/users/register')
+          .send({
+              email: 'admin@example.com',
+              fullName: 'Admin User',
+              password: 'password123'
+          });
+
+      const loginResponse = await app
+          .post('/api/v1/users/login')
+          .send({
+              email: 'admin@example.com',
+              password: 'password123'
+          });
+
+      expect(loginResponse.status).toBe(200);
+      const token = loginResponse.body.token;
+
+      const updateResponse = await app
+          .patch('/api/v1/users/profile')
+          .set('Authorization', `Bearer ${token}`)
+          .send({
+              fullName: 'Updated Admin Name',
+              newPassword: 'newpassword123'
+          });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.success).toBe(true);
+      expect(updateResponse.body.data.user.fullName).toBe('Updated Admin Name');
+      expect(updateResponse.body.data.token).toBeDefined();
+
+      // Verify we can login with new password
+      const newLoginResponse = await app
+          .post('/api/v1/users/login')
+          .send({
+              email: 'admin@example.com',
+              password: 'newpassword123'
+          });
+
+      expect(newLoginResponse.status).toBe(200);
+  });
+
+  test('should update user profile without password change', async () => {
+      // Register user first
+      await app
+          .post('/api/v1/users/register')
+          .send({
+              email: 'admin@example.com',
+              fullName: 'Admin User',
+              password: 'password123'
+          });
+
+      const loginResponse = await app
+          .post('/api/v1/users/login')
+          .send({
+              email: 'admin@example.com',
+              password: 'password123'
+          });
+
+      expect(loginResponse.status).toBe(200);
+      const token = loginResponse.body.token;
+
+      const updateResponse = await app
+          .patch('/api/v1/users/profile')
+          .set('Authorization', `Bearer ${token}`)
+          .send({
+              fullName: 'Another Updated Name'
+          });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.success).toBe(true);
+      expect(updateResponse.body.data.user.fullName).toBe('Another Updated Name');
+      expect(updateResponse.body.data.token).toBeUndefined();
+  });
+
+  test('should return 400 for invalid profile update data', async () => {
+      // Register user first
+      await app
+          .post('/api/v1/users/register')
+          .send({
+              email: 'admin@example.com',
+              fullName: 'Admin User',
+              password: 'password123'
+          });
+
+      const loginResponse = await app
+          .post('/api/v1/users/login')
+          .send({
+              email: 'admin@example.com',
+              password: 'password123'
+          });
+
+      expect(loginResponse.status).toBe(200);
+      const token = loginResponse.body.token;
+
+      const updateResponse = await app
+          .patch('/api/v1/users/profile')
+          .set('Authorization', `Bearer ${token}`)
+          .send({
+              fullName: '', // Invalid: empty name
+              newPassword: 'short' // Invalid: too short
+          });
+
+      expect(updateResponse.status).toBe(400);
+      expect(updateResponse.body.success).toBe(false);
+      expect(updateResponse.body.error).toBe('Validation error');
+  });
+
+  test('should return 401 for profile update without authentication', async () => {
+      const updateResponse = await app
+          .patch('/api/v1/users/profile')
+          .send({
+              fullName: 'Test Name'
+          });
+
+      expect(updateResponse.status).toBe(401);
+      expect(updateResponse.body.success).toBe(false);
+      expect(updateResponse.body.error).toBe('Missing or invalid Authorization header');
+  });
 }); 

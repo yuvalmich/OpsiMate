@@ -58,7 +58,20 @@ export class UserBL {
      */
     async usersExist(): Promise<boolean> {
         const count = await this.userRepo.countUsers();
-        console.error('count', count);
         return count > 0;
+    }
+
+    async updateProfile(id: number, fullName: string, newPassword?: string): Promise<User> {
+        let passwordHash: string | undefined;
+        if (newPassword) {
+            passwordHash = await bcrypt.hash(newPassword, 10);
+        }
+        
+        await this.userRepo.updateUserProfile(id, fullName, passwordHash);
+        const updatedUser = await this.userRepo.getUserById(id);
+        if (!updatedUser) {
+            throw new Error('User not found');
+        }
+        return updatedUser;
     }
 } 

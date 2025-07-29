@@ -14,6 +14,9 @@ export default function createUsersRouter(usersController: UsersController) {
     // PATCH /users/role - update user role
     router.patch('/role', usersController.updateUserRoleHandler);
 
+    // PATCH /users/profile - update user profile
+    router.patch('/profile', usersController.updateProfileHandler);
+
     // DELETE /users/:id - delete user by ID (admin only)
     router.delete('/:id', usersController.deleteUserHandler);
 
