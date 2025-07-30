@@ -154,22 +154,42 @@ const getK8SServices = async (_provider: Provider): Promise<DiscoveredService[]>
     const k8sApi = createClient(_provider)
     const servicesResp = await k8sApi.listServiceForAllNamespaces();
 
-    return servicesResp.items
+    const allResponses = servicesResp.items
         .filter(service => service.metadata?.namespace !== "kube-system")
-        .map(service => {
+        .map(async (service) => {
             const name = service.metadata?.name || 'unknown';
             const namespace = service.metadata?.namespace || 'default';
             const serviceType = service.spec?.type || 'ClusterIP';
             const serviceIp = service.spec?.clusterIP;
+            const selector = service.spec?.selector;
+            let serviceStatus: string;
+
+            if (!selector || Object.keys(selector).length === 0) {
+                serviceStatus = "Unknown"
+            } else {
+                const labelSelector = Object.entries(selector)
+                    .map(([key, value]) => `${key}=${value}`)
+                    .join(',');
+
+                // Query Pods using the selector
+                const podsResp = await k8sApi.listNamespacedPod({
+                    labelSelector: labelSelector,
+                    namespace: namespace,
+                });
+
+                serviceStatus = [...new Set(podsResp.items.map(item => item.status?.phase || "Unknown"))].join(", ")
+            }
 
             return {
                 name,
-                serviceStatus: 'Running',
+                serviceStatus: serviceStatus,
                 serviceIP: serviceIp || 'N/A',
                 namespace,
                 serviceType,
             };
         });
+
+    return Promise.all(allResponses);
 }
 
 export {getK8SServices, getK8RLogs, deleteK8RPod, getK8RPods, restartK8RServicePods}
