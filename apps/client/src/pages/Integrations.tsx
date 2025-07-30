@@ -380,17 +380,17 @@ export default function Integrations() {
               onMouseEnter={() => setHoveredCard(integration.id)}
               onMouseLeave={() => setHoveredCard(null)}
             >
+              {!integration.supported && (
+                  <div className="text-center bg-yellow-100 text-yellow-800 text-xs font-medium py-1 border-b border-yellow-300">
+                    🚧 Coming Soon
+                  </div>
+              )}
               <CardHeader className={cn(
                 "pb-2",
                 configuredInstances[integration.id] && configuredInstances[integration.id] > 0
                   ? ""
                   : "opacity-75"
               )}>
-                {!integration.supported && (
-                    <div className="text-center bg-yellow-100 text-yellow-800 text-xs font-medium py-1 border-b border-yellow-300">
-                      🚧 Coming Soon
-                    </div>
-                )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={cn(
