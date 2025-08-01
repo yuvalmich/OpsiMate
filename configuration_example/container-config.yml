@@ -1,4 +1,4 @@
-# Service Peek Configuration for Docker Container
+# Opsimate Configuration for Docker Container
 # Container-specific configuration with proper paths
 
 # Server configuration
@@ -19,7 +19,7 @@ client:
 
 # Database configuration
 database:
-  path: "/app/data/database/service_peek.db"  # Container path for database
+  path: "/app/data/database/opsimate.db"  # Container path for database
 
 # Security configuration
 security:

@@ -218,5 +218,5 @@ node test-integration.js
 
 - The SSH connection uses the provided public key for authentication
 - Service discovery uses `systemctl list-units` command (Linux systems)
-- All data is stored locally in SQLite database (`service_peek.db`)
+- All data is stored locally in SQLite database (`opsimate.db`)
 - The API includes input validation using Zod schemas 

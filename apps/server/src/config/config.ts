@@ -4,7 +4,7 @@ import {Logger} from '@OpsiMate/shared';
 
 const logger = new Logger('config');
 
-export interface ServicePeekConfig {
+export interface OpsimateConfig {
     server: {
         port: number;
         host: string;
@@ -21,9 +21,9 @@ export interface ServicePeekConfig {
     };
 }
 
-let cachedConfig: ServicePeekConfig | null = null;
+let cachedConfig: OpsimateConfig | null = null;
 
-export function loadConfig(): ServicePeekConfig {
+export function loadConfig(): OpsimateConfig {
     if (cachedConfig) {
         return cachedConfig;
     }
@@ -37,7 +37,7 @@ export function loadConfig(): ServicePeekConfig {
 
     logger.info(`Loading config from: ${configPath}`);
     const configFile = fs.readFileSync(configPath, 'utf8');
-    const config = yaml.load(configFile) as ServicePeekConfig;
+    const config = yaml.load(configFile) as OpsimateConfig;
 
     // Validate required fields
     if (!config.server?.port || !config.database?.path || !config.security?.private_keys_path) {
@@ -50,7 +50,7 @@ export function loadConfig(): ServicePeekConfig {
     return config;
 }
 
-function getDefaultConfig(): ServicePeekConfig {
+function getDefaultConfig(): OpsimateConfig {
     return {
         server: {
             port: 3001,
@@ -61,7 +61,7 @@ function getDefaultConfig(): ServicePeekConfig {
             api_url: 'http://localhost:3001/api/v1'
         },
         database: {
-            path: '../../data/service_peek.db'
+            path: '../../data/opsimate.db'
         },
         security: {
             private_keys_path: 'apps/server/data/private-keys'

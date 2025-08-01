@@ -14,7 +14,7 @@ client:
 
 # Database configuration
 database:
-  path: "/app/data/database/service_peek.db"  # Container path
+  path: "/app/data/database/opsimate.db"  # Container path
 
 # Security configuration
 security:

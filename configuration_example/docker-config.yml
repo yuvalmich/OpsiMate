@@ -1,4 +1,4 @@
-# Service Peek Docker Configuration
+# Opsimate Docker Configuration
 # This configuration is optimized for Docker container deployment
 
 # Server configuration
@@ -13,7 +13,7 @@ client:
 
 # Database configuration
 database:
-  path: "/app/data/database/service_peek.db"  # SQLite database file path (mounted volume)
+  path: "/app/data/database/opsimate.db"  # SQLite database file path (mounted volume)
 
 # Security configuration
 security:
