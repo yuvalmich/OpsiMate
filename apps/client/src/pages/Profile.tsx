@@ -1,4 +1,4 @@
-import { User as UserType } from '@service-peek/shared';
+import { User as UserType } from '@OpsiMate/shared';
 import { Lock, LogOut, Save, User, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
