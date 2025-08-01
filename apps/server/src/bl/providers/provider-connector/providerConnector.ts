@@ -1,4 +1,4 @@
-import {Provider, DiscoveredService, Service, ServiceType, ContainerDetails, DiscoveredPod} from "@service-peek/shared";
+import {Provider, DiscoveredService, Service, ServiceType, ContainerDetails, DiscoveredPod} from "@OpsiMate/shared";
 
 export interface ProviderConnector {
     discoverServices(provider: Provider): Promise<DiscoveredService[]>;

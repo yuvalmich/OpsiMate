@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ViewBL } from '../../../bl/custom-views/custom-view.bl';
-import { Logger } from '@service-peek/shared';
+import { Logger } from '@OpsiMate/shared';
 import {SavedView} from "../../../dal/viewRepository";
 
 const logger = new Logger('api/v1/views/controller');

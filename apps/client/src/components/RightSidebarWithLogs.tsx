@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useToast } from "@/hooks/use-toast";
 import { providerApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { Alert, Tag } from "@service-peek/shared";
+import { Alert, Tag } from "@OpsiMate/shared";
 import {
   Activity,
   AlertTriangle,

@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
-import {Integration, IntegrationType} from '@service-peek/shared';
+import {Integration, IntegrationType} from '@OpsiMate/shared';
 import { IntegrationRow } from './models';
 
 const mapRowToIntegration = (row: IntegrationRow): Integration => ({

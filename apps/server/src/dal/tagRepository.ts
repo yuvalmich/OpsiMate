@@ -1,5 +1,5 @@
 import Database, {Statement} from 'better-sqlite3';
-import {Tag} from '@service-peek/shared';
+import {Tag} from '@OpsiMate/shared';
 import {runAsync} from './db';
 
 export class TagRepository {

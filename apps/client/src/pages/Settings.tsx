@@ -15,7 +15,7 @@ import { DashboardLayout } from '../components/DashboardLayout';
 import { AddUserModal } from '../components/AddUserModal';
 import { auditApi } from '../lib/api';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '../components/ui/alert-dialog';
-import {AuditLog} from "@service-peek/shared";
+import {AuditLog} from "@OpsiMate/shared";
 
 const PAGE_SIZE = 20;
 

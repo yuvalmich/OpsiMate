@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertTriangle, X, Eye, EyeOff, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { GrafanaIcon } from "@/components/icons/GrafanaIcon";
-import { Alert as SharedAlert } from '@service-peek/shared';
+import { Alert as SharedAlert } from '@OpsiMate/shared';
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";

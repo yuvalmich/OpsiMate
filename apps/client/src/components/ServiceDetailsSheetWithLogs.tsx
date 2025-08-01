@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink, X, RefreshCw } from "lucide-react";
-import { Provider } from '@service-peek/shared';
+import { Provider } from '@OpsiMate/shared';
 import { getProviderTypeName, getStatusBadgeColor } from "@/pages/MyProviders";
 import { ServiceConfig } from "./AddServiceDialog";
 import { ServicesList } from "./ServicesList";

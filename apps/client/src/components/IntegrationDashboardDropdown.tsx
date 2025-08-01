@@ -12,7 +12,7 @@ import { KibanaIcon } from './icons/KibanaIcon';
 import { GrafanaIcon } from './icons/GrafanaIcon';
 import { DatadogIcon } from './icons/DatadogIcon';
 import { ChevronDown, ExternalLink, Loader2 } from 'lucide-react';
-import { Tag } from '@service-peek/shared';
+import { Tag } from '@OpsiMate/shared';
 import { useToast } from '@/hooks/use-toast';
 import { useIntegrations, useIntegrationUrls } from '@/hooks/queries';
 

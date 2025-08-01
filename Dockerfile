@@ -24,7 +24,7 @@ RUN npm rebuild bcrypt --build-from-source
 RUN npm rebuild
 
 # Build shared package first to ensure TypeScript compilation
-RUN npm run build --workspace=@service-peek/shared
+RUN npm run build --workspace=@OpsiMate/shared
 
 # Create directories for volume mounts with proper permissions
 RUN mkdir -p /app/data/database /app/data/private-keys /app/config && \

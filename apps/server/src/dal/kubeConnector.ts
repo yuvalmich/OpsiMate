@@ -1,5 +1,5 @@
 import * as k8s from '@kubernetes/client-node';
-import {DiscoveredPod, DiscoveredService, Logger, Provider, Service} from "@service-peek/shared";
+import {DiscoveredPod, DiscoveredService, Logger, Provider, Service} from "@OpsiMate/shared";
 import path from "path";
 import fs from "fs";
 import {ObjectCoreV1Api} from "@kubernetes/client-node/dist/gen/types/ObjectParamAPI";

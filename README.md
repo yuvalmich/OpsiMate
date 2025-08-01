@@ -5,7 +5,7 @@ A monorepo for the OpsiMate application built with Turbo.
 ## Structure
 
 ```
-service-peek/
+OpsiMate/
 ├── apps/
 │   ├── client/          # React frontend (Vite + TypeScript)
 │   └── server/          # Node.js backend (Express + TypeScript)
@@ -88,13 +88,13 @@ mkdir -p data/database data/private-keys
 cp -r apps/server/data/private-keys/* data/private-keys/
 
 # Build and run with default config
-docker build -t service-peek .
+docker build -t OpsiMate .
 docker run -d \
-  --name service-peek-app \
+  --name OpsiMate-app \
   -p 3001:3001 -p 8080:8080 \
   -v $(pwd)/data/database:/app/data/database \
   -v $(pwd)/data/private-keys:/app/data/private-keys \
-  service-peek
+  OpsiMate
 ```
 
 #### Option 2: Custom Configuration
@@ -106,12 +106,12 @@ cp configuration_example/container-config.yml my-config.yml
 
 # Run with custom config
 docker run -d \
-  --name service-peek-app \
+  --name OpsiMate-app \
   -p 3001:3001 -p 8080:8080 \
   -v $(pwd)/data/database:/app/data/database \
   -v $(pwd)/data/private-keys:/app/data/private-keys \
   -v $(pwd)/my-config.yml:/app/config/config.yml \
-  service-peek
+  OpsiMate
 ```
 
 ### Configuration
@@ -140,7 +140,7 @@ The container supports the following volume mounts:
 
 To verify your deployment:
 
-1. **Check container logs**: `docker logs service-peek-app`
+1. **Check container logs**: `docker logs OpsiMate-app`
 2. **Test API**: `curl http://localhost:3001/api/v1/providers`
 3. **Access frontend**: Open http://localhost:8080 in your browser
 

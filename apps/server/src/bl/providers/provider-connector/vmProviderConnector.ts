@@ -1,4 +1,4 @@
-import {DiscoveredPod, DiscoveredService, Provider, Service, ServiceType} from "@service-peek/shared";
+import {DiscoveredPod, DiscoveredService, Provider, Service, ServiceType} from "@OpsiMate/shared";
 import * as sshClient from "../../../dal/sshClient";
 import {ProviderConnector} from "./providerConnector";
 

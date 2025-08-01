@@ -1,7 +1,7 @@
 import { initializeDb } from './dal/db';
 import { createApp } from './app';
 import { getServerConfig } from './config/config';
-import { Logger } from '@service-peek/shared';
+import { Logger } from '@OpsiMate/shared';
 
 const logger = new Logger('server');
 

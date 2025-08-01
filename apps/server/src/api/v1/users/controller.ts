@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { UserBL } from '../../../bl/users/user.bl';
-import {CreateUserSchema, Logger, LoginSchema, RegisterSchema, Role, UpdateUserRoleSchema, UpdateProfileSchema} from '@service-peek/shared';
+import {CreateUserSchema, Logger, LoginSchema, RegisterSchema, Role, UpdateUserRoleSchema, UpdateProfileSchema} from '@OpsiMate/shared';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest } from '../../../middleware/auth';
-import { User } from '@service-peek/shared';
+import { User } from '@OpsiMate/shared';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme-secret';
 const logger = new Logger('api/v1/users/controller');

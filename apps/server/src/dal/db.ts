@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import { Logger } from '@service-peek/shared';
+import { Logger } from '@OpsiMate/shared';
 import { getDatabaseConfig } from '../config/config';
 
 const logger = new Logger('dal/db');

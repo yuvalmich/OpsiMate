@@ -17,7 +17,7 @@ OpsiMate is a web-based dashboard for monitoring and managing cloud services acr
 The project is organized as a monorepo using Turborepo with the following structure:
 
 ```
-service-peek/
+OpsiMate/
 ├── apps/
 │   ├── client/    # Frontend React application
 │   └── server/    # Backend Express API server

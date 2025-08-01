@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Logger } from "@service-peek/shared";
+import { Logger } from "@OpsiMate/shared";
 import { AlertBL } from "../../../bl/alerts/alert.bl";
 
 const logger: Logger = new Logger('server');
