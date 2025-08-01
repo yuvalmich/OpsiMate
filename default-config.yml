@@ -1,4 +1,4 @@
-# Default Service Peek Configuration
+# Default Opsimate Configuration
 # This configuration is built into the Docker image and used when no custom config is provided
 
 # Server configuration
@@ -14,7 +14,7 @@ client:
 
 # Database configuration
 database:
-  path: "/app/data/database/service_peek.db"  # Container path
+  path: "/app/data/database/opsimate.db"  # Container path
 
 # Security configuration
 security:
