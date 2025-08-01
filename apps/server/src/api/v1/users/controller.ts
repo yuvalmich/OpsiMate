@@ -130,6 +130,24 @@ export class UsersController {
         }
     };
 
+    getProfileHandler = async (req: AuthenticatedRequest, res: Response) => {
+        if (!req.user) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+
+        try {
+            const user = await this.userBL.getUserById(req.user.id);
+            if (!user) {
+                return res.status(404).json({ success: false, error: 'User not found' });
+            }
+            
+            res.status(200).json({ success: true, data: user });
+        } catch (error) {
+            logger.error('Error fetching profile:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    };
+
     updateProfileHandler = async (req: AuthenticatedRequest, res: Response) => {
         if (!req.user) {
             return res.status(401).json({ success: false, error: 'Unauthorized' });

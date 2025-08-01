@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Input } from '../components/ui/input';
+import { User as UserType } from '@service-peek/shared';
+import { Lock, LogOut, Save, User, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { DashboardLayout } from '../components/DashboardLayout';
+import { ErrorAlert } from '../components/ErrorAlert';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Avatar, AvatarFallback } from '../components/ui/avatar';
-import { User, Lock, Save, X, LogOut } from 'lucide-react';
-import { apiRequest } from '../lib/api';
+import { Input } from '../components/ui/input';
 import { useFormErrors } from '../hooks/useFormErrors';
-import { ErrorAlert } from '../components/ErrorAlert';
+import { apiRequest } from '../lib/api';
 import { getCurrentUser } from '../lib/auth';
-import { DashboardLayout } from '../components/DashboardLayout';
 
 interface UserProfile {
   id: number;
@@ -39,16 +39,29 @@ const Profile: React.FC = () => {
     try {
       const currentUser = getCurrentUser();
       if (currentUser) {
-        // For now, we'll use email as fullName since JWT doesn't include fullName
-        // In a real implementation, you'd fetch the full profile from the server
-        setProfile({
-          id: currentUser.id,
-          email: currentUser.email,
-          fullName: currentUser.email.split('@')[0], // Use email prefix as fallback
-          role: currentUser.role,
-          createdAt: new Date().toISOString() // We don't have createdAt in JWT, using current date as placeholder
-        });
-        setFormData(prev => ({ ...prev, fullName: currentUser.email.split('@')[0] }));
+        // Fetch the full user profile from the server
+        const response = await apiRequest<UserType>('/users/profile', 'GET');
+        if (response.success && response.data) {
+          setProfile({
+            id: response.data.id,
+            email: response.data.email,
+            fullName: response.data.fullName,
+            role: response.data.role,
+            createdAt: response.data.createdAt
+          });
+          setFormData(prev => ({ ...prev, fullName: response.data.fullName }));
+        } else {
+          // Fallback to JWT data if server request fails
+          console.warn('Failed to fetch user profile from server, using JWT data as fallback');
+          setProfile({
+            id: currentUser.id,
+            email: currentUser.email,
+            fullName: currentUser.email.split('@')[0], // Use email prefix as fallback
+            role: currentUser.role,
+            createdAt: new Date().toISOString()
+          });
+          setFormData(prev => ({ ...prev, fullName: currentUser.email.split('@')[0] }));
+        }
       }
     } catch (error) {
       handleApiResponse({ 
