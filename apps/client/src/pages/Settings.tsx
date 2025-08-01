@@ -129,14 +129,15 @@ const Settings: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-6 max-w-6xl">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <SettingsIcon className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Settings</h1>
-          </div>
-          <p className="text-muted-foreground">Manage your Service Peek configuration and user access.</p>
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="flex-shrink-0 bg-background border-b border-border px-6 py-4">
+          <h1 className="text-2xl font-bold">Settings</h1>
         </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-6">
+          <div className="max-w-6xl mx-auto">
 
       {generalError && <ErrorAlert message={generalError} className="mb-6" />}
 
@@ -283,6 +284,8 @@ const Settings: React.FC = () => {
         onClose={() => setShowAddUserModal(false)}
         onUserCreated={handleUserCreated}
       />
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

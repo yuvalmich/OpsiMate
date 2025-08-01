@@ -79,6 +79,18 @@ export class UserRepository {
         });
     }
 
+    async updateUserProfile(id: number, fullName: string, passwordHash?: string): Promise<void> {
+        return runAsync(() => {
+            if (passwordHash) {
+                const stmt = this.db.prepare('UPDATE users SET full_name = ?, password_hash = ? WHERE id = ?');
+                stmt.run(fullName, passwordHash, id);
+            } else {
+                const stmt = this.db.prepare('UPDATE users SET full_name = ? WHERE id = ?');
+                stmt.run(fullName, id);
+            }
+        });
+    }
+
     private toSharedUser = (row: UserRow): User => {
         return {
             id: row.id,
