@@ -1,5 +1,5 @@
 // Global test setup
-import { Logger } from '@service-peek/shared';
+import { Logger } from '@OpsiMate/shared';
 
 // Mock the Kubernetes client to avoid ES module issues
 jest.mock('@kubernetes/client-node', () => ({

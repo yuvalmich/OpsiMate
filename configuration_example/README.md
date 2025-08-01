@@ -40,12 +40,12 @@ cp configuration_example/config.yml ./config.yml
 ```bash
 # Use the container config as a volume mount
 docker run -d \
-  --name service-peek-app \
+  --name OpsiMate-app \
   -p 3001:3001 -p 8080:8080 \
   -v $(pwd)/data/database:/app/data/database \
   -v $(pwd)/data/private-keys:/app/data/private-keys \
   -v $(pwd)/configuration_example/container-config.yml:/app/config/config.yml \
-  service-peek
+  OpsiMate
 ```
 
 ### For Custom Environments
@@ -55,10 +55,10 @@ cp configuration_example/container-config.yml my-production-config.yml
 
 # Edit as needed, then mount it
 docker run -d \
-  --name service-peek-prod \
+  --name OpsiMate-prod \
   -p 3001:3001 -p 8080:8080 \
   -v $(pwd)/data/database:/app/data/database \
   -v $(pwd)/data/private-keys:/app/data/private-keys \
   -v $(pwd)/my-production-config.yml:/app/config/config.yml \
-  service-peek
+  OpsiMate
 ```

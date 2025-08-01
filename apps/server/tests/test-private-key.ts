@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { Logger } from '@service-peek/shared';
+import { Logger } from '@OpsiMate/shared';
 
 const BASE_URL = 'http://localhost:3001/api/v1/integration';
 const logger = new Logger('test-private-key');

@@ -1,4 +1,4 @@
-import { Integration, IntegrationUrls } from "@service-peek/shared";
+import { Integration, IntegrationUrls } from "@OpsiMate/shared";
 import { IntegrationConnector } from "./integration-connector";
 import { GrafanaClient, GrafanaDashboardSummary } from "../../../dal/external-client/grafana-client";
 

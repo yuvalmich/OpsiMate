@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Loader2, RefreshCw, AlertCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { providerApi } from "@/lib/api";
-import { DiscoveredService, ServiceWithProvider } from "@service-peek/shared";
+import { DiscoveredService, ServiceWithProvider } from "@OpsiMate/shared";
 
 // Define service types
 export interface ServiceConfig {

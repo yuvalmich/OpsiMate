@@ -6,7 +6,7 @@ import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { providerApi } from "@/lib/api";
-import { Tag } from "@service-peek/shared";
+import { Tag } from "@OpsiMate/shared";
 import { CreateTagDialog } from "./CreateTagDialog";
 import { DeleteTagDialog } from "./DeleteTagDialog";
 import { TagBadge } from "./ui/tag-badge";

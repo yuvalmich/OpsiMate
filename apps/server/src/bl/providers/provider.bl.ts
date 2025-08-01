@@ -1,10 +1,10 @@
-import {DiscoveredService, Provider, Service, Logger, User} from "@service-peek/shared";
+import {DiscoveredService, Provider, Service, Logger, User} from "@OpsiMate/shared";
 import { ProviderNotFound } from "./ProviderNotFound";
 import { providerConnectorFactory } from "./provider-connector/providerConnectorFactory";
 import {ProviderRepository} from "../../dal/providerRepository";
 import {ServiceRepository} from "../../dal/serviceRepository";
 import { AuditBL } from '../audit/audit.bl';
-import { AuditActionType, AuditResourceType } from '@service-peek/shared';
+import { AuditActionType, AuditResourceType } from '@OpsiMate/shared';
 
 const logger = new Logger('bl/providers/provider.bl');
 

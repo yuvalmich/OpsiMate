@@ -1,4 +1,4 @@
-import {IntegrationType} from '@service-peek/shared';
+import {IntegrationType} from '@OpsiMate/shared';
 import {IntegrationConnector} from "./integration-connector";
 import {GrafanaIntegrationConnector} from "./grafana-integration-connector";
 import {KibanaIntegrationConnector} from "./kibana-integration-connector";

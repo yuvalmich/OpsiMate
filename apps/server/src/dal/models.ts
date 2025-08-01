@@ -1,5 +1,5 @@
-import {IntegrationType, Role} from "@service-peek/shared";
-import { AuditActionType, AuditResourceType } from '@service-peek/shared';
+import {IntegrationType, Role} from "@OpsiMate/shared";
+import { AuditActionType, AuditResourceType } from '@OpsiMate/shared';
 
 export type IntegrationRow = {
     id: number;

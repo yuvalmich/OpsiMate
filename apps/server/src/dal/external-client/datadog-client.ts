@@ -1,4 +1,4 @@
-import { Logger } from '@service-peek/shared';
+import { Logger } from '@OpsiMate/shared';
 
 const logger = new Logger('dal/external-client/datadog-client');
 

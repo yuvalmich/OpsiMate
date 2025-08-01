@@ -10,7 +10,7 @@ import { SavedViewsManager } from "@/components/SavedViewsManager"
 import { DashboardLayout } from "../components/DashboardLayout"
 import { SavedView } from "@/types/SavedView"
 import { useServices, useAlerts, useStartService, useStopService, useDismissAlert, useSaveView, useDeleteView, useViews, useActiveView } from "@/hooks/queries"
-import { Alert } from "@service-peek/shared"
+import { Alert } from "@OpsiMate/shared"
 
 
 const Dashboard = () => {

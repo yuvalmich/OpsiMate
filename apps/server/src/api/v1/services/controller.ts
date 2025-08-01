@@ -1,6 +1,6 @@
 import {Request, Response} from "express";
 import {z} from "zod";
-import {CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema, Logger, ServiceType} from "@service-peek/shared";
+import {CreateServiceSchema, ServiceIdSchema, UpdateServiceSchema, Logger, ServiceType} from "@OpsiMate/shared";
 import {providerConnectorFactory} from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import {ProviderNotFound} from "../../../bl/providers/ProviderNotFound";
 import {ServiceNotFound} from "../../../bl/services/ServiceNotFound";

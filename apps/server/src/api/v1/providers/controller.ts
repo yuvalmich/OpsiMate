@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import {AddBulkServiceSchema, CreateProviderSchema, Logger, Provider, User} from "@service-peek/shared";
+import {AddBulkServiceSchema, CreateProviderSchema, Logger, Provider, User} from "@OpsiMate/shared";
 import { z } from "zod";
 import { providerConnectorFactory } from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import { ProviderNotFound } from "../../../bl/providers/ProviderNotFound";

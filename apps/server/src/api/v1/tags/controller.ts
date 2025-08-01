@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { CreateTagSchema, UpdateTagSchema, TagIdSchema, ServiceTagSchema, Logger } from '@service-peek/shared';
+import { CreateTagSchema, UpdateTagSchema, TagIdSchema, ServiceTagSchema, Logger } from '@OpsiMate/shared';
 import { TagRepository } from '../../../dal/tagRepository';
 import {ServiceRepository} from "../../../dal/serviceRepository"; // can be refactored to use DI as well
 

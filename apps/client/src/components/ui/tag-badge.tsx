@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tag } from "@service-peek/shared";
+import { Tag } from "@OpsiMate/shared";
 
 interface TagBadgeProps {
   tag: Tag;

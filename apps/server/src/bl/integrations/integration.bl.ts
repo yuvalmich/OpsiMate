@@ -1,5 +1,5 @@
 import { IntegrationRepository } from "../../dal/integrationRepository";
-import {Integration, IntegrationType, Logger} from "@service-peek/shared";
+import {Integration, IntegrationType, Logger} from "@OpsiMate/shared";
 import {integrationConnectorFactory} from "./integration-connector/integration-connector-factory";
 
 const logger = new Logger('bl/integrations/integration.bl');

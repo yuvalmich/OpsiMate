@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import {Service, Provider, Tag, Logger, ServiceType, ContainerDetails, ProviderType} from '@service-peek/shared';
+import {Service, Provider, Tag, Logger, ServiceType, ContainerDetails, ProviderType} from '@OpsiMate/shared';
 import { runAsync } from './db';
 import {ServiceRow, ServiceRowWithProviderRow} from "./models";
 

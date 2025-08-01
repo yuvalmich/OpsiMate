@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Provider } from "@service-peek/shared";
+import { Provider } from "@OpsiMate/shared";
 import { Container, Server } from "lucide-react";
 
 interface EditProviderDialogProps {

@@ -3,7 +3,7 @@ import {
     CreateIntegrationSchema,
     Integration,
     IntegrationTagsquerySchema, Logger
-} from "@service-peek/shared";
+} from "@OpsiMate/shared";
 import { z } from "zod";
 import { IntegrationBL } from "../../../bl/integrations/integration.bl";
 

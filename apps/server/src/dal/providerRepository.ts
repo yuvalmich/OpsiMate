@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import {Provider} from '@service-peek/shared';
+import {Provider} from '@OpsiMate/shared';
 import {runAsync} from "./db";
 
 export class ProviderRepository {

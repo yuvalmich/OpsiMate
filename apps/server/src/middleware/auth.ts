@@ -1,7 +1,7 @@
 // JWT authentication middleware for Express
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import {User} from "@service-peek/shared";
+import {User} from "@OpsiMate/shared";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme-secret';
 

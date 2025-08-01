@@ -1,6 +1,6 @@
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
-import {Logger} from '@service-peek/shared';
+import {Logger} from '@OpsiMate/shared';
 
 const logger = new Logger('config');
 
