@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { UserBL } from '../../../bl/users/user.bl';
-import {CreateUserSchema, Logger, LoginSchema, RegisterSchema, Role, UpdateUserRoleSchema} from '@OpsiMate/shared';
+import {CreateUserSchema, Logger, LoginSchema, RegisterSchema, Role, UpdateUserRoleSchema, UpdateProfileSchema} from '@OpsiMate/shared';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest } from '../../../middleware/auth';
+import { User } from '@OpsiMate/shared';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme-secret';
 const logger = new Logger('api/v1/users/controller');
@@ -126,6 +127,54 @@ export class UsersController {
             res.status(200).json({ success: true, exists });
         } catch {
             res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    };
+
+    getProfileHandler = async (req: AuthenticatedRequest, res: Response) => {
+        if (!req.user) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+
+        try {
+            const user = await this.userBL.getUserById(req.user.id);
+            if (!user) {
+                return res.status(404).json({ success: false, error: 'User not found' });
+            }
+            
+            res.status(200).json({ success: true, data: user });
+        } catch (error) {
+            logger.error('Error fetching profile:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    };
+
+    updateProfileHandler = async (req: AuthenticatedRequest, res: Response) => {
+        if (!req.user) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+
+        try {
+            const { fullName, newPassword } = UpdateProfileSchema.parse(req.body);
+            const updatedUser = await this.userBL.updateProfile(req.user.id, fullName, newPassword);
+            
+            const responseData: { user: User; token?: string } = { user: updatedUser };
+            
+            // If password was changed, generate a new token
+            if (newPassword) {
+                const token = jwt.sign(updatedUser, JWT_SECRET, { expiresIn: '7d' });
+                responseData.token = token;
+            }
+            
+            res.status(200).json({ success: true, data: responseData });
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+            } else if (error instanceof Error && error.message === 'User not found') {
+                res.status(404).json({ success: false, error: error.message });
+            } else {
+                logger.error('Error updating profile:', error);
+                res.status(500).json({ success: false, error: 'Internal server error' });
+            }
         }
     };
 } 

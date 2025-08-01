@@ -130,10 +130,16 @@ export const LoginSchema = z.object({
     password: z.string().min(6)
 });
 
+export const UpdateProfileSchema = z.object({
+    fullName: z.string().min(1, 'Full name is required'),
+    newPassword: z.string().min(6, 'Password must be at least 6 characters').optional()
+});
+
 
 export type UserSchemaType = z.infer<typeof UserSchema>;
 export type CreateUserRequest = z.infer<typeof CreateUserSchema>;
 export type UpdateUserRoleRequest = z.infer<typeof UpdateUserRoleSchema>;
+export type UpdateProfileRequest = z.infer<typeof UpdateProfileSchema>;
 
 export type CreateProviderRequest = z.infer<typeof CreateProviderSchema>;
 export type AddBulkServiceRequest = z.infer<typeof AddBulkServiceSchema>;
