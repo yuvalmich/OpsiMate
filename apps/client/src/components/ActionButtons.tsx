@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Play, Square, RotateCcw, Terminal } from "lucide-react"
+import { Play, Square, RotateCcw } from "lucide-react"
 import { Service } from "./ServiceTable"
 
 interface ActionButtonsProps {
@@ -8,7 +8,6 @@ interface ActionButtonsProps {
   onStart: () => void
   onStop: () => void
   onRestart: () => void
-  onOpenSSH: () => void
 }
 
 export function ActionButtons({ 
@@ -16,11 +15,9 @@ export function ActionButtons({
   selectedServices,
   onStart, 
   onStop, 
-  onRestart, 
-  onOpenSSH 
+  onRestart
 }: ActionButtonsProps) {
   const isDisabled = selectedServices.length === 0
-  const isSshDisabled = selectedServices.length !== 1
 
   return (
     <div className="bg-card border-t border-border p-3 shadow-sm">
@@ -31,7 +28,7 @@ export function ActionButtons({
               <span>
                 Selected: <span className="text-primary">{selectedServices.length} service{selectedServices.length !== 1 ? 's' : ''}</span> 
                 {selectedServices.length === 1 && (
-                  <span className="text-muted-foreground">({selectedServices[0].serverId})</span>
+                  <span className="text-muted-foreground">({selectedServices[0].id})</span>
                 )}
               </span>
             )
@@ -73,16 +70,7 @@ export function ActionButtons({
             Restart
           </Button>
           
-          <Button 
-            variant="default" 
-            size="sm" 
-            disabled={isSshDisabled}
-            onClick={onOpenSSH}
-            className="gap-2 h-9"
-          >
-            <Terminal className="h-4 w-4" />
-            SSH Terminal
-          </Button>
+
         </div>
       </div>
     </div>

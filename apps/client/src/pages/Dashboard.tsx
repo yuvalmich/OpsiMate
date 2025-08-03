@@ -454,21 +454,7 @@ const Dashboard = () => {
         }
     }
 
-    const handleOpenSSH = () => {
-        if (selectedServices.length === 1) {
-            toast({
-                title: "Opening SSH Terminal",
-                description: `Connecting to ${selectedServices[0].serviceIP}...`
-            })
-            // Here you would call your API to open SSH connection
-        } else if (selectedServices.length > 1) {
-            toast({
-                title: "SSH Connection Error",
-                description: "SSH can only be opened for a single service at a time",
-                variant: "destructive"
-            })
-        }
-    }
+
 
     const handleAlertDismiss = async (alertId: string) => {
         try {
@@ -528,7 +514,6 @@ const Dashboard = () => {
                                     onStart={handleStart}
                                     onStop={handleStop}
                                     onRestart={handleRestart}
-                                    onOpenSSH={handleOpenSSH}
                                 />
                             </div>
                         </div>
