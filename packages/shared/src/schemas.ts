@@ -5,7 +5,8 @@ export const CreateProviderSchema = z.object({
     name: z.string().min(1, 'Provider name is required'),
     providerIP: z.string().ip('Invalid IP address').optional(),
     username: z.string().min(1, 'Username is required').optional(),
-    privateKeyFilename: z.string().min(1, 'Private key filename is required'),
+    privateKeyFilename: z.string().optional().nullable(),
+    password: z.string().optional().nullable(),
     SSHPort: z.number().int().min(1).max(65535).optional().default(22),
     providerType: z.nativeEnum(ProviderType),
 });

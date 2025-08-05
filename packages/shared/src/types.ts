@@ -39,7 +39,8 @@ export interface Provider {
     name: string;
     providerIP?: string;
     username?: string;
-    privateKeyFilename: string;
+    privateKeyFilename?: string;
+    password?: string;
     SSHPort?: number;
     createdAt: string;
     providerType: ProviderType;

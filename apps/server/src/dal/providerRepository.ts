@@ -12,7 +12,7 @@ export class ProviderRepository {
     async createProvider(data: Omit<Provider, 'id'>): Promise<{ lastID: number }> {
         return await runAsync<{ lastID: number }>(() => {
             const stmt = this.db.prepare(
-                'INSERT INTO providers (provider_name, provider_ip, username, private_key_filename, ssh_port, provider_type) VALUES (?, ?, ?, ?, ?, ?)'
+                'INSERT INTO providers (provider_name, provider_ip, username, private_key_filename, password, ssh_port, provider_type) VALUES (?, ?, ?, ?, ?, ?)'
             );
 
             const result = stmt.run(
@@ -109,12 +109,18 @@ export class ProviderRepository {
                 (
                     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
                     provider_name        TEXT NOT NULL,
-                    provider_ip          TEXT DEFAULT NULL,
-                    username             TEXT DEFAULT NULL,
-                    private_key_filename TEXT NOT NULL,
-                    ssh_port             INTEGER DEFAULT 22,
+                    provider_ip          TEXT     DEFAULT NULL,
+                    username             TEXT     DEFAULT NULL,
+                    private_key_filename TEXT,
+                    password             TEXT,
+                    ssh_port             INTEGER  DEFAULT 22,
                     created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
                     provider_type        TEXT NOT NULL
+                    CHECK (
+                        (private_key_filename IS NOT NULL AND TRIM(private_key_filename) <> '')
+                            OR
+                        (password IS NOT NULL AND TRIM(password) <> '')
+                        )
                 )
             `).run();
         });

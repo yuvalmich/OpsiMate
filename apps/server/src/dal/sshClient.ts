@@ -26,7 +26,7 @@ function getKeyPath(filename: string) {
 export async function connectAndListContainers(provider: Provider): Promise<DiscoveredService[]> {
 
     const ssh = new NodeSSH();
-    const privateKeyPath = getKeyPath(provider.privateKeyFilename);
+    const privateKeyPath = getKeyPath(provider.privateKeyFilename!);
 
     const sshConfig = {
         host: provider.providerIP,
@@ -70,7 +70,7 @@ export async function startService(
         await ssh.connect({
             host: provider.providerIP,
             username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
             port: provider.SSHPort,
         });
 
@@ -92,7 +92,7 @@ export async function stopService(
         await ssh.connect({
             host: provider.providerIP,
             username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
             port: provider.SSHPort,
         });
 
@@ -112,7 +112,7 @@ export async function getServiceLogs(provider: Provider, serviceName: string): P
         await ssh.connect({
             host: provider.providerIP,
             username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
             port: provider.SSHPort,
         });
 
@@ -148,7 +148,7 @@ export async function discoverSystemServices(provider: Provider): Promise<Discov
         await ssh.connect({
             host: provider.providerIP,
             username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
             port: provider.SSHPort,
         });
 
@@ -205,7 +205,7 @@ export async function startSystemService(
         await ssh.connect({
             host: provider.providerIP,
             username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
             port: provider.SSHPort,
         });
 
@@ -230,7 +230,7 @@ export async function stopSystemService(
         await ssh.connect({
             host: provider.providerIP,
             username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
             port: provider.SSHPort,
         });
 
@@ -252,7 +252,7 @@ export async function getSystemServiceLogs(provider: Provider, serviceName: stri
         await ssh.connect({
             host: provider.providerIP,
             username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
             port: provider.SSHPort,
         });
 
@@ -284,7 +284,7 @@ export async function testConnection(provider: Provider): Promise<boolean> {
         const sshConfig = {
             host: provider.providerIP,
             username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
             port: provider.SSHPort,
         }
 
@@ -320,7 +320,7 @@ export async function checkSystemServiceStatus(
         await ssh.connect({
             host: provider.providerIP,
             username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename),
+            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
             port: provider.SSHPort,
         });
 

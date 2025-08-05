@@ -25,7 +25,7 @@ function getKeyPath(filename: string) {
 
 const createClient = (_provider: Provider): ObjectCoreV1Api => {
     const kc: k8s.KubeConfig = new k8s.KubeConfig();
-    const privateKeyPath = getKeyPath(_provider.privateKeyFilename);
+    const privateKeyPath = getKeyPath(_provider.privateKeyFilename!);
 
     kc.loadFromFile(privateKeyPath);
 
