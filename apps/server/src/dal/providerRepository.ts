@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import {Provider} from '@OpsiMate/shared';
 import {runAsync} from "./db";
+import {encryptPassword, decryptPassword} from '../utils/encryption';
 
 export class ProviderRepository {
     private db: Database.Database;
@@ -20,7 +21,7 @@ export class ProviderRepository {
                 data.providerIP,
                 data.username,
                 data.privateKeyFilename,
-                data.password,
+                encryptPassword(data.password),
                 data.SSHPort,
                 data.providerType
             );
@@ -45,7 +46,11 @@ export class ProviderRepository {
                 WHERE id = ?
             `);
 
-            return stmt.get(id) as Provider;
+            const result = stmt.get(id) as Provider;
+            if (result && result.password) {
+                result.password = decryptPassword(result.password);
+            }
+            return result;
         });
     }
 
@@ -65,7 +70,13 @@ export class ProviderRepository {
                 ORDER BY created_at DESC
             `);
 
-            return stmt.all() as Provider[];
+            const results = stmt.all() as Provider[];
+            return results.map(provider => {
+                if (provider.password) {
+                    provider.password = decryptPassword(provider.password);
+                }
+                return provider;
+            });
         });
     }
 
@@ -99,7 +110,7 @@ export class ProviderRepository {
                 data.providerIP,
                 data.username,
                 data.privateKeyFilename,
-                data.password,
+                encryptPassword(data.password),
                 data.SSHPort,
                 data.providerType,
                 id
