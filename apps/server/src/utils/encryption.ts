@@ -1,10 +1,13 @@
 import * as crypto from 'crypto';
+import {Logger} from "@OpsiMate/shared";
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16; // For GCM, this is always 16
 const SALT_LENGTH = 64;
 const TAG_LENGTH = 16;
 const KEY_LENGTH = 32;
+
+const logger = new Logger('encryption-');
 
 /**
  * Get encryption key from environment variable or use default
@@ -79,7 +82,7 @@ export function decryptPassword(encryptedPassword: string | undefined): string |
 
         return decrypted;
     } catch (error) {
-        console.error('Failed to decrypt password:', error);
+        logger.error('Failed to decrypt password:', error);
         // Return the original value if decryption fails (for backward compatibility)
         return encryptedPassword;
     }
