@@ -12,7 +12,7 @@ export class ProviderRepository {
     async createProvider(data: Omit<Provider, 'id'>): Promise<{ lastID: number }> {
         return await runAsync<{ lastID: number }>(() => {
             const stmt = this.db.prepare(
-                'INSERT INTO providers (provider_name, provider_ip, username, private_key_filename, password, ssh_port, provider_type) VALUES (?, ?, ?, ?, ?, ?)'
+                'INSERT INTO providers (provider_name, provider_ip, username, private_key_filename, password, ssh_port, provider_type) VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
 
             const result = stmt.run(
@@ -20,6 +20,7 @@ export class ProviderRepository {
                 data.providerIP,
                 data.username,
                 data.privateKeyFilename,
+                data.password,
                 data.SSHPort,
                 data.providerType
             );
@@ -36,6 +37,7 @@ export class ProviderRepository {
                        provider_ip          AS providerIP,
                        username,
                        private_key_filename AS privateKeyFilename,
+                       password,
                        ssh_port             AS SSHPort,
                        created_at           AS createdAt,
                        provider_type        AS providerType
@@ -55,6 +57,7 @@ export class ProviderRepository {
                        provider_ip          AS providerIP,
                        username,
                        private_key_filename AS privateKeyFilename,
+                       password,
                        ssh_port             AS SSHPort,
                        created_at           AS createdAt,
                        provider_type        AS providerType
@@ -85,6 +88,7 @@ export class ProviderRepository {
                     provider_ip          = ?,
                     username             = ?,
                     private_key_filename = ?,
+                    password             = ?,
                     ssh_port             = ?,
                     provider_type        = ?
                 WHERE id = ?
@@ -95,6 +99,7 @@ export class ProviderRepository {
                 data.providerIP,
                 data.username,
                 data.privateKeyFilename,
+                data.password,
                 data.SSHPort,
                 data.providerType,
                 id

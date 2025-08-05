@@ -23,17 +23,38 @@ function getKeyPath(filename: string) {
     return filePath;
 }
 
+function getSshConfig(provider: Provider) {
+    const { providerIP, username, privateKeyFilename, password, SSHPort } = provider;
+    
+    // Ensure at least one authentication method is provided
+    if (!privateKeyFilename && !password) {
+        throw new Error('Either privateKeyFilename or password must be provided for SSH authentication');
+    }
+    
+    const baseConfig = {
+        host: providerIP,
+        username: username,
+    };
+    
+    // Use private key authentication if available, otherwise use password
+    if (privateKeyFilename) {
+        return {
+            ...baseConfig,
+            privateKeyPath: getKeyPath(privateKeyFilename),
+            port: SSHPort,
+        };
+    } else {
+        return {
+            ...baseConfig,
+            password: password,
+        };
+    }
+}
+
 export async function connectAndListContainers(provider: Provider): Promise<DiscoveredService[]> {
 
     const ssh = new NodeSSH();
-    const privateKeyPath = getKeyPath(provider.privateKeyFilename!);
-
-    const sshConfig = {
-        host: provider.providerIP,
-        username: provider.username,
-        privateKeyPath: privateKeyPath,
-        port: provider.SSHPort,
-    };
+    const sshConfig = getSshConfig(provider);
 
     await timeoutPromise(ssh.connect(sshConfig), 5 * 1000, 'SSH connection timed out');
 
@@ -67,12 +88,8 @@ export async function startService(
 ): Promise<void> {
     const ssh = new NodeSSH();
     try {
-        await ssh.connect({
-            host: provider.providerIP,
-            username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
-            port: provider.SSHPort,
-        });
+        const sshConfig = getSshConfig(provider);
+        await ssh.connect(sshConfig);
 
         const result = await ssh.execCommand(`sudo docker start ${serviceName}`);
         if (result.code !== 0) {
@@ -89,12 +106,8 @@ export async function stopService(
 ): Promise<void> {
     const ssh = new NodeSSH();
     try {
-        await ssh.connect({
-            host: provider.providerIP,
-            username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
-            port: provider.SSHPort,
-        });
+        const sshConfig = getSshConfig(provider);
+        await ssh.connect(sshConfig);
 
         const result = await ssh.execCommand(`sudo docker stop ${serviceName}`);
         if (result.code !== 0) {
@@ -109,12 +122,8 @@ export async function getServiceLogs(provider: Provider, serviceName: string): P
     const ssh = new NodeSSH();
 
     try {
-        await ssh.connect({
-            host: provider.providerIP,
-            username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
-            port: provider.SSHPort,
-        });
+        const sshConfig = getSshConfig(provider);
+        await ssh.connect(sshConfig);
 
         const cmd = `sudo docker logs --since 1h ${serviceName} 2>&1 | grep -i err | tail -n 10`
 
@@ -145,12 +154,8 @@ export async function getServiceLogs(provider: Provider, serviceName: string): P
 export async function discoverSystemServices(provider: Provider): Promise<DiscoveredService[]> {
     const ssh = new NodeSSH();
     try {
-        await ssh.connect({
-            host: provider.providerIP,
-            username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
-            port: provider.SSHPort,
-        });
+        const sshConfig = getSshConfig(provider);
+        await ssh.connect(sshConfig);
 
         // List all system services (not just running ones)
         const result = await ssh.execCommand('systemctl list-units --type=service --all --no-legend');
@@ -202,12 +207,8 @@ export async function startSystemService(
 ): Promise<void> {
     const ssh = new NodeSSH();
     try {
-        await ssh.connect({
-            host: provider.providerIP,
-            username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
-            port: provider.SSHPort,
-        });
+        const sshConfig = getSshConfig(provider);
+        await ssh.connect(sshConfig);
 
         const result = await ssh.execCommand(`sudo systemctl start ${serviceName}`);
         if (result.code !== 0) {
@@ -227,12 +228,8 @@ export async function stopSystemService(
 ): Promise<void> {
     const ssh = new NodeSSH();
     try {
-        await ssh.connect({
-            host: provider.providerIP,
-            username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
-            port: provider.SSHPort,
-        });
+        const sshConfig = getSshConfig(provider);
+        await ssh.connect(sshConfig);
 
         const result = await ssh.execCommand(`sudo systemctl stop ${serviceName}`);
         if (result.code !== 0) {
@@ -249,12 +246,8 @@ export async function stopSystemService(
 export async function getSystemServiceLogs(provider: Provider, serviceName: string): Promise<string[]> {
     const ssh = new NodeSSH();
     try {
-        await ssh.connect({
-            host: provider.providerIP,
-            username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
-            port: provider.SSHPort,
-        });
+        const sshConfig = getSshConfig(provider);
+        await ssh.connect(sshConfig);
 
         // Get logs using journalctl
         const result = await ssh.execCommand(`sudo journalctl -u ${serviceName} --since "24 hours ago" --no-pager`);
@@ -281,12 +274,7 @@ export async function testConnection(provider: Provider): Promise<boolean> {
     const ssh = new NodeSSH();
 
     try {
-        const sshConfig = {
-            host: provider.providerIP,
-            username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
-            port: provider.SSHPort,
-        }
+        const sshConfig = getSshConfig(provider);
 
         // Timeout for SSH connection (e.g., 10 seconds)
         await timeoutPromise(ssh.connect(sshConfig), 10000, 'SSH connection timed out');
@@ -317,12 +305,8 @@ export async function checkSystemServiceStatus(
 ): Promise<'running' | 'stopped' | 'unknown'> {
     const ssh = new NodeSSH();
     try {
-        await ssh.connect({
-            host: provider.providerIP,
-            username: provider.username,
-            privateKeyPath: getKeyPath(provider.privateKeyFilename!),
-            port: provider.SSHPort,
-        });
+        const sshConfig = getSshConfig(provider);
+        await ssh.connect(sshConfig);
 
         // Check service status using systemctl is-active (most reliable for running status)
         const isActiveResult = await ssh.execCommand(`sudo systemctl is-active ${serviceName}`);

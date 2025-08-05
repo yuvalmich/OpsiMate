@@ -23,6 +23,7 @@ interface EditProviderDialogProps {
     providerIP: string;
     username: string;
     privateKeyFilename: string;
+    password: string;
     SSHPort: number;
     providerType: string;
   }) => Promise<void>;
@@ -39,6 +40,7 @@ export function EditProviderDialog({
     providerIP: "",
     username: "",
     privateKeyFilename: "",
+    password: "",
     SSHPort: 22,
     providerType: "VM", // Default to VM
   });
@@ -51,7 +53,8 @@ export function EditProviderDialog({
         name: provider.name,
         providerIP: provider.providerIP || "",
         username: provider.username || "",
-        privateKeyFilename: provider.privateKeyFilename || "",
+        privateKeyFilename: provider.privateKeyFilename || undefined,
+        password: provider.password || undefined,
         SSHPort: provider.SSHPort || 22,
         providerType: provider.providerType || 'VM',
       });
@@ -228,8 +231,21 @@ export function EditProviderDialog({
                     value={formData.privateKeyFilename}
                     onChange={handleInputChange}
                     className="col-span-3"
-                    placeholder="Path to SSH private key file"
-                    required
+                    placeholder="Path to SSH private key file (leave empty to use password)"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="password" className="text-right">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className="col-span-3"
+                    placeholder="SSH password (leave empty to use key file)"
                   />
                 </div>
               </>
