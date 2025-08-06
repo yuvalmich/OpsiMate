@@ -6,7 +6,7 @@ import {
     Logger,
     Provider,
     User
-} from "@service-peek/shared";
+} from "@OpsiMate/shared";
 import {z} from "zod";
 import {providerConnectorFactory} from "../../../bl/providers/provider-connector/providerConnectorFactory";
 import {ProviderNotFound} from "../../../bl/providers/ProviderNotFound";
