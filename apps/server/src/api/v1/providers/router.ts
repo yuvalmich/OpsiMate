@@ -8,6 +8,7 @@ export default function createProviderRouter(controller: ProviderController) {
     // CRUD API
     router.get('/', controller.getProviders.bind(controller));
     router.post('/', controller.createProvider.bind(controller));
+    router.post('/bulk', controller.createProviderBulk.bind(controller));
     router.put('/:providerId', controller.updateProvider.bind(controller));
     router.delete('/:providerId', controller.deleteProvider.bind(controller));
 
