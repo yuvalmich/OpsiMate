@@ -45,6 +45,6 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['@service-peek/shared']
+          include: ['@OpsiMate/shared']
   }
 }));

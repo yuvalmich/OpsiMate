@@ -2,7 +2,7 @@ import {NodeSSH} from 'node-ssh';
 import path from 'path';
 import fs from 'fs';
 
-import {DiscoveredService, Provider, Logger} from "@service-peek/shared";
+import {DiscoveredService, Provider, Logger} from "@OpsiMate/shared";
 import { getSecurityConfig } from '../config/config';
 
 const logger = new Logger('dal/sshClient');

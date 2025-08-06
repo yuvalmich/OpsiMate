@@ -16,7 +16,7 @@ module.exports = {
     'node_modules/(?!(@kubernetes/client-node)/)'
   ],
   moduleNameMapper: {
-    '^@service-peek/shared$': '<rootDir>/../../packages/shared/dist/index.js',
+    '^@OpsiMate/shared$': '<rootDir>/../../packages/shared/dist/index.js',
   },
   // Handle ES modules in node_modules
   extensionsToTreatAsEsm: ['.ts'],

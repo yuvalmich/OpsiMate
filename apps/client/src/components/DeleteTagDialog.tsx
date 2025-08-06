@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { providerApi } from "@/lib/api";
-import { Tag } from "@service-peek/shared";
+import { Tag } from "@OpsiMate/shared";
 import { AlertTriangle } from "lucide-react";
 
 interface DeleteTagDialogProps {

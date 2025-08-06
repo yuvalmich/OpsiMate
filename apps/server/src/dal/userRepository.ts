@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
 import {UserRow} from './models';
-import {User} from "@service-peek/shared";
+import {User} from "@OpsiMate/shared";
 
 export class UserRepository {
     private db: Database.Database;

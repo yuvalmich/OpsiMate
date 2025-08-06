@@ -1,4 +1,4 @@
-import { Integration, IntegrationUrls, Logger } from "@service-peek/shared";
+import { Integration, IntegrationUrls, Logger } from "@OpsiMate/shared";
 import { IntegrationConnector } from "./integration-connector";
 import { DatadogClient, DatadogDashboardSummary } from "../../../dal/external-client/datadog-client";
 

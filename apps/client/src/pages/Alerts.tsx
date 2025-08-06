@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
-import { Alert } from "@service-peek/shared";
+import { Alert } from "@OpsiMate/shared";
 import { ExternalLink, X, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 

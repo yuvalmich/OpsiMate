@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { viewsApi } from '@/lib/api';
 import { queryKeys } from '../queryKeys';
 
-const ACTIVE_VIEW_STORAGE_KEY = "service-peek-active-view-id";
+const ACTIVE_VIEW_STORAGE_KEY = "OpsiMate-active-view-id";
 
 export const useActiveView = () => {
   const queryClient = useQueryClient();

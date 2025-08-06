@@ -1,4 +1,4 @@
-# Service Peek Configuration
+# Opsimate Configuration
 # Simple configuration file with essential settings
 
 # Server configuration
@@ -13,8 +13,8 @@ client:
 
 # Database configuration
 database:
-  path: "/Users/idanlodzki/code/windsurf_projects/service-peek/apps/server/data/service_peek.db2"  # SQLite database file path
+  path: "/Users/idanlodzki/code/windsurf_projects/OpsiMate/apps/server/data/OpsiMate.db2"  # SQLite database file path
 
 # Security configuration
 security:
-  private_keys_path: "/Users/idanlodzki/code/windsurf_projects/service-peek/apps/server/data/private-keys"  # SSH private keys directory
+  private_keys_path: "/Users/idanlodzki/code/windsurf_projects/OpsiMate/apps/server/data/private-keys"  # SSH private keys directory

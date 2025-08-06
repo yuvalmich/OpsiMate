@@ -15,7 +15,7 @@ import { DashboardLayout } from '../components/DashboardLayout';
 import { AddUserModal } from '../components/AddUserModal';
 import { auditApi } from '../lib/api';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '../components/ui/alert-dialog';
-import {AuditLog} from "@service-peek/shared";
+import {AuditLog} from "@OpsiMate/shared";
 
 const PAGE_SIZE = 20;
 
@@ -157,7 +157,7 @@ const Settings: React.FC = () => {
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-semibold">User Management</h2>
-              <p className="text-muted-foreground">Manage user access and permissions for your Service Peek instance.</p>
+              <p className="text-muted-foreground">Manage user access and permissions for your Service instance.</p>
             </div>
             <Button
               onClick={() => setShowAddUserModal(true)}

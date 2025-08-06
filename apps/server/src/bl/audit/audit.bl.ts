@@ -1,5 +1,5 @@
 import { AuditLogRepository } from '../../dal/auditLogRepository';
-import { AuditLog } from '@service-peek/shared';
+import { AuditLog } from '@OpsiMate/shared';
 
 export class AuditBL {
     constructor(private auditLogRepository: AuditLogRepository) {}

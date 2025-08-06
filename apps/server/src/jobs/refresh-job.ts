@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import { ProviderBL } from '../bl/providers/provider.bl';
 import { providerConnectorFactory } from '../bl/providers/provider-connector/providerConnectorFactory';
-import { DiscoveredService, Logger, Provider, ServiceType } from '@service-peek/shared';
+import { DiscoveredService, Logger, Provider, ServiceType } from '@OpsiMate/shared';
 import { ServiceRepository } from "../dal/serviceRepository";
 import { checkSystemServiceStatus } from "../dal/sshClient";
 

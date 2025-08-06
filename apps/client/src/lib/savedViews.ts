@@ -1,7 +1,7 @@
 import { SavedView } from "@/types/SavedView";
 import { viewsApi } from "./api";
 
-const STORAGE_KEY = "service-peek-saved-views";
+const STORAGE_KEY = "OpsiMate-saved-views";
 
 // Fallback to localStorage if API fails
 export async function getSavedViews(): Promise<SavedView[]> {
@@ -91,13 +91,13 @@ export async function getActiveViewId(): Promise<string | undefined> {
     // If API returns error (like 404 when no active view is set), handle gracefully
     if (response.error && response.error.includes('404')) {
       // No active view is set on server, this is expected - check localStorage or return default
-      const localStorageViewId = localStorage.getItem("service-peek-active-view-id");
+      const localStorageViewId = localStorage.getItem("OpsiMate-active-view-id");
       return localStorageViewId || 'default-view';
     }
     
     // For other API errors, fall back to localStorage
     console.warn("API get active view failed, falling back to localStorage", response.error);
-    const localStorageViewId = localStorage.getItem("service-peek-active-view-id");
+    const localStorageViewId = localStorage.getItem("OpsiMate-active-view-id");
     
     // If no active view is set, return the default view ID
     return localStorageViewId || 'default-view';
@@ -117,11 +117,11 @@ export async function setActiveViewId(viewId: string | undefined): Promise<void>
       if (!response.success) {
         console.warn("API set active view failed, falling back to localStorage", response.error);
         // Fall back to localStorage
-        localStorage.setItem("service-peek-active-view-id", viewId);
+        localStorage.setItem("OpsiMate-active-view-id", viewId);
       }
     } else {
       // For now, just remove from localStorage as the API doesn't have a clear endpoint
-      localStorage.removeItem("service-peek-active-view-id");
+      localStorage.removeItem("OpsiMate-active-view-id");
     }
   } catch (error) {
     console.error("Failed to set active view ID:", error);

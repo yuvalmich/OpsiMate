@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { providerApi } from "@/lib/api";
-import { Tag } from "@service-peek/shared";
+import { Tag } from "@OpsiMate/shared";
 
 interface CreateTagDialogProps {
   open: boolean;

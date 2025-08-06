@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
-import { AuditLog } from '@service-peek/shared';
+import { AuditLog } from '@OpsiMate/shared';
 import { AuditLogRow } from './models';
 
 export class AuditLogRepository {

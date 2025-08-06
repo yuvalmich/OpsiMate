@@ -49,7 +49,7 @@ import {useToast} from "@/hooks/use-toast";
 import {Link} from "react-router-dom";
 import {cn} from "@/lib/utils";
 import { canManageProviders, canDelete } from "../lib/permissions";
-import { Provider as SharedProvider } from '@service-peek/shared';
+import { Provider as SharedProvider } from '@OpsiMate/shared';
 import { AddServiceDialog, ServiceConfig } from "@/components/AddServiceDialog";
 import { RightSidebarWithLogs } from "@/components/RightSidebarWithLogs";
 import type { Service } from "@/components/ServiceTable";

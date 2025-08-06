@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Settings, Search, X, ChevronUp, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useMemo } from "react"
-import { Tag, Alert } from "@service-peek/shared"
+import { Tag, Alert } from "@OpsiMate/shared"
 
 export interface Service {
   id: string

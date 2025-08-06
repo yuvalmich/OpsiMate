@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Docker entrypoint script for Service Peek
+# Docker entrypoint script for Opsimate
 # Handles config file mounting and startup
 
 set -e
 
-echo "Starting Service Peek container..."
+echo "Starting Opsimate container..."
 
 # Check if a custom config file is mounted
 if [ -f "/app/config/config.yml" ]; then

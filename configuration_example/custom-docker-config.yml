@@ -1,4 +1,4 @@
-# Custom Docker Configuration for Service Peek
+# Custom Docker Configuration for Opsimate
 # This demonstrates mounting a custom config file
 
 # Server configuration
@@ -14,11 +14,11 @@ client:
 
 # Database configuration
 database:
-  path: "/app/data/database/service_peek_custom.db"  # Custom database name
+  path: "/app/server/data/database/opsimate.db"  # Custom database name
 
 # Security configuration
 security:
-  private_keys_path: "/app/data/private-keys"  # Container path for SSH keys
+  private_keys_path: "/app/server/data/private-keys"  # Container path for SSH keys
 
 # Logging configuration
 logging:
