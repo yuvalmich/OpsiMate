@@ -11,6 +11,10 @@ export const CreateProviderSchema = z.object({
     providerType: z.nativeEnum(ProviderType),
 });
 
+export const CreateProviderBulkSchema = z.object({
+    providers: z.array(CreateProviderSchema).min(1, 'At least one provider is required'),
+});
+
 export const CreateIntegrationSchema = z.object({
     name: z.string().min(1),
     type: z.nativeEnum(IntegrationType),
@@ -124,7 +128,7 @@ export const UpdateUserRoleSchema = z.object({
     newRole: RoleSchema
 });
 
-export const RegisterSchema = CreateUserSchema.omit({ role: true });
+export const RegisterSchema = CreateUserSchema.omit({role: true});
 
 export const LoginSchema = z.object({
     email: z.string().email(),
@@ -143,5 +147,6 @@ export type UpdateUserRoleRequest = z.infer<typeof UpdateUserRoleSchema>;
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileSchema>;
 
 export type CreateProviderRequest = z.infer<typeof CreateProviderSchema>;
+export type CreateProviderBulkRequest = z.infer<typeof CreateProviderBulkSchema>;
 export type AddBulkServiceRequest = z.infer<typeof AddBulkServiceSchema>;
 export type ProviderIdParams = z.infer<typeof ProviderIdSchema>;
