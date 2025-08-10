@@ -22,15 +22,22 @@ beforeAll(async () => {
 
   // Create the providers and audit_logs tables
   db.exec(`
-    CREATE TABLE IF NOT EXISTS providers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      provider_name TEXT NOT NULL,
-      provider_ip TEXT DEFAULT NULL,
-      username TEXT DEFAULT NULL,
-      private_key_filename TEXT NOT NULL,
-      ssh_port INTEGER DEFAULT 22,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      provider_type TEXT NOT NULL
+    CREATE TABLE IF NOT EXISTS providers
+    (
+      id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider_name        TEXT NOT NULL,
+      provider_ip          TEXT     DEFAULT NULL,
+      username             TEXT     DEFAULT NULL,
+      private_key_filename TEXT,
+      password             TEXT,
+      ssh_port             INTEGER  DEFAULT 22,
+      created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
+      provider_type        TEXT NOT NULL
+      CHECK (
+        (private_key_filename IS NOT NULL AND TRIM(private_key_filename) <> '')
+        OR
+        (password IS NOT NULL AND TRIM(password) <> '')
+      )
     );
     CREATE TABLE IF NOT EXISTS audit_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

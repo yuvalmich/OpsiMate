@@ -129,7 +129,8 @@ const ServerForm = ({onSubmit, onClose}: ProviderFormProps<ServerFormData>) => {
                 name: values.name,
                 providerIP: values.hostname,
                 username: values.username,
-                privateKeyFilename: values.authType === 'key' ? values.sshKey || 'id_rsa' : 'none',
+                privateKeyFilename: values.authType === 'key' ? values.sshKey : undefined,
+                password: values.authType === 'password' ? values.password : undefined,
                 SSHPort: values.port,
                 providerType: 'VM',
             };
@@ -389,7 +390,8 @@ export function ProviderSidebar({provider, onClose}: ProviderSidebarProps) {
                         name: serverData.name,
                         providerIP: serverData.hostname,
                         username: serverData.username,
-                        privateKeyFilename: serverData.authType === 'key' ? serverData.sshKey || 'id_rsa' : 'none',
+                        privateKeyFilename: serverData.authType === 'key' ? serverData.sshKey : undefined,
+                        password: serverData.authType === 'password' ? serverData.password : undefined,
                         SSHPort: serverData.port,
                         providerType: providerType
                     };

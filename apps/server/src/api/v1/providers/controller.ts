@@ -22,6 +22,9 @@ export class ProviderController {
     async getProviders(req: Request, res: Response) {
         try {
             const providers = await this.providerBL.getAllProviders();
+            providers.forEach(provider => {
+                delete provider.password;
+            })
             res.json({success: true, data: {providers}});
         } catch (error) {
             logger.error('Error getting providers:', error);

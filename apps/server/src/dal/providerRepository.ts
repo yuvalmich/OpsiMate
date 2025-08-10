@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import {Provider} from '@OpsiMate/shared';
 import {runAsync} from "./db";
+import {encryptPassword, decryptPassword} from '../utils/encryption';
 
 export class ProviderRepository {
     private db: Database.Database;
@@ -12,7 +13,7 @@ export class ProviderRepository {
     async createProvider(data: Omit<Provider, 'id'>): Promise<{ lastID: number }> {
         return await runAsync<{ lastID: number }>(() => {
             const stmt = this.db.prepare(
-                'INSERT INTO providers (provider_name, provider_ip, username, private_key_filename, ssh_port, provider_type) VALUES (?, ?, ?, ?, ?, ?)'
+                'INSERT INTO providers (provider_name, provider_ip, username, private_key_filename, password, ssh_port, provider_type) VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
 
             const result = stmt.run(
@@ -20,6 +21,7 @@ export class ProviderRepository {
                 data.providerIP,
                 data.username,
                 data.privateKeyFilename,
+                encryptPassword(data.password),
                 data.SSHPort,
                 data.providerType
             );
@@ -36,6 +38,7 @@ export class ProviderRepository {
                        provider_ip          AS providerIP,
                        username,
                        private_key_filename AS privateKeyFilename,
+                       password,
                        ssh_port             AS SSHPort,
                        created_at           AS createdAt,
                        provider_type        AS providerType
@@ -43,7 +46,11 @@ export class ProviderRepository {
                 WHERE id = ?
             `);
 
-            return stmt.get(id) as Provider;
+            const result = stmt.get(id) as Provider;
+            if (result && result.password) {
+                result.password = decryptPassword(result.password);
+            }
+            return result;
         });
     }
 
@@ -55,6 +62,7 @@ export class ProviderRepository {
                        provider_ip          AS providerIP,
                        username,
                        private_key_filename AS privateKeyFilename,
+                       password,
                        ssh_port             AS SSHPort,
                        created_at           AS createdAt,
                        provider_type        AS providerType
@@ -62,7 +70,13 @@ export class ProviderRepository {
                 ORDER BY created_at DESC
             `);
 
-            return stmt.all() as Provider[];
+            const results = stmt.all() as Provider[];
+            return results.map(provider => {
+                if (provider.password) {
+                    provider.password = decryptPassword(provider.password);
+                }
+                return provider;
+            });
         });
     }
 
@@ -85,6 +99,7 @@ export class ProviderRepository {
                     provider_ip          = ?,
                     username             = ?,
                     private_key_filename = ?,
+                    password             = ?,
                     ssh_port             = ?,
                     provider_type        = ?
                 WHERE id = ?
@@ -95,6 +110,7 @@ export class ProviderRepository {
                 data.providerIP,
                 data.username,
                 data.privateKeyFilename,
+                encryptPassword(data.password),
                 data.SSHPort,
                 data.providerType,
                 id
@@ -109,12 +125,18 @@ export class ProviderRepository {
                 (
                     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
                     provider_name        TEXT NOT NULL,
-                    provider_ip          TEXT DEFAULT NULL,
-                    username             TEXT DEFAULT NULL,
-                    private_key_filename TEXT NOT NULL,
-                    ssh_port             INTEGER DEFAULT 22,
+                    provider_ip          TEXT     DEFAULT NULL,
+                    username             TEXT     DEFAULT NULL,
+                    private_key_filename TEXT,
+                    password             TEXT,
+                    ssh_port             INTEGER  DEFAULT 22,
                     created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
                     provider_type        TEXT NOT NULL
+                    CHECK (
+                        (private_key_filename IS NOT NULL AND TRIM(private_key_filename) <> '')
+                            OR
+                        (password IS NOT NULL AND TRIM(password) <> '')
+                        )
                 )
             `).run();
         });
