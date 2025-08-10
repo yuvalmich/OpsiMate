@@ -1,8 +1,55 @@
-# OpsiMate
+<div align="center">
+    <img src="apps/client/images/logo.png" width="86">
+</div>
 
-A monorepo for the OpsiMate application built with Turbo.
+<h1 align="center">The open-source infrastructure monitoring and service management platform</h1>
 
-## Structure
+</br>
+
+<div align="center">
+Centralized service discovery, monitoring, and management across your infrastructure. SSH-based connectivity, real-time alerts, and intuitive dashboards.
+</br>
+</div>
+
+<div align="center">
+    <a href='http://makeapullrequest.com'>
+      <img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/></a>
+    <a href="https://github.com/OpsiMate/OpsiMate/commits/main">
+      <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/OpsiMate/OpsiMate"/></a>
+    <a href="https://github.com/OpsiMate/OpsiMate/blob/main/LICENSE">
+      <img alt="License" src="https://img.shields.io/github/license/OpsiMate/OpsiMate"/></a>
+    <a href="https://github.com/OpsiMate/OpsiMate/stargazers">
+      <img alt="GitHub stars" src="https://img.shields.io/github/stars/OpsiMate/OpsiMate?style=social"/></a>
+</div>
+
+<p align="center">
+    <a href="https://opsimate.vercel.app/getting-started/deploy">Get Started</a>
+    ·
+    <a href="https://opsimate.vercel.app/">Documentation</a>
+    ·
+    <a href="https://www.opsimate.com/">Website</a>
+    ·
+    <a href="https://join.slack.com/t/opsimate/shared_invite/zt-39bq3x6et-NrVCZzH7xuBGIXmOjJM7gA">Join Slack</a>
+    ·
+    <a href="https://github.com/OpsiMate/OpsiMate/issues/new?assignees=&labels=bug&template=bug_report.md&title=">Report Bug</a>
+</p>
+
+<h1 align="center"></h1>
+
+- 🔍 **Service Discovery** - Automatically discover and monitor Docker containers and systemd services across your infrastructure
+- 🖥️ **Multi-Provider Support** - Connect to VMs, Kubernetes clusters, and cloud instances via SSH and APIs
+- 📊 **Real-time Monitoring** - Live service status, health checks, and performance metrics
+- 🚨 **Integrated Alerting** - Grafana integration for centralized alert management and correlation
+- 🎛️ **Service Management** - Start, stop, and restart services directly from the dashboard
+- 📋 **Centralized Logs** - View and analyze service logs from a single interface
+- 🏷️ **Smart Tagging** - Organize and filter services with custom tags and labels
+- 🔐 **Secure Access** - SSH key-based authentication with role-based access control
+
+</br>
+
+## Architecture
+
+OpsiMate is built as a modern monorepo with a React frontend and Node.js backend:
 
 ```
 OpsiMate/
@@ -11,193 +58,333 @@ OpsiMate/
 │   └── server/          # Node.js backend (Express + TypeScript)
 ├── packages/
 │   └── shared/          # Shared types and validation schemas
-├── package.json         # Root workspace configuration
-└── turbo.json          # Turbo build configuration
+├── configuration_example/  # Example configurations
+└── docker/             # Docker deployment files
 ```
+
+## Supported Infrastructure
+
+### Compute Platforms
+
+<table>
+<tr>
+    <td align="center" width="150">
+        <img width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker"/><br/>
+        Docker
+    </td>
+    <td align="center" width="150">
+        <img width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg" alt="Kubernetes"/><br/>
+        Kubernetes
+    </td>
+    <td align="center" width="150">
+        <img width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg" alt="Linux VMs"/><br/>
+        Linux VMs
+    </td>
+    <td align="center" width="150">
+        <img width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg" alt="AWS"/><br/>
+        AWS EC2
+    </td>
+    <td align="center" width="150">
+        <img width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg" alt="Azure"/><br/>
+        Azure VMs
+    </td>
+    <td align="center" width="150">
+        <img width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg" alt="GCP"/><br/>
+        GCP Compute
+    </td>
+</tr>
+</table>
+
+### Service Types
+
+- **Docker Containers** - Full lifecycle management of containerized applications
+- **Systemd Services** - Native Linux service monitoring and control
+- **Kubernetes Pods** - Pod-level visibility and management
+- **Custom Services** - Extensible framework for custom service types
+
+### Monitoring Integrations
+
+<table>
+<tr>
+    <td align="center" width="150">
+        <img width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/grafana/grafana-original.svg" alt="Grafana"/><br/>
+        Grafana
+    </td>
+    <td align="center" width="150">
+        <img width="40" src="https://avatars.githubusercontent.com/u/3380462?s=200&v=4" alt="Prometheus"/><br/>
+        Prometheus
+    </td>
+    <td align="center" width="150">
+        <img width="40" src="https://static-00.iconduck.com/assets.00/elasticsearch-icon-2048x2048-bd6sxbp0.png" alt="Elasticsearch"/><br/>
+        Elasticsearch
+    </td>
+</tr>
+</table>
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm 10+
+- **Node.js 20+** - Runtime environment
+- **Docker** (optional) - For containerized deployment
+- **SSH Access** - To target infrastructure
+- **SSH Private Keys** - For secure authentication
 
-### Installation
+### Quick Start
 
-1. Install dependencies for all workspaces:
-```bash
-npm install
-```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/opsimate/opsimate.git
+   cd opsimate
+   ```
 
-2. Build all packages:
-```bash
-npm run build
-```
-
-3. Start development servers:
-```bash
-npm run dev
-```
-
-## Available Scripts
-
-- `npm run build` - Build all packages and apps
-- `npm run dev` - Start development servers for all apps
-- `npm run lint` - Run linting for all packages
-- `npm run clean` - Clean build outputs
-- `npm run format` - Format code with Prettier
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js 20+
-- Docker (for containerized deployment)
-- SSH private keys for service discovery (see `configuration_example/` for setup)
-
-### Local Development
-
-1. **Install dependencies:**
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-2. **Set up configuration:**
+3. **Build the project:**
    ```bash
-   # Copy example config and customize for your environment
-   cp configuration_example/config.yml ./config.yml
-   # Edit config.yml with your local paths
+   npm run build
    ```
 
-3. **Run the application:**
+4. **Start development server:**
    ```bash
    npm run dev
    ```
 
-4. **Access the application:**
-   - Backend API: http://localhost:3001/api/v1
-   - Frontend: http://localhost:8080
+5. **Access the application:**
+   - **Application:** http://localhost:3000
 
 ### Docker Deployment
 
-#### Option 1: Default Configuration (Simplest)
+#### Quick Start with Docker
 
 ```bash
 # Create required directories
 mkdir -p data/database data/private-keys
-cp -r apps/server/data/private-keys/* data/private-keys/
 
-# Build and run with default config
-docker build -t OpsiMate .
+# Copy your SSH private keys
+cp ~/.ssh/id_rsa data/private-keys/
+
+# Build and run
+docker build -t opsimate .
 docker run -d \
-  --name OpsiMate-app \
+  --name opsimate \
   -p 3001:3001 -p 8080:8080 \
   -v $(pwd)/data/database:/app/data/database \
   -v $(pwd)/data/private-keys:/app/data/private-keys \
-  OpsiMate
+  opsimate
 ```
 
-#### Option 2: Custom Configuration
+#### Production Deployment
 
 ```bash
-# Use example config as starting point
+# Use custom configuration
 cp configuration_example/container-config.yml my-config.yml
-# Edit my-config.yml as needed
+# Edit my-config.yml with your settings
 
-# Run with custom config
+# Deploy with custom config
 docker run -d \
-  --name OpsiMate-app \
+  --name opsimate \
   -p 3001:3001 -p 8080:8080 \
   -v $(pwd)/data/database:/app/data/database \
   -v $(pwd)/data/private-keys:/app/data/private-keys \
   -v $(pwd)/my-config.yml:/app/config/config.yml \
-  OpsiMate
+  opsimate
 ```
 
-### Configuration
+## Configuration
 
-Configuration examples are available in the `configuration_example/` folder:
+OpsiMate uses YAML configuration files for flexible deployment scenarios:
+
+### Configuration Files
 
 - **`config.yml`** - Local development configuration
 - **`container-config.yml`** - Docker container configuration
 - **`custom-docker-config.yml`** - Custom Docker configuration example
 
-See `configuration_example/README.md` for detailed explanations.
+### Example Configuration
+
+```yaml
+# OpsiMate Configuration
+server:
+  port: 3001
+  host: "0.0.0.0"
+
+client:
+  port: 8080
+  api_url: "http://localhost:3001/api/v1"
+
+database:
+  path: "/app/data/database/opsimate.db"
+
+security:
+  private_keys_path: "/app/data/private-keys"
+```
 
 ### Volume Mounts
 
-The container supports the following volume mounts:
-- **Database**: `-v $(pwd)/data/database:/app/data/database` (required for data persistence)
-- **Private Keys**: `-v $(pwd)/data/private-keys:/app/data/private-keys` (required for SSH connections)
-- **Config File**: `-v $(pwd)/my-config.yml:/app/config/config.yml` (optional for custom configuration)
+| Volume | Purpose | Required |
+|--------|---------|----------|
+| `/app/data/database` | SQLite database persistence | ✅ |
+| `/app/data/private-keys` | SSH private keys for authentication | ✅ |
+| `/app/config/config.yml` | Custom configuration | ❌ |
 
-### Configuration Priority
+## Features
 
-1. **Custom mounted config** (`/app/config/config.yml`) - if provided via volume mount
-2. **Built-in default config** (`/app/config/default-config.yml`) - used when no custom config is mounted
+### Service Discovery
 
-### Verification
+- **Automatic Discovery** - Scan infrastructure providers for running services
+- **Multi-Protocol Support** - SSH, Kubernetes API, Docker API
+- **Real-time Updates** - Continuous monitoring with configurable intervals
+- **Service Categorization** - Automatic tagging and classification
 
-To verify your deployment:
+### Monitoring & Alerting
 
-1. **Check container logs**: `docker logs OpsiMate-app`
-2. **Test API**: `curl http://localhost:3001/api/v1/providers`
-3. **Access frontend**: Open http://localhost:8080 in your browser
+- **Health Checks** - Service status monitoring with custom health endpoints
+- **Log Aggregation** - Centralized log viewing and analysis
+- **Alert Integration** - Grafana alert correlation and management
+- **Performance Metrics** - Resource usage and performance tracking
 
-## Workspaces
+### Service Management
 
-### Apps
+- **Lifecycle Control** - Start, stop, restart services remotely
+- **Bulk Operations** - Manage multiple services simultaneously
+- **Rollback Support** - Safe service updates with rollback capabilities
+- **Scheduled Operations** - Automated maintenance and updates
 
-#### Client (`apps/client`)
-React frontend application built with:
-- Vite
-- TypeScript
-- Tailwind CSS
-- Radix UI components
-- React Router
-- React Query
+### User Interface
 
-#### Server (`apps/server`)
-Node.js backend application built with:
-- Express
-- TypeScript
-- SQLite
-- Node SSH
-- Zod validation
+- **Modern Dashboard** - Clean, responsive React interface
+- **Real-time Updates** - Live service status and metrics
+- **Advanced Filtering** - Search and filter by tags, status, provider
+- **Custom Views** - Save and share custom dashboard configurations
 
-### Packages
+## Technology Stack
 
-#### Shared (`packages/shared`)
-Shared types and validation schemas used by both client and server:
-- TypeScript interfaces
-- Zod validation schemas
-- Common utilities
+### Frontend
+- **React 18** - Modern React with hooks and concurrent features
+- **TypeScript** - Type-safe development
+- **Vite** - Fast build tool and development server
+- **Tailwind CSS** - Utility-first CSS framework
+- **Radix UI** - Accessible component primitives
+- **React Query** - Server state management
+
+### Backend
+- **Node.js** - JavaScript runtime
+- **Express** - Web application framework
+- **TypeScript** - Type-safe server development
+- **SQLite** - Embedded database
+- **Node SSH** - SSH client for remote operations
+- **Zod** - Schema validation
+
+### Infrastructure
+- **Docker** - Containerization
+- **Turbo** - Monorepo build system
+- **GitHub Actions** - CI/CD pipeline
 
 ## Development
 
-Each workspace can be developed independently:
+### Workspace Structure
+
+OpsiMate uses a monorepo structure with Turbo for efficient builds:
 
 ```bash
-# Work on client only
+# Work on frontend only
 cd apps/client
 npm run dev
 
-# Work on server only
+# Work on backend only
 cd apps/server
 npm run dev
 
-# Work on shared package
+# Work on shared packages
 cd packages/shared
 npm run dev
-```
 
-## Building for Production
-
-```bash
 # Build all workspaces
 npm run build
+```
 
-# Start production server
-cd apps/server
-npm start
-``` 
+### Development Commands
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build production version
+- `npm run test` - Run test suite
+- `npm run lint` - Check code quality
+
+### API Development
+
+The backend provides a RESTful API with the following endpoints:
+
+- `GET /api/v1/providers` - List all infrastructure providers
+- `GET /api/v1/services` - List all discovered services
+- `POST /api/v1/services/{id}/start` - Start a service
+- `POST /api/v1/services/{id}/stop` - Stop a service
+- `GET /api/v1/services/{id}/logs` - Get service logs
+- `GET /api/v1/alerts` - List active alerts
+
+## Contributing
+
+We welcome contributions to OpsiMate! Here's how you can help:
+
+### Getting Started
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork** locally
+3. **Create a feature branch** from `main`
+4. **Make your changes** with tests
+5. **Submit a pull request**
+
+### Development Guidelines
+
+- Follow the existing code style and conventions
+- Write tests for new features and bug fixes
+- Update documentation for API changes
+- Use conventional commit messages
+- Ensure all CI checks pass
+
+### Areas for Contribution
+
+- **New Provider Integrations** - Add support for additional infrastructure platforms
+- **Monitoring Integrations** - Extend alerting and metrics capabilities
+- **UI/UX Improvements** - Enhance the dashboard and user experience
+- **Performance Optimizations** - Improve scalability and responsiveness
+- **Documentation** - Help improve guides and API documentation
+
+## Roadmap
+
+### Upcoming Features
+
+- **🔌 Plugin System** - Extensible architecture for custom integrations
+- **📈 Advanced Analytics** - Service performance trends and insights
+- **🔄 GitOps Integration** - Infrastructure as Code workflows
+- **🌐 Multi-Cluster Support** - Manage services across multiple environments
+- **📱 Mobile App** - Native mobile application for on-the-go monitoring
+- **🤖 AI-Powered Insights** - Intelligent anomaly detection and recommendations
+
+### Long-term Vision
+
+- **Enterprise Features** - RBAC, audit logging, compliance reporting
+- **Cloud Native** - Kubernetes operator and Helm charts
+- **Marketplace** - Community-driven plugin ecosystem
+- **SaaS Offering** - Hosted version with enterprise support
+
+## License
+
+OpsiMate is distributed under the [MIT License](LICENSE). See `LICENSE` for more information.
+
+## Support
+
+- **[Documentation](https://opsimate.vercel.app/)** - Comprehensive guides and API reference
+- **[GitHub Issues](https://github.com/opsimate/opsimate/issues)** - Bug reports and feature requests
+- **[Slack Community](https://join.slack.com/t/opsimate/shared_invite/zt-39bq3x6et-NrVCZzH7xuBGIXmOjJM7gA)** - Join our discussions and get help
+- **[Website](https://www.opsimate.com/)** - Learn more about OpsiMate
+
+---
+
+<div align="center">
+  <p>Built with ❤️ by the OpsiMate team</p>
+  <p>© 2025 OpsiMate. All rights reserved.</p>
+</div> 
