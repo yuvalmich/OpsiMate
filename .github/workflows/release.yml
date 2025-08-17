@@ -67,7 +67,7 @@ jobs:
     - name: Docker Login
       uses: docker/login-action@v3
       with:
-        username: idan_lut
+        username: opsimate
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Set up Docker Buildx
