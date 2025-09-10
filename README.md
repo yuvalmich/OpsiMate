@@ -81,10 +81,10 @@
         <img width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/grafana/grafana-original.svg" alt="Grafana"/><br/>
         Grafana
     </td>
-    <td align="center" width="150">
-        <img width="40" src="https://avatars.githubusercontent.com/u/3380462?s=200&v=4" alt="Prometheus"/><br/>
-        Prometheus
-    </td>
+  <td align="center" width="150">
+      <img width="40" src="https://github.com/datadog.png?size=200" alt="Datadog"/><br/>
+      Datadog
+  </td>
     <td align="center" width="150">
         <img width="40" src="https://avatars.githubusercontent.com/u/6764390?v=4" alt="Kibana"/><br/>
         Kibana
