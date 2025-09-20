@@ -232,5 +232,5 @@ A huge thank you to everyone who has helped and continues to help make OpsiMate 
 <a href="https://github.com/OpsiMate/OpsiMate/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=OpsiMate/OpsiMate" />
 </a>
-
+ 
 ---
