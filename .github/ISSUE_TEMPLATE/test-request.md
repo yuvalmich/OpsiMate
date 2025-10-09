@@ -1,5 +1,5 @@
 ---
-name: "\U0001F9EA Test Request"
+name: Test Request
 about: Create or improve tests
 title: "[TEST] "
 labels: Test
