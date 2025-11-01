@@ -11,8 +11,8 @@ build/
 *.sqlite3
 
 # Private keys and sensitive data
-data/
-data/private-keys/
+#data/
+#data/private-keys/
 
 # Logs
 *.log
