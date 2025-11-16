@@ -534,6 +534,11 @@ export const alertsApi = {
 		return await apiRequest<{ alert: SharedAlert }>(`/alerts/${alertId}/undismiss`, 'PATCH');
 	},
 
+	// Delete an alert
+	async deleteAlert(alertId: string): Promise<ApiResponse<void>> {
+		return await apiRequest<void>(`/alerts/${alertId}`, 'DELETE');
+	},
+
 	// Get alerts by tag
 	async getAlertsByTag(tag: string): Promise<ApiResponse<{ alerts: SharedAlert[] }>> {
 		const response = await this.getAllAlerts();
