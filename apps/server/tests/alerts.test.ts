@@ -23,7 +23,7 @@ const seedAlerts = () => {
 			id: 'alert-1',
 			type: 'Grafana',
 			status: 'active',
-			tags: {'tag': 'system'},
+			tags: { tag: 'system' },
 			starts_at: new Date().toISOString(),
 			updated_at: new Date().toISOString(),
 			alert_url: 'https://example.com/alert/1',
@@ -36,7 +36,7 @@ const seedAlerts = () => {
 			id: 'alert-2',
 			type: 'Grafana',
 			status: 'warning',
-			tags: {'tag': 'security'},
+			tags: { tag: 'security' },
 			starts_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
 			updated_at: new Date().toISOString(),
 			alert_url: 'https://example.com/alert/2',
@@ -49,7 +49,7 @@ const seedAlerts = () => {
 			id: 'alert-3',
 			status: 'critical',
 			type: 'Grafana',
-			tags: {'tag': 'database'},
+			tags: { tag: 'database' },
 			starts_at: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
 			updated_at: new Date().toISOString(),
 			alert_url: 'https://example.com/alert/3',
@@ -90,7 +90,7 @@ const seedAlerts = () => {
 			id: 'archived-1',
 			type: 'Grafana',
 			status: 'resolved',
-			tags: {'tag': 'system'},
+			tags: { tag: 'system' },
 			starts_at: new Date(Date.now() - 5 * 3600000).toISOString(), // 5 hours ago
 			updated_at: new Date().toISOString(),
 			alert_url: 'https://example.com/archived/1',
@@ -334,7 +334,7 @@ describe('Alerts API', () => {
 			const payload = {
 				id: 'new-alert-1',
 				status: 'active',
-				tags: {'tag': 'testing'},
+				tags: { tag: 'testing' },
 				startsAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 				alertUrl: 'https://example.com/new',
@@ -377,7 +377,7 @@ describe('Alerts API', () => {
 			const payload = {
 				id: 'bad-url-alert',
 				status: 'active',
-				tags: {'tag': 'bad'},
+				tags: { tag: 'bad' },
 				startsAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 				alertUrl: 'not-a-url',
@@ -398,7 +398,7 @@ describe('Alerts API', () => {
 			const payload = {
 				id: 'unauthorized-alert',
 				status: 'active',
-				tags: {'tag': 'security'},
+				tags: { tag: 'security' },
 				startsAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 				alertUrl: 'https://example.com/a',
@@ -541,7 +541,7 @@ describe('Alerts API', () => {
 				'UPTIMEKUMA_4',
 				'UptimeKuma',
 				'active',
-				JSON.stringify({'tag': 'Test Monitor'}),
+				JSON.stringify({ tag: 'Test Monitor' }),
 				new Date().toISOString(),
 				new Date().toISOString(),
 				baseMonitor.url,
@@ -848,7 +848,7 @@ describe('Alerts API', () => {
 				const newAlertPayload = {
 					id: 'alert-to-delete',
 					status: 'active',
-					tags: {'tag': 'testing'},
+					tags: { tag: 'testing' },
 					startsAt: new Date().toISOString(),
 					updatedAt: new Date().toISOString(),
 					alertUrl: 'https://example.com/delete-test',

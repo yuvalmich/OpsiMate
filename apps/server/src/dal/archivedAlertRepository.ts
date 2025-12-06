@@ -1,7 +1,7 @@
 import { AlertStatus, Alert as SharedAlert } from '@OpsiMate/shared';
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
-import {ArchivedAlertRow, TableInfoRow} from './models';
+import { ArchivedAlertRow, TableInfoRow } from './models';
 
 export class ArchivedAlertRepository {
 	private db: Database.Database;
