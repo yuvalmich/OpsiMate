@@ -47,13 +47,11 @@ export class PullGrafanaAlertsJob {
 
 			for (const alert of grafanaAlerts) {
 				try {
-					const tagName = alert.labels?.tag || '';
-
 					await this.alertBL.insertOrUpdateAlert({
 						id: alert.fingerprint,
 						type: 'Grafana',
 						status: AlertStatus.FIRING,
-						tag: tagName,
+						tags: {},
 						startsAt: alert.startsAt ? new Date(alert.startsAt).toISOString() : '',
 						updatedAt: alert.updatedAt ? new Date(alert.updatedAt).toISOString() : '',
 						alertUrl: alert.generatorURL || '',
