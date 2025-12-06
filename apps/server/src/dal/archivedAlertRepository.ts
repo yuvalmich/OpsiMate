@@ -38,7 +38,7 @@ export class ArchivedAlertRepository {
 			const hasTags = columns.some((col: TableInfoRow) => col.name === 'tags');
 
 			if (!hasTags) {
-				this.db.prepare(`ALTER TABLE alerts ADD COLUMN tags TEXT`).run();
+				this.db.prepare(`ALTER TABLE alerts_archived ADD COLUMN tags TEXT`).run();
 			}
 		});
 	}
