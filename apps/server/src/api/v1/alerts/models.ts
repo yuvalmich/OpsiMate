@@ -6,6 +6,7 @@ export interface GcpAlertWebhook {
 }
 
 export interface GcpIncident {
+	policy_user_labels?: Record<string, string>;
 	incident_id: string;
 	resource_id?: string;
 	resource_name?: string;
