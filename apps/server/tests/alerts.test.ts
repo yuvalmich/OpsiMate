@@ -23,7 +23,7 @@ const seedAlerts = () => {
 			id: 'alert-1',
 			type: 'Grafana',
 			status: 'active',
-			tags: { tag: 'system' },
+			tags: JSON.stringify({ tag: 'system' }),
 			starts_at: new Date().toISOString(),
 			updated_at: new Date().toISOString(),
 			alert_url: 'https://example.com/alert/1',
@@ -36,7 +36,7 @@ const seedAlerts = () => {
 			id: 'alert-2',
 			type: 'Grafana',
 			status: 'warning',
-			tags: { tag: 'security' },
+			tags: JSON.stringify({ tag: 'security' }),
 			starts_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
 			updated_at: new Date().toISOString(),
 			alert_url: 'https://example.com/alert/2',
@@ -49,7 +49,7 @@ const seedAlerts = () => {
 			id: 'alert-3',
 			status: 'critical',
 			type: 'Grafana',
-			tags: { tag: 'database' },
+			tags: JSON.stringify({ tag: 'database' }),
 			starts_at: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
 			updated_at: new Date().toISOString(),
 			alert_url: 'https://example.com/alert/3',
@@ -70,7 +70,7 @@ const seedAlerts = () => {
 		insertStmt.run(
 			alert.id,
 			alert.status,
-			JSON.stringify(alert.tags ?? {}),
+			alert.tags,
 			alert.starts_at,
 			alert.updated_at,
 			alert.alert_url,

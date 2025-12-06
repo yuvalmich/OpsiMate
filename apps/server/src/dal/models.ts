@@ -65,7 +65,7 @@ export type AlertRow = {
 	id: string;
 	type: AlertType;
 	status: string;
-	tags: Record<string, string>;
+	tags: string;
 	starts_at: string;
 	updated_at: string;
 	alert_url: string;
@@ -80,7 +80,7 @@ export type ArchivedAlertRow = {
 	id: string;
 	type: AlertType;
 	status: string;
-	tags: Record<string, string>;
+	tags: string;
 	starts_at: string;
 	updated_at: string;
 	alert_url: string;
