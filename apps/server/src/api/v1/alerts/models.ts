@@ -54,7 +54,14 @@ export interface UptimeKumaHeartbeat {
 	localDateTime: string;
 }
 
+export interface UptimeKumaTag {
+	id: number;
+	name: string;
+	value?: string;
+}
+
 export interface UptimeKumaMonitor {
+	tags: UptimeKumaTag[];
 	id: number;
 	name: string;
 	description: string | null;

@@ -95,11 +95,16 @@ export class AlertController {
 			const startsAt = new Date(heartbeat.time).toISOString();
 			const updatedAt = new Date().toISOString();
 
+			const tags: Record<string, string> = {};
+			for (const tag of monitor.tags) {
+				tags[tag.name] = tag.value || 'unknown';
+			}
+
 			await this.alertBL.insertOrUpdateAlert({
 				id: monitorId,
 				type: 'UptimeKuma',
 				status: AlertStatus.FIRING,
-				tags: {},
+				tags: tags,
 				startsAt,
 				updatedAt,
 				alertUrl: '',
