@@ -23,7 +23,8 @@ const Alerts = () => {
 	const { data: services = [] } = useServices();
 
 	const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
-	const [filters, setFilters] = useState<Record<string, string[]>>({});
+	const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
+	const [archivedFilters, setArchivedFilters] = useState<Record<string, string[]>>({});
 	const [selectedAlerts, setSelectedAlerts] = useState<Alert[]>([]);
 	const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
 	const [filterPanelCollapsed, setFilterPanelCollapsed] = useState(false);
@@ -53,8 +54,10 @@ const Alerts = () => {
 	const lastRefresh = activeTab === 'active' ? lastRefreshActive : lastRefreshArchived;
 	const isRefreshing = activeTab === 'active' ? isRefreshingActive : isRefreshingArchived;
 	const handleManualRefresh = activeTab === 'active' ? handleManualRefreshActive : handleManualRefreshArchived;
-	const filteredAlerts = useAlertsFiltering(alerts, filters);
-	const filteredArchivedAlerts = useAlertsFiltering(archivedAlerts, filters);
+	const currentFilters = activeTab === 'active' ? activeFilters : archivedFilters;
+	const currentAlerts = activeTab === 'active' ? alerts : archivedAlerts;
+	const filteredAlerts = useAlertsFiltering(alerts, activeFilters);
+	const filteredArchivedAlerts = useAlertsFiltering(archivedAlerts, archivedFilters);
 	const { visibleColumns, columnOrder, handleColumnToggle } = useColumnManagement();
 	const { handleDismissAlert, handleUndismissAlert, handleDeleteAlert, handleDismissAll } = useAlertActions();
 	const deleteArchivedAlertMutation = useDeleteArchivedAlert();
@@ -69,7 +72,7 @@ const Alerts = () => {
 
 	const handleLaunchTVMode = () => {
 		const params = new URLSearchParams({
-			filters: JSON.stringify(filters),
+			filters: JSON.stringify(activeFilters),
 			visibleColumns: JSON.stringify(visibleColumns),
 			columnOrder: JSON.stringify(columnOrder),
 		});
@@ -84,9 +87,9 @@ const Alerts = () => {
 					onToggle={() => setFilterPanelCollapsed(!filterPanelCollapsed)}
 				>
 					<AlertsFilterPanel
-						alerts={alerts}
-						filters={filters}
-						onFilterChange={setFilters}
+						alerts={currentAlerts}
+						filters={currentFilters}
+						onFilterChange={activeTab === 'active' ? setActiveFilters : setArchivedFilters}
 						collapsed={filterPanelCollapsed}
 					/>
 				</FilterSidebar>
@@ -115,7 +118,7 @@ const Alerts = () => {
 										value="active"
 										aria-label="Active alerts"
 										size="sm"
-										className="gap-1.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground text-foreground"
+										className="gap-1.5 text-foreground hover:bg-primary/10 hover:text-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 									>
 										<Bell className="h-4 w-4" />
 										<span>Active</span>
@@ -124,7 +127,7 @@ const Alerts = () => {
 										value="archived"
 										aria-label="Archived alerts"
 										size="sm"
-										className="gap-1.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground text-foreground"
+										className="gap-1.5 text-foreground hover:bg-primary/10 hover:text-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 									>
 										<Archive className="h-4 w-4" />
 										<span>Archived</span>
@@ -200,6 +203,7 @@ const Alerts = () => {
 								onClose={() => setSelectedAlert(null)}
 								onDismiss={handleDismissAlert}
 								onUndismiss={handleUndismissAlert}
+								onDelete={activeTab === 'active' ? handleDeleteAlert : handleDeleteArchivedAlert}
 							/>
 						</div>
 					)}
