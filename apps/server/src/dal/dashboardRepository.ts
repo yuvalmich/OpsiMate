@@ -32,20 +32,20 @@ export class DashboardRepository {
 		});
 	}
 
-	async createDashboard(view: Omit<Dashboard, 'createdAt' | 'id'>): Promise<number> {
+	async createDashboard(dashboard: Omit<Dashboard, 'createdAt' | 'id'>): Promise<number> {
 		return runAsync(() => {
 			const stmt = this.db.prepare(`
                 INSERT INTO dashboards (name, type, description, filters, visible_columns, query, group_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             `);
 			const result = stmt.run(
-				view.name,
-				view.type,
-				view.description,
-				JSON.stringify(view.filters),
-				JSON.stringify(view.visibleColumns),
-				view.query,
-				JSON.stringify(view.groupBy)
+				dashboard.name,
+				dashboard.type,
+				dashboard.description,
+				JSON.stringify(dashboard.filters),
+				JSON.stringify(dashboard.visibleColumns),
+				dashboard.query,
+				JSON.stringify(dashboard.groupBy)
 			);
 			return result.lastInsertRowid as number;
 		});
