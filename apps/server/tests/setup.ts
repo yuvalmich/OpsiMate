@@ -59,7 +59,7 @@ export async function setupDB(): Promise<Database.Database> {
 	const db = new Database(':memory:');
 	const providerRepo = new ProviderRepository(db);
 	const serviceRepo = new ServiceRepository(db);
-	const viewRepo = new DashboardRepository(db);
+	const dashboardRepo = new DashboardRepository(db);
 	const tagRepo = new TagRepository(db);
 	const integrationRepo = new IntegrationRepository(db);
 	const alertRepo = new AlertRepository(db);
@@ -76,7 +76,7 @@ export async function setupDB(): Promise<Database.Database> {
 	await Promise.all([
 		providerRepo.initProvidersTable(),
 		serviceRepo.initServicesTable(),
-		viewRepo.initDashboardTable(),
+		dashboardRepo.initDashboardTable(),
 		tagRepo.initTagsTables(),
 		integrationRepo.initIntegrationsTable(),
 		alertRepo.initAlertsTable(),
