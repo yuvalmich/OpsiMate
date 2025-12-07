@@ -14,7 +14,7 @@ export class ViewRepository {
 			filters: JSON.parse(viewRow.filters) as Record<string, unknown>,
 			visibleColumns: JSON.parse(viewRow.visibleColumns) as Record<string, boolean>,
 			searchTerm: viewRow.searchTerm,
-			type: viewRow.type
+			type: viewRow.type,
 		};
 	};
 
