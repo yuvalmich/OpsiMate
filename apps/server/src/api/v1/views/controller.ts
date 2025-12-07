@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { ViewBL } from '../../../bl/custom-views/custom-view.bl';
-import { Logger } from '@OpsiMate/shared';
-import { SavedView } from '../../../dal/viewRepository';
+import {CreateViewSchema, Logger, View} from '@OpsiMate/shared';
 import { AuthenticatedRequest } from '../../../middleware/auth';
+import {isZodError} from "../../../utils/isZodError.ts";
 
 const logger = new Logger('api/v1/views/controller');
 
@@ -37,29 +37,27 @@ export class ViewController {
 
 	createViewHandler = async (req: AuthenticatedRequest, res: Response) => {
 		try {
-			// todo: should use zod schema
-			const view = req.body as SavedView;
 			const user = req.user;
-
-			if (!view || !view.id || !view.name) {
-				return res.status(400).json({ success: false, error: 'Invalid view data' });
-			}
 
 			if (!user) {
 				return res.status(401).json({ success: false, error: 'Unauthorized: user not found' });
 			}
 
-			const savedView = await this.viewBL.saveView(view, user);
+			const createViewRequest = CreateViewSchema.parse(req.body);
 
-			if (!savedView) {
-				return res.status(500).json({ success: false, error: 'Failed to save view' });
-			}
+			const createdViewId = await this.viewBL.createView(createViewRequest, user);
 
-			return res.json({ success: true, data: savedView });
+			return res.json({ success: true, data: { id: createdViewId } });
 		} catch (error) {
+			if (isZodError(error)) {
+				return res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
+			}
 			logger.error('Error saving view:', error);
 			const message = error instanceof Error ? error.message : String(error);
-			return res.status(500).json({ success: false, error: message || 'Failed to save view' });
+			return res.status(500).json({
+				success: false,
+				error: message || 'Failed to save view',
+			});
 		}
 	};
 
@@ -77,33 +75,6 @@ export class ViewController {
 			logger.error('Error deleting view:', error);
 			const message = error instanceof Error ? error.message : String(error);
 			return res.status(500).json({ success: false, error: message || 'Failed to delete view' });
-		}
-	};
-
-	setActiveViewHandler = async (req: Request, res: Response) => {
-		try {
-			const viewId = req.params.viewId;
-			const success = await this.viewBL.setActiveViewId(viewId);
-
-			if (!success) {
-				return res.status(404).json({ success: false, error: 'View not found or could not be set as active' });
-			}
-
-			return res.json({ success: true, message: 'Active view set successfully' });
-		} catch (error) {
-			logger.error('Error setting active view:', error);
-			const message = error instanceof Error ? error.message : String(error);
-			return res.status(500).json({ success: false, error: message || 'Failed to set active view' });
-		}
-	};
-
-	getActiveViewHandler = async (req: Request, res: Response) => {
-		try {
-			const activeViewId = await this.viewBL.getActiveViewId();
-			return res.json({ success: true, data: { activeViewId } });
-		} catch (error) {
-			logger.error('Error getting active view ID:', error);
-			return res.status(500).json({ success: false, error: 'Failed to get active view ID' });
 		}
 	};
 }

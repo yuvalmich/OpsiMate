@@ -203,3 +203,13 @@ export interface ResetPasswordType {
 	tokenHash: string;
 	expiresAt: Date;
 }
+
+export interface View {
+	id: string;
+	name: string;
+	description?: string;
+	createdAt: string; // todo: remove from shared package?
+	filters: Record<string, unknown>;
+	visibleColumns: Record<string, boolean>;
+	searchTerm: string;
+}

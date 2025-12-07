@@ -131,6 +131,7 @@ export async function createApp(db: Database.Database, mode: AppMode): Promise<e
 	const serviceCustomFieldBL = new ServiceCustomFieldBL(serviceCustomFieldRepo, serviceCustomFieldValueRepo);
 	const servicesBL = new ServicesBL(serviceRepo, auditBL);
 	const customActionBL = new CustomActionBL(customActionRepo, providerBL, servicesBL, serviceCustomFieldBL);
+	const viewBL = new ViewBL(viewRepo, auditBL)
 
 	// Controllers (only for SERVER)
 	const providerController = new ProviderController(providerBL, secretsMetadataRepo);
@@ -142,7 +143,7 @@ export async function createApp(db: Database.Database, mode: AppMode): Promise<e
 		tagRepo,
 		alertBL
 	);
-	const viewController = new ViewController(new ViewBL(viewRepo));
+	const viewController = new ViewController(viewBL);
 	const tagController = new TagController(tagRepo, serviceRepo, alertBL);
 	const integrationController = new IntegrationController(integrationBL);
 	const alertController = new AlertController(alertBL);
