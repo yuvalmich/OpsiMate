@@ -14,7 +14,7 @@ export class DashboardRepository {
 			filters: JSON.parse(dashboardRow.filters) as Record<string, unknown>,
 			visibleColumns: JSON.parse(dashboardRow.visible_columns) as string[],
 			query: dashboardRow.query,
-			groupBy: JSON.parse(dashboardRow.group_by) as string[]
+			groupBy: JSON.parse(dashboardRow.group_by) as string[],
 		};
 	};
 
@@ -45,7 +45,7 @@ export class DashboardRepository {
 				JSON.stringify(view.filters),
 				JSON.stringify(view.visibleColumns),
 				view.query,
-				JSON.stringify(view.groupBy),
+				JSON.stringify(view.groupBy)
 			);
 			return result.lastInsertRowid as number;
 		});
@@ -78,6 +78,36 @@ export class DashboardRepository {
 					`
 				)
 				.run();
+		});
+	}
+
+	async updateDashboard(dashboardId: string, dashboard: Omit<Dashboard, 'createdAt' | 'id'>): Promise<boolean> {
+		return runAsync(() => {
+			const stmt = this.db.prepare(`
+            UPDATE dashboards
+            SET
+                name = ?,
+                type = ?,
+                description = ?,
+                filters = ?,
+                visible_columns = ?,
+                query = ?,
+                group_by = ?
+            WHERE id = ?
+        `);
+
+			const result = stmt.run(
+				dashboard.name,
+				dashboard.type,
+				dashboard.description,
+				JSON.stringify(dashboard.filters),
+				JSON.stringify(dashboard.visibleColumns),
+				dashboard.query,
+				JSON.stringify(dashboard.groupBy),
+				dashboardId
+			);
+
+			return result.changes > 0;
 		});
 	}
 }

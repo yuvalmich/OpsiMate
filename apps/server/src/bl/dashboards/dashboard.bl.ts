@@ -13,18 +13,18 @@ export class DashboardBL {
 	}
 
 	async createDashboard(dashboard: Omit<Dashboard, 'createdAt' | 'id'>, user: User): Promise<number> {
-		const dasboardId = await this.dashboardRepository.createDashboard(dashboard);
+		const dashboardId = await this.dashboardRepository.createDashboard(dashboard);
 
 		await this.auditBL.logAction({
 			actionType: AuditActionType.CREATE,
 			resourceType: AuditResourceType.DASHBOARD,
-			resourceId: dasboardId.toString(),
+			resourceId: dashboardId.toString(),
 			userId: user.id,
 			userName: user.fullName,
 			resourceName: dashboard.name,
 		});
 
-		return dasboardId;
+		return dashboardId;
 	}
 
 	async deleteDashboard(id: string): Promise<boolean> {
@@ -36,7 +36,23 @@ export class DashboardBL {
 		return await this.dashboardRepository.deleteDashboard(id);
 	}
 
-	async updateDashboard(dashboardId: string, createDashboardRequest: any, user: User) {
+	async updateDashboard(dashboardId: string, dashboard: Omit<Dashboard, 'createdAt' | 'id'>, user: User) {
+		const currentDashboard = await this.dashboardRepository.getDashboardById(dashboardId);
+		if (!currentDashboard) {
+			throw new Error(`Dashboard with ID ${dashboardId} not found`);
+		}
+		const updated = await this.dashboardRepository.updateDashboard(dashboardId, dashboard);
+		if (!updated) {
+			throw new Error(`Failed to update dashboard with ID ${dashboardId}`);
+		}
 
+		await this.auditBL.logAction({
+			actionType: AuditActionType.UPDATE,
+			resourceType: AuditResourceType.DASHBOARD,
+			resourceId: dashboardId.toString(),
+			userId: user.id,
+			userName: user.fullName,
+			resourceName: dashboard.name,
+		});
 	}
 }

@@ -40,7 +40,7 @@ import { MailClient } from './dal/external-client/mail-client';
 import { CustomActionRepository } from './dal/customActionRepository';
 import { CustomActionBL } from './bl/custom-actions/customAction.bl';
 import { CustomActionsController } from './api/v1/custom-actions/controller';
-import {DashboardBL} from "./bl/dashboards/dashboard.bl.ts";
+import { DashboardBL } from './bl/dashboards/dashboard.bl.ts';
 
 export enum AppMode {
 	SERVER = 'SERVER',

@@ -247,8 +247,8 @@ export const CreateDashboardSchema = z.object({
 	name: z.string(),
 	type: z.enum(['services', 'alerts']),
 	description: z.string().optional(),
-	filters: z.record(z.unknown()), // {"team": "quala", status: "firing"}
-	visibleColumns: z.array(z.string()), // ['name', 'status', 'description']
-	query: z.string(), // "grafana"
-	groupBy: z.array(z.string()), // ['name', 'status', 'description']
+	filters: z.record(z.unknown()),
+	visibleColumns: z.array(z.string()),
+	query: z.string(),
+	groupBy: z.array(z.string()),
 });

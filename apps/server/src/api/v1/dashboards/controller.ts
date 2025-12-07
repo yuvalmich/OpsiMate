@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { CreateDashboardSchema, Logger } from '@OpsiMate/shared';
 import { AuthenticatedRequest } from '../../../middleware/auth';
 import { isZodError } from '../../../utils/isZodError.ts';
-import {DashboardBL} from "../../../bl/dashboards/dashboard.bl.ts";
+import { DashboardBL } from '../../../bl/dashboards/dashboard.bl.ts';
 
 const logger = new Logger('api/v1/dashboards/controller');
 
@@ -54,9 +54,9 @@ export class DashboardController {
 
 			const dashboardId = req.params.dashboardId;
 			const updateDashboardRequest = CreateDashboardSchema.parse(req.body);
-			const createdDashboardId = await this.dashboardBL.updateDashboard(dashboardId, updateDashboardRequest, user);
+			await this.dashboardBL.updateDashboard(dashboardId, updateDashboardRequest, user);
 
-			return res.json({ success: true, data: { id: createdDashboardId } });
+			return res.json({ success: true, data: null });
 		} catch (error) {
 			if (isZodError(error)) {
 				return res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
