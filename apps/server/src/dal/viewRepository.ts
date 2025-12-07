@@ -14,6 +14,7 @@ export class ViewRepository {
 			filters: JSON.parse(viewRow.filters) as Record<string, unknown>,
 			visibleColumns: JSON.parse(viewRow.visibleColumns) as Record<string, boolean>,
 			searchTerm: viewRow.searchTerm,
+			type: viewRow.type
 		};
 	};
 
@@ -34,11 +35,12 @@ export class ViewRepository {
 	async createView(view: Omit<View, 'createdAt' | 'id'>): Promise<number> {
 		return runAsync(() => {
 			const stmt = this.db.prepare(`
-                INSERT INTO views (name, description, filters, visibleColumns, searchTerm)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO views (name, type, description, filters, visibleColumns, searchTerm)
+                VALUES (?, ?, ?, ?, ?, ?)
             `);
 			const result = stmt.run(
 				view.name,
+				view.type,
 				view.description || '',
 				JSON.stringify(view.filters),
 				JSON.stringify(view.visibleColumns),
@@ -63,6 +65,7 @@ export class ViewRepository {
                         CREATE TABLE IF NOT EXISTS views
                         (
                             id             INTEGER PRIMARY KEY AUTOINCREMENT,
+							type	       TEXT NOT NULL,
                             name           TEXT NOT NULL,
                             description    TEXT,
                             createdAt      DATETIME DEFAULT CURRENT_TIMESTAMP,

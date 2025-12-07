@@ -44,7 +44,6 @@ export class ViewController {
 			}
 
 			const createViewRequest = CreateViewSchema.parse(req.body);
-
 			const createdViewId = await this.viewBL.createView(createViewRequest, user);
 
 			return res.json({ success: true, data: { id: createdViewId } });

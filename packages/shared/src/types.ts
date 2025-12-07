@@ -206,6 +206,7 @@ export interface ResetPasswordType {
 
 export interface View {
 	id: string;
+	type: 'services' | 'alerts';
 	name: string;
 	description?: string;
 	createdAt: string; // todo: remove from shared package?

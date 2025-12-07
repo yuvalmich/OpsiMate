@@ -52,6 +52,7 @@ export type ServiceRowWithProviderRow = {
 
 export interface ViewRow {
 	id: string;
+	type: 'services' | 'alerts';
 	name: string;
 	description?: string;
 	createdAt: string;
