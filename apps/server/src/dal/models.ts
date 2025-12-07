@@ -58,7 +58,6 @@ export interface ViewRow {
 	filters: string;
 	visibleColumns: string;
 	searchTerm: string;
-	isDefault?: number;
 }
 
 export type AlertRow = {

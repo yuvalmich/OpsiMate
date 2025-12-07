@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
 import { ViewRow } from './models';
-import {View} from "@OpsiMate/shared";
+import { View } from '@OpsiMate/shared';
 
 export class ViewRepository {
 	constructor(private db: Database.Database) {}
@@ -13,8 +13,8 @@ export class ViewRepository {
 			createdAt: viewRow.createdAt,
 			filters: JSON.parse(viewRow.filters) as Record<string, unknown>,
 			visibleColumns: JSON.parse(viewRow.visibleColumns) as Record<string, boolean>,
-			searchTerm: ''
-		}
+			searchTerm: viewRow.searchTerm,
+		};
 	};
 
 	async getAllViews(): Promise<View[]> {
@@ -50,22 +50,7 @@ export class ViewRepository {
 
 	async deleteView(id: string): Promise<boolean> {
 		return runAsync(() => {
-			const isDefaultView: { isDefault: number } = this.db
-				.prepare(
-					`SELECT isDefault
-                          FROM views
-                          WHERE id = ?`
-				)
-				.get(id) as { isDefault: number };
-			if (isDefaultView?.isDefault === 1) return false;
-
-			const result = this.db
-				.prepare(
-					`DELETE
-                                            FROM views
-                                            WHERE id = ?`
-				)
-				.run(id);
+			const result = this.db.prepare(`DELETE FROM views WHERE id = ?`).run(id);
 			return result.changes > 0;
 		});
 	}
@@ -83,8 +68,7 @@ export class ViewRepository {
                             createdAt      DATETIME DEFAULT CURRENT_TIMESTAMP,
                             filters        TEXT NOT NULL,
                             visibleColumns TEXT NOT NULL,
-                            searchTerm     TEXT,
-                            isDefault      INTEGER DEFAULT 0
+                            searchTerm     TEXT
                         )
                     `
 				)

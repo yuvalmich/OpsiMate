@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { ViewBL } from '../../../bl/custom-views/custom-view.bl';
-import {CreateViewSchema, Logger, View} from '@OpsiMate/shared';
+import { CreateViewSchema, Logger, View } from '@OpsiMate/shared';
 import { AuthenticatedRequest } from '../../../middleware/auth';
-import {isZodError} from "../../../utils/isZodError.ts";
+import { isZodError } from '../../../utils/isZodError.ts';
 
 const logger = new Logger('api/v1/views/controller');
 

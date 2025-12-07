@@ -131,7 +131,7 @@ export async function createApp(db: Database.Database, mode: AppMode): Promise<e
 	const serviceCustomFieldBL = new ServiceCustomFieldBL(serviceCustomFieldRepo, serviceCustomFieldValueRepo);
 	const servicesBL = new ServicesBL(serviceRepo, auditBL);
 	const customActionBL = new CustomActionBL(customActionRepo, providerBL, servicesBL, serviceCustomFieldBL);
-	const viewBL = new ViewBL(viewRepo, auditBL)
+	const viewBL = new ViewBL(viewRepo, auditBL);
 
 	// Controllers (only for SERVER)
 	const providerController = new ProviderController(providerBL, secretsMetadataRepo);

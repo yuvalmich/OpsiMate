@@ -1,10 +1,12 @@
-import {AuditActionType, AuditResourceType, View, User} from '@OpsiMate/shared';
+import { AuditActionType, AuditResourceType, View, User } from '@OpsiMate/shared';
 import { ViewRepository } from '../../dal/viewRepository';
 import { AuditBL } from '../audit/audit.bl';
 
 export class ViewBL {
-	constructor(private viewRepository: ViewRepository,
-				private auditBL: AuditBL) {}
+	constructor(
+		private viewRepository: ViewRepository,
+		private auditBL: AuditBL
+	) {}
 
 	async getAllViews(): Promise<View[]> {
 		return await this.viewRepository.getAllViews();
