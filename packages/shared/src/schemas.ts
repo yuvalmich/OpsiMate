@@ -243,11 +243,12 @@ export const ResetPasswordSchema = z.object({
 		}),
 });
 
-export const CreateViewSchema = z.object({
+export const CreateDashboardSchema = z.object({
 	name: z.string(),
 	type: z.enum(['services', 'alerts']),
 	description: z.string().optional(),
-	filters: z.record(z.unknown()),
-	visibleColumns: z.record(z.boolean()),
-	searchTerm: z.string(),
+	filters: z.record(z.unknown()), // {"team": "quala", status: "firing"}
+	visibleColumns: z.array(z.string()), // ['name', 'status', 'description']
+	query: z.string(), // "grafana"
+	groupBy: z.array(z.string()), // ['name', 'status', 'description']
 });

@@ -152,7 +152,7 @@ export enum AuditResourceType {
 	PROVIDER = 'PROVIDER',
 	SERVICE = 'SERVICE',
 	USER = 'USER',
-	VIEW = 'VIEW',
+	DASHBOARD = 'DASHBOARD',
 	SECRET = 'SECRET',
 	// Add more as needed
 }
@@ -204,13 +204,13 @@ export interface ResetPasswordType {
 	expiresAt: Date;
 }
 
-export interface View {
+export interface Dashboard {
 	id: string;
 	type: 'services' | 'alerts';
 	name: string;
 	description?: string;
-	createdAt: string; // todo: remove from shared package?
 	filters: Record<string, unknown>;
-	visibleColumns: Record<string, boolean>;
-	searchTerm: string;
+	visibleColumns: string[];
+	query: string;
+	groupBy: string[];
 }

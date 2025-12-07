@@ -50,7 +50,7 @@ export type ServiceRowWithProviderRow = {
 	provider_type: string;
 };
 
-export interface ViewRow {
+export interface DashboardRow {
 	id: string;
 	type: 'services' | 'alerts';
 	name: string;

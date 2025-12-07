@@ -1,38 +1,38 @@
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
-import { ViewRow } from './models';
-import { View } from '@OpsiMate/shared';
+import { DashboardRow } from './models';
+import { Dashboard } from '@OpsiMate/shared';
 
-export class ViewRepository {
+export class DashboardRepository {
 	constructor(private db: Database.Database) {}
 
-	private toSharedView = (viewRow: ViewRow): View => {
+	private toSharedDashboard = (dashboardRow: DashboardRow): Dashboard => {
 		return {
-			id: viewRow.id,
-			name: viewRow.name,
-			createdAt: viewRow.createdAt,
-			filters: JSON.parse(viewRow.filters) as Record<string, unknown>,
-			visibleColumns: JSON.parse(viewRow.visibleColumns) as Record<string, boolean>,
-			searchTerm: viewRow.searchTerm,
-			type: viewRow.type,
+			id: dashboardRow.id,
+			name: dashboardRow.name,
+			createdAt: dashboardRow.createdAt,
+			filters: JSON.parse(dashboardRow.filters) as Record<string, unknown>,
+			visibleColumns: JSON.parse(dashboardRow.visibleColumns) as Record<string, boolean>,
+			searchTerm: dashboardRow.searchTerm,
+			type: dashboardRow.type,
 		};
 	};
 
-	async getAllViews(): Promise<View[]> {
+	async getAllDashboards(): Promise<Dashboard[]> {
 		return runAsync(() => {
-			const rows = this.db.prepare(`SELECT * FROM views`).all() as ViewRow[];
-			return rows.map(this.toSharedView);
+			const rows = this.db.prepare(`SELECT * FROM views`).all() as DashboardRow[];
+			return rows.map(this.toSharedDashboard);
 		});
 	}
 
-	async getViewById(id: string): Promise<View | null> {
+	async getDashboardById(id: string): Promise<Dashboard | null> {
 		return runAsync(() => {
-			const row: ViewRow = this.db.prepare(`SELECT * FROM views WHERE id = ?`).get(id) as ViewRow;
-			return row ? this.toSharedView(row) : null;
+			const row: DashboardRow = this.db.prepare(`SELECT *FROM views WHERE id = ?`).get(id) as DashboardRow;
+			return row ? this.toSharedDashboard(row) : null;
 		});
 	}
 
-	async createView(view: Omit<View, 'createdAt' | 'id'>): Promise<number> {
+	async createDashboard(view: Omit<Dashboard, 'createdAt' | 'id'>): Promise<number> {
 		return runAsync(() => {
 			const stmt = this.db.prepare(`
                 INSERT INTO views (name, type, description, filters, visibleColumns, searchTerm)
@@ -50,19 +50,19 @@ export class ViewRepository {
 		});
 	}
 
-	async deleteView(id: string): Promise<boolean> {
+	async deleteDashboard(id: string): Promise<boolean> {
 		return runAsync(() => {
 			const result = this.db.prepare(`DELETE FROM views WHERE id = ?`).run(id);
 			return result.changes > 0;
 		});
 	}
 
-	async initViewsTable(): Promise<void> {
+	async initDashboardTable(): Promise<void> {
 		return runAsync(() => {
 			this.db
 				.prepare(
 					`
-                        CREATE TABLE IF NOT EXISTS views
+                        CREATE TABLE IF NOT EXISTS dashboards
                         (
                             id             INTEGER PRIMARY KEY AUTOINCREMENT,
 							type	       TEXT NOT NULL,
