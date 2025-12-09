@@ -34,7 +34,7 @@ export class ArchivedAlertRepository {
 				.run();
 
 			// Backward compatibility: ensure tags column exists
-			const columns = this.db.prepare(`PRAGMA table_info(alerts)`).all();
+			const columns = this.db.prepare(`PRAGMA table_info(alerts_archived)`).all();
 			const hasTags = columns.some((col: TableInfoRow) => col.name === 'tags');
 
 			if (!hasTags) {
