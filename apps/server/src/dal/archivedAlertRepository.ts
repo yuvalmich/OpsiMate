@@ -36,12 +36,20 @@ export class ArchivedAlertRepository {
 																	  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 						);
 
-						CREATE TRIGGER IF NOT EXISTS archive_alert_history
+						CREATE TRIGGER IF NOT EXISTS archive_alert_history_on_update
 							BEFORE UPDATE ON alerts_archived
 							FOR EACH ROW
 						BEGIN
 							INSERT INTO alerts_history (alert_id)
 							VALUES (OLD.id);
+						END;
+
+						CREATE TRIGGER IF NOT EXISTS archive_alert_history_on_insert
+							AFTER INSERT ON alerts_archived
+							FOR EACH ROW
+						BEGIN
+							INSERT INTO alerts_history (alert_id)
+							VALUES (NEW.id);
 						END;
 						`
 				);
