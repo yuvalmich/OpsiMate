@@ -13,7 +13,7 @@ export class ArchivedAlertRepository {
 	async initArchivedAlertsTable(): Promise<void> {
 		return runAsync(() => {
 			this.db.exec(
-					`
+				`
 						CREATE TABLE IF NOT EXISTS alerts_archived (
 																	   id TEXT PRIMARY KEY,
 																	   status TEXT,
@@ -52,7 +52,7 @@ export class ArchivedAlertRepository {
 							VALUES (NEW.id);
 						END;
 						`
-				);
+			);
 
 			// Backward compatibility: ensure tags column exists
 			const columns = this.db.prepare(`PRAGMA table_info(alerts_archived)`).all();
