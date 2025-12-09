@@ -12,9 +12,8 @@ export class ArchivedAlertRepository {
 
 	async initArchivedAlertsTable(): Promise<void> {
 		return runAsync(() => {
-			this.db
-				.prepare(
-					`
+			this.db.exec(
+				`
 						CREATE TABLE IF NOT EXISTS alerts_archived (
 																	   id TEXT PRIMARY KEY,
 																	   status TEXT,
@@ -29,12 +28,34 @@ export class ArchivedAlertRepository {
 																	   runbook_url TEXT,
 																	   created_at TEXT,
 																	   archived_at DATETIME DEFAULT CURRENT_TIMESTAMP
-						)`
-				)
-				.run();
+						);
+
+						CREATE TABLE IF NOT EXISTS alerts_history (
+																	  history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+																	  alert_id TEXT NOT NULL,
+																	  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+						);
+
+						CREATE TRIGGER IF NOT EXISTS archive_alert_history_on_update
+							BEFORE UPDATE ON alerts_archived
+							FOR EACH ROW
+						BEGIN
+							INSERT INTO alerts_history (alert_id)
+							VALUES (OLD.id);
+						END;
+
+						CREATE TRIGGER IF NOT EXISTS archive_alert_history_on_insert
+							AFTER INSERT ON alerts_archived
+							FOR EACH ROW
+						BEGIN
+							INSERT INTO alerts_history (alert_id)
+							VALUES (NEW.id);
+						END;
+						`
+			);
 
 			// Backward compatibility: ensure tags column exists
-			const columns = this.db.prepare(`PRAGMA table_info(alerts)`).all();
+			const columns = this.db.prepare(`PRAGMA table_info(alerts_archived)`).all();
 			const hasTags = columns.some((col: TableInfoRow) => col.name === 'tags');
 
 			if (!hasTags) {
