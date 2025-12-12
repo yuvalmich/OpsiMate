@@ -1,9 +1,13 @@
+import { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { alertsApi } from '@/lib/api';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { Alert, AlertStatus } from '@OpsiMate/shared';
+import {Alert, AlertStatus, AlertHistory, Logger} from '@OpsiMate/shared';
 import { format } from 'date-fns';
 import { Archive, Book, Calendar, Check, Clock, ExternalLink, RotateCcw, Trash2, X } from 'lucide-react';
 import { IntegrationAvatar, resolveAlertIntegration } from '../IntegrationAvatar';
@@ -20,6 +24,8 @@ interface AlertDetailsProps {
 	className?: string;
 }
 
+const logger = new Logger('AlertDetails');
+
 export const AlertDetails = ({
 	isActive,
 	alert,
@@ -32,6 +38,27 @@ export const AlertDetails = ({
 	if (!alert) return null;
 
 	const integration = resolveAlertIntegration(alert);
+	const [historyData, setHistoryData] = useState<AlertHistory | null>(null);
+
+	useEffect(() => {
+		const fetchHistory = async () => {
+			if (alert.id) {
+				try {
+					const alertHistoryResponse = await alertsApi.getAlertHistory(alert.id);
+
+					if (!alertHistoryResponse.success) {
+						throw new Error(alertHistoryResponse.error || 'Failed to fetch alert history');
+					}
+
+					setHistoryData(alertHistoryResponse.data);
+				} catch (error) {
+					logger.error('Failed to fetch alert history:', error);
+				}
+			}
+		};
+
+		fetchHistory();
+	}, [alert.id]);
 
 	return (
 		<div className={cn('h-full flex flex-col bg-background border-l', className)}>
@@ -134,6 +161,59 @@ export const AlertDetails = ({
 							</div>
 						)}
 					</div>
+
+					{historyData && historyData.data.length > 0 && (
+						<>
+							<Separator />
+							<div>
+								<div className="text-xs font-medium text-foreground mb-3">Alert History</div>
+								<ResponsiveContainer width="100%" height={150}>
+									<LineChart data={historyData.data.map((item, index) => ({
+										...item,
+										statusValue: item.status === AlertStatus.FIRING ? 1 : 0,
+										index
+									}))}>
+										<CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+										<XAxis
+											dataKey="date"
+											tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
+											tickFormatter={(value) => format(new Date(value), 'MM/dd HH:mm')}
+											stroke="hsl(var(--border))"
+										/>
+										<YAxis
+											domain={[0, 1]}
+											ticks={[0, 1]}
+											tickFormatter={(value) => value === 1 ? 'Firing' : 'Resolved'}
+											tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
+											stroke="hsl(var(--border))"
+										/>
+										<Tooltip
+											labelFormatter={(value) => format(new Date(value), 'PPpp')}
+											contentStyle={{
+												fontSize: '12px',
+												backgroundColor: 'hsl(var(--background))',
+												border: '1px solid hsl(var(--border))',
+												borderRadius: '6px'
+											}}
+											formatter={(value: any, name: string) => {
+												if (name === 'statusValue') {
+													return [value === 1 ? 'Firing' : 'Resolved', 'Status'];
+												}
+												return [value, name];
+											}}
+										/>
+										<Line
+											type="stepAfter"
+											dataKey="statusValue"
+											stroke="hsl(var(--primary))"
+											strokeWidth={2}
+											dot={{ r: 4, fill: 'hsl(var(--primary))' }}
+										/>
+									</LineChart>
+								</ResponsiveContainer>
+							</div>
+						</>
+					)}
 
 					<Separator />
 

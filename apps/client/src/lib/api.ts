@@ -9,7 +9,7 @@ import {
 	Service,
 	ServiceWithProvider,
 	Alert as SharedAlert,
-	Tag,
+	Tag, AlertHistory,
 } from '@OpsiMate/shared';
 import { CustomAction } from '@OpsiMate/custom-actions';
 
@@ -538,6 +538,11 @@ export const alertsApi = {
 	// Delete an alert
 	async deleteAlert(alertId: string): Promise<ApiResponse<void>> {
 		return await apiRequest<void>(`/alerts/${alertId}`, 'DELETE');
+	},
+
+	getAlertHistory: (alertId: string) => {
+		// Make sure we're using the correct path
+		return apiRequest<AlertHistory>(`/alerts/${alertId}/history`, 'GET');
 	},
 
 	// Get alerts by tag

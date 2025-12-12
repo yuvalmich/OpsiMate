@@ -16,7 +16,7 @@ export class ArchivedAlertRepository {
 				`
 						CREATE TABLE IF NOT EXISTS alerts_archived (
 																	   id TEXT PRIMARY KEY,
-																	   status TEXT,
+																	   status TEXT NOT NULL,
 																	   tags TEXT,
 																	   type TEXT,
 																	   starts_at TEXT,
@@ -49,8 +49,8 @@ export class ArchivedAlertRepository {
 							AFTER INSERT ON alerts_archived
 							FOR EACH ROW
 						BEGIN
-							INSERT INTO alerts_history (alert_id)
-							VALUES (NEW.id);
+							INSERT INTO alerts_history (alert_id, status)
+							VALUES (NEW.id, NEW.status);
 						END;
 						`
 			);

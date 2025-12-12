@@ -280,7 +280,7 @@ export class AlertController {
 				return res.status(400).json({ success: false, error: 'Invalid alert ID' });
 			}
 			const alertHistory: AlertHistory = await this.alertBL.getAlertHistory(alertId);
-			return res.json({ success: true, data: { alertHistory } });
+			return res.json({ success: true, data: { ...alertHistory } });
 		} catch (error) {
 			logger.error('Error deleting archived alert:', error);
 			return res.status(500).json({ success: false, error: 'Internal server error' });
