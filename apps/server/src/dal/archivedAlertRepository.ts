@@ -1,4 +1,4 @@
-import {AlertStatus, Alert as SharedAlert, AlertHistory} from '@OpsiMate/shared';
+import { AlertStatus, Alert as SharedAlert, AlertHistory } from '@OpsiMate/shared';
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
 import { ArchivedAlertRow, TableInfoRow } from './models';
@@ -138,25 +138,27 @@ export class ArchivedAlertRepository {
 	}
 
 	async getAlertHistory(alertId: string): Promise<AlertHistory> {
-		const history: {archived_at: string, status: string}[] = await runAsync(() => {
+		const history: { archived_at: string; status: string }[] = await runAsync(() => {
 			return this.db
-				.prepare(`
+				.prepare(
+					`
 					SELECT
 						archived_at,
 						status
 					FROM alerts_history
 					WHERE alert_id = ?
 					ORDER BY archived_at ASC
-				`)
-				.all(alertId) as {archived_at: string, status: string}[];
+				`
+				)
+				.all(alertId) as { archived_at: string; status: string }[];
 		});
 
 		return {
 			alertId,
-			data: history.map(h => ({
+			data: history.map((h) => ({
 				date: h.archived_at,
-				status: h.status as AlertStatus
-			}))
+				status: h.status as AlertStatus,
+			})),
 		};
 	}
 }

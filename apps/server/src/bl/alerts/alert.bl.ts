@@ -1,6 +1,6 @@
 import { AlertRepository } from '../../dal/alertRepository';
 import { ArchivedAlertRepository } from '../../dal/archivedAlertRepository';
-import {Alert, AlertHistory, AlertType, Logger} from '@OpsiMate/shared';
+import { Alert, AlertHistory, AlertType, Logger } from '@OpsiMate/shared';
 
 const logger = new Logger('bl/alert.bl');
 

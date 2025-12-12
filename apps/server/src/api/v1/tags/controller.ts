@@ -10,7 +10,7 @@ const logger = new Logger('api/v1/tags/controller');
 export class TagController {
 	constructor(
 		private tagRepo: TagRepository,
-		private serviceRepo: ServiceRepository,
+		private serviceRepo: ServiceRepository
 	) {}
 
 	getAllTagsHandler = async (req: Request, res: Response) => {

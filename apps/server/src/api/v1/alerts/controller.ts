@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import {AlertHistory, AlertStatus, Logger} from '@OpsiMate/shared';
+import { AlertHistory, AlertStatus, Logger } from '@OpsiMate/shared';
 import { AlertBL } from '../../../bl/alerts/alert.bl';
 import { DatadogAlertWebhookSchema, GcpAlertWebhook, HttpAlertWebhookSchema, UptimeKumaWebhookPayload } from './models';
 import { isZodError } from '../../../utils/isZodError.ts';

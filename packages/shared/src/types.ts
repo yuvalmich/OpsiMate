@@ -143,7 +143,7 @@ export interface AlertHistory {
 
 export interface AlertHistoryData {
 	date: string;
-	status: AlertStatus
+	status: AlertStatus;
 }
 
 export interface ApiResponse<T> {
