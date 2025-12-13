@@ -136,6 +136,16 @@ export interface Alert {
 	isDismissed: boolean;
 }
 
+export interface AlertHistory {
+	alertId: string;
+	data: AlertHistoryData[];
+}
+
+export interface AlertHistoryData {
+	date: string;
+	status: AlertStatus;
+}
+
 export interface ApiResponse<T> {
 	success: boolean;
 	data?: T;

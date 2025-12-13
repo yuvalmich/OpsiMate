@@ -79,8 +79,8 @@ export async function setupDB(): Promise<Database.Database> {
 		dashboardRepo.initDashboardTable(),
 		tagRepo.initTagsTables(),
 		integrationRepo.initIntegrationsTable(),
+		archivedAlertRepo.initArchivedAlertsTable(), // should be prior to alertRepo.initAlertsTable()
 		alertRepo.initAlertsTable(),
-		archivedAlertRepo.initArchivedAlertsTable(),
 		userRepo.initUsersTable(),
 		auditLogRepo.initAuditLogsTable(),
 		secretsMetadataRepo.initSecretsMetadataTable(),

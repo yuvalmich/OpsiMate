@@ -62,6 +62,7 @@ export async function createApp(db: Database.Database, mode: AppMode): Promise<e
 		providerRepo.initProvidersTable(),
 		serviceRepo.initServicesTable(),
 		integrationRepo.initIntegrationsTable(),
+		archivedAlertRepo.initArchivedAlertsTable(), // this should be prior to alertRepo.initAlertsTable
 		alertRepo.initAlertsTable(),
 		auditLogRepo.initAuditLogsTable(),
 		secretsMetadataRepo.initSecretsMetadataTable(),
@@ -77,7 +78,7 @@ export async function createApp(db: Database.Database, mode: AppMode): Promise<e
 		// WORKER mode: Only start background jobs
 		new RefreshJob(providerBL).startRefreshJob();
 		new PullGrafanaAlertsJob(alertBL, integrationBL).startPullGrafanaAlertsJob();
-		return; // No Express app needed
+		return;
 	}
 
 	// SERVER mode: Create Express app and API routes
@@ -115,9 +116,6 @@ export async function createApp(db: Database.Database, mode: AppMode): Promise<e
 	await Promise.all([
 		dashboardRepository.initDashboardTable(),
 		tagRepo.initTagsTables(),
-		integrationRepo.initIntegrationsTable(),
-		alertRepo.initAlertsTable(),
-		archivedAlertRepo.initArchivedAlertsTable(),
 		userRepo.initUsersTable(),
 		serviceCustomFieldRepo.initServiceCustomFieldTable(),
 		serviceCustomFieldValueRepo.initServiceCustomFieldValueTable(),
@@ -144,7 +142,7 @@ export async function createApp(db: Database.Database, mode: AppMode): Promise<e
 		alertBL
 	);
 	const dashboardController = new DashboardController(dashboardBL);
-	const tagController = new TagController(tagRepo, serviceRepo, alertBL);
+	const tagController = new TagController(tagRepo, serviceRepo);
 	const integrationController = new IntegrationController(integrationBL);
 	const alertController = new AlertController(alertBL);
 	const usersController = new UsersController(userBL);
