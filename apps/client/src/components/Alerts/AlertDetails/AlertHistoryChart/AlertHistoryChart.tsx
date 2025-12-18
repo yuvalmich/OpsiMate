@@ -14,7 +14,7 @@ const formatFullDate = (dateStr: string) => {
 		year: 'numeric',
 		hour: '2-digit',
 		minute: '2-digit',
-		second: '2-digit'
+		second: '2-digit',
 	});
 };
 
@@ -38,14 +38,14 @@ export const AlertHistoryChart = ({ historyData }: AlertHistoryChartProps) => {
 							/>
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center gap-3 flex-wrap">
-                            <span className={`font-medium text-sm ${
-								isFiring ? 'text-red-500' : 'text-green-500'
-							}`}>
-                               {isFiring ? 'Firing' : 'Resolved'}
-                            </span>
-									<span className="text-xs text-muted-foreground">
-                               {formatFullDate(item.date)}
-                            </span>
+									<span
+										className={`font-medium text-sm ${
+											isFiring ? 'text-red-500' : 'text-green-500'
+										}`}
+									>
+										{isFiring ? 'Firing' : 'Resolved'}
+									</span>
+									<span className="text-xs text-muted-foreground">{formatFullDate(item.date)}</span>
 								</div>
 							</div>
 						</div>
@@ -53,9 +53,7 @@ export const AlertHistoryChart = ({ historyData }: AlertHistoryChartProps) => {
 				})}
 			</div>
 			{historyData.data.length === 0 && (
-				<div className="px-4 py-8 text-center text-sm text-muted-foreground">
-					No alert history available
-				</div>
+				<div className="px-4 py-8 text-center text-sm text-muted-foreground">No alert history available</div>
 			)}
 		</div>
 	);
