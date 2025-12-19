@@ -22,8 +22,8 @@ export class AlertCommentsRepository {
         return runAsync(() => {
             this.db.exec(`
 				CREATE TABLE IF NOT EXISTS alert_comments (
-					id TEXT PRIMARY KEY,
-					alert_id TEXT NOT NULL,
+                    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+                    alert_id TEXT NOT NULL,
 					user_id TEXT NOT NULL,
 					comment TEXT NOT NULL,
 					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
