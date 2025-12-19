@@ -1,13 +1,15 @@
 import { AlertRepository } from '../../dal/alertRepository';
 import { ArchivedAlertRepository } from '../../dal/archivedAlertRepository';
 import { Alert, AlertHistory, AlertType, Logger } from '@OpsiMate/shared';
+import {AlertComment, AlertCommentsRepository} from "../../dal/alertCommentsRepository.ts";
 
 const logger = new Logger('bl/alert.bl');
 
 export class AlertBL {
 	constructor(
 		private alertRepo: AlertRepository,
-		private archivedAlertRepo: ArchivedAlertRepository
+		private archivedAlertRepo: ArchivedAlertRepository,
+		private alertCommentsRepo: AlertCommentsRepository
 	) {}
 
 	// region active
@@ -136,6 +138,28 @@ export class AlertBL {
 			logger.error('Error setting alert owner', error);
 			throw error;
 		}
+	}
+	// endregion
+
+	// region comments
+	async createComment(comment: Omit<AlertComment, 'createdAt' | 'updatedAt' | 'id'>): Promise<AlertComment> {
+		return await this.alertCommentsRepo.createComment(comment);
+	}
+
+	async updateComment(id: string, comment: string): Promise<AlertComment | null> {
+		return await this.alertCommentsRepo.updateComment(id, comment);
+	}
+
+	async deleteComment(id: string): Promise<void> {
+		return await this.alertCommentsRepo.deleteComment(id);
+	}
+
+	async getCommentsByAlertId(alertId: string): Promise<AlertComment[]> {
+		return await this.alertCommentsRepo.getCommentsByAlertId(alertId);
+	}
+
+	async deleteCommentsByAlertId(alertId: string): Promise<void> {
+		return await this.alertCommentsRepo.deleteCommentsByAlertId(alertId);
 	}
 	// endregion
 }

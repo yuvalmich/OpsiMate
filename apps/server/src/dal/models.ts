@@ -132,3 +132,12 @@ export type TableInfoRow = {
 	dflt_value: unknown;
 	pk: number;
 };
+
+export type AlertCommentRow = {
+	id: string;
+	alert_id: string;
+	user_id: string;
+	comment: string;
+	created_at: string;
+	updated_at: string;
+}
