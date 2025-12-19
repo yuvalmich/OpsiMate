@@ -10,17 +10,6 @@ export type IntegrationRow = {
 	created_at: string; // SQLite returns DATETIME as string
 };
 
-export type ProviderRow = {
-	id: number;
-	name: string; // provider_name in DB
-	provider_ip: string;
-	username: string;
-	private_key_filename: string;
-	ssh_port: number;
-	created_at: string; // DATETIME
-	provider_type: string;
-};
-
 export type ServiceRow = {
 	id: number;
 	provider_id: number;
@@ -114,20 +103,6 @@ export type AuditLogRow = {
 	resource_name: string;
 	timestamp: string;
 	details?: string;
-};
-
-export type ServiceCustomFieldRow = {
-	id: number;
-	name: string;
-	created_at: string;
-};
-
-export type ServiceCustomFieldValueRow = {
-	service_id: number;
-	custom_field_id: number;
-	value: string;
-	created_at: string;
-	updated_at: string;
 };
 
 export type ResetPasswordRow = {
