@@ -1,12 +1,16 @@
+import { useUsers } from '@/hooks/queries/users';
 import { extractTagKeyFromColumnId, isTagKeyColumn } from '@/types';
 import { Alert } from '@OpsiMate/shared';
 import { useMemo } from 'react';
+import { getOwnerDisplayName } from '../utils/owner.utils';
 
 const getAlertType = (alert: Alert): string => {
 	return alert.type || 'Custom';
 };
 
 export const useAlertsFiltering = (alerts: Alert[], filters: Record<string, string[]>) => {
+	const { data: users = [] } = useUsers();
+
 	const filteredAlerts = useMemo(() => {
 		if (Object.keys(filters).length === 0) return alerts;
 
@@ -36,6 +40,9 @@ export const useAlertsFiltering = (alerts: Alert[], filters: Record<string, stri
 					case 'alertName':
 						fieldValue = alert.alertName ?? '';
 						break;
+					case 'owner':
+						fieldValue = getOwnerDisplayName(alert.ownerId, users);
+						break;
 					default:
 						continue;
 				}
@@ -46,7 +53,7 @@ export const useAlertsFiltering = (alerts: Alert[], filters: Record<string, stri
 			}
 			return true;
 		});
-	}, [alerts, filters]);
+	}, [alerts, filters, users]);
 
 	return filteredAlerts;
 };

@@ -1,7 +1,9 @@
 import { ActiveFilters, FilterFacets, FilterPanel, FilterPanelConfig } from '@/components/shared';
+import { useUsers } from '@/hooks/queries/users';
 import { getTagKeyColumnId, TagKeyInfo } from '@/types';
 import { Alert } from '@OpsiMate/shared';
 import { useMemo } from 'react';
+import { getOwnerDisplayName } from './utils/owner.utils';
 
 interface AlertsFilterPanelProps {
 	alerts: Alert[];
@@ -12,12 +14,13 @@ interface AlertsFilterPanelProps {
 	enabledTagKeys?: TagKeyInfo[];
 }
 
-const BASE_FILTER_FIELDS = ['status', 'type', 'alertName'];
+const BASE_FILTER_FIELDS = ['status', 'type', 'alertName', 'owner'];
 
 const BASE_FIELD_LABELS: Record<string, string> = {
 	status: 'Status',
 	type: 'Type',
 	alertName: 'Alert Name',
+	owner: 'Owner',
 };
 
 export const AlertsFilterPanel = ({
@@ -28,6 +31,8 @@ export const AlertsFilterPanel = ({
 	className,
 	enabledTagKeys = [],
 }: AlertsFilterPanelProps) => {
+	const { data: users = [] } = useUsers();
+
 	const getAlertType = (alert: Alert): string => {
 		return alert.type || 'Custom';
 	};
@@ -63,6 +68,9 @@ export const AlertsFilterPanel = ({
 				facetData.alertName.set(alert.alertName, (facetData.alertName.get(alert.alertName) || 0) + 1);
 			}
 
+			const ownerName = getOwnerDisplayName(alert.ownerId, users);
+			facetData.owner.set(ownerName, (facetData.owner.get(ownerName) || 0) + 1);
+
 			enabledTagKeys.forEach((tagKeyInfo) => {
 				const colId = getTagKeyColumnId(tagKeyInfo.key);
 				const value = alert.tags?.[tagKeyInfo.key];
@@ -83,7 +91,7 @@ export const AlertsFilterPanel = ({
 		});
 
 		return result;
-	}, [alerts, filterConfig.fields, enabledTagKeys]);
+	}, [alerts, filterConfig.fields, enabledTagKeys, users]);
 
 	return (
 		<FilterPanel

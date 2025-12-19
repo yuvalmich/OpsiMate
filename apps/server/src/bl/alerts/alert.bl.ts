@@ -124,4 +124,18 @@ export class AlertBL {
 		return await this.archivedAlertRepo.getAlertHistory(alertId);
 	}
 	// endregion
+
+	// region owner
+	async setAlertOwner(alertId: string, ownerId: string | null): Promise<Alert | null> {
+		try {
+			logger.info(`Setting owner ${ownerId} for alert: ${alertId}`);
+			// Convert string to number for database storage
+			const numericOwnerId = ownerId !== null ? parseInt(ownerId, 10) : null;
+			return await this.alertRepo.updateAlertOwner(alertId, numericOwnerId);
+		} catch (error) {
+			logger.error('Error setting alert owner', error);
+			throw error;
+		}
+	}
+	// endregion
 }
