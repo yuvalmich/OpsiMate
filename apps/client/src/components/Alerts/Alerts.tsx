@@ -256,7 +256,10 @@ const Alerts = () => {
 									type="single"
 									value={activeTab}
 									onValueChange={(value) => {
-										if (value) setActiveTab(value as 'active' | 'archived');
+										if (value) {
+											setActiveTab(value as 'active' | 'archived');
+											setSelectedAlert(null);
+										}
 									}}
 									className="justify-start"
 								>
