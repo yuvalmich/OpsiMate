@@ -67,26 +67,48 @@ export class AlertCommentsRepository {
 		});
 	}
 
-	async updateComment(id: string, comment: string): Promise<AlertComment | null> {
+	async updateComment(id: string, userId: string, comment: string): Promise<AlertComment | null> {
 		return runAsync(() => {
-			this.db
-				.prepare(
-					`UPDATE alert_comments 
-					SET comment = ?, updated_at = CURRENT_TIMESTAMP 
-					WHERE id = ?`
-				)
-				.run(comment, id);
-
-			const row = this.db.prepare('SELECT * FROM alert_comments WHERE id = ?').get(id) as
+			const existingRow = this.db.prepare('SELECT * FROM alert_comments WHERE id = ?').get(id) as
 				| AlertCommentRow
 				| undefined;
 
-			return row ? this.toAlertComment(row) : null;
+			if (!existingRow) {
+				return null;
+			}
+
+			if (existingRow.user_id !== userId) {
+				throw new Error('Unauthorized: User does not have permission to update this comment');
+			}
+
+			this.db
+				.prepare(
+					`UPDATE alert_comments 
+                SET comment = ?, updated_at = CURRENT_TIMESTAMP 
+                WHERE id = ?`
+				)
+				.run(comment, id);
+
+			const row = this.db.prepare('SELECT * FROM alert_comments WHERE id = ?').get(id) as AlertCommentRow;
+
+			return this.toAlertComment(row);
 		});
 	}
 
-	async deleteComment(id: string): Promise<void> {
+	async deleteComment(id: string, userId: string): Promise<void> {
 		return runAsync(() => {
+			const existingRow = this.db.prepare('SELECT * FROM alert_comments WHERE id = ?').get(id) as
+				| AlertCommentRow
+				| undefined;
+
+			if (!existingRow) {
+				return;
+			}
+
+			if (existingRow.user_id !== userId) {
+				throw new Error('Unauthorized: User does not have permission to update this comment');
+			}
+
 			this.db.prepare('DELETE FROM alert_comments WHERE id = ?').run(id);
 		});
 	}
