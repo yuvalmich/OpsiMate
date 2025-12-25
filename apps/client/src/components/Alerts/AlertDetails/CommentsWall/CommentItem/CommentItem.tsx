@@ -30,7 +30,12 @@ export const CommentItem = ({
 	const isOwnComment = String(currentUserId) === String(comment.userId);
 	const user = userMap.get(comment.userId);
 	const displayName = user?.fullName || user?.email || 'Unknown User';
-	const initials = displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+	const initials = displayName
+		.split(' ')
+		.map((n) => n[0])
+		.join('')
+		.toUpperCase()
+		.slice(0, 2);
 
 	const formatDate = (dateString: string) => {
 		const date = new Date(dateString);
@@ -68,7 +73,9 @@ export const CommentItem = ({
 				<div className="flex items-center justify-between gap-2 mb-1">
 					<div className="flex items-center gap-2 min-w-0">
 						<span className="font-medium text-sm text-foreground truncate">{displayName}</span>
-						<span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(comment.createdAt)}</span>
+						<span className="text-xs text-muted-foreground flex-shrink-0">
+							{formatDate(comment.createdAt)}
+						</span>
 						{comment.updatedAt !== comment.createdAt && (
 							<span className="text-xs text-muted-foreground italic flex-shrink-0">(edited)</span>
 						)}
@@ -110,7 +117,12 @@ export const CommentItem = ({
 								<X className="h-3 w-3 mr-1" />
 								Cancel
 							</Button>
-							<Button size="sm" onClick={handleSave} disabled={!editText.trim() || isUpdating} className="h-7 px-2">
+							<Button
+								size="sm"
+								onClick={handleSave}
+								disabled={!editText.trim() || isUpdating}
+								className="h-7 px-2"
+							>
 								<Check className="h-3 w-3 mr-1" />
 								Save
 							</Button>

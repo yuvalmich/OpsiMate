@@ -10,7 +10,7 @@ import {
 } from './models';
 import { isZodError } from '../../../utils/isZodError.ts';
 import { v4 } from 'uuid';
-import {AuthenticatedRequest} from "../../../middleware/auth.ts";
+import { AuthenticatedRequest } from '../../../middleware/auth.ts';
 
 const logger: Logger = new Logger('alerts.controller');
 

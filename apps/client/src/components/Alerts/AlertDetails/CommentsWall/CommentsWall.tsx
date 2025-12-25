@@ -1,9 +1,9 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-    useAlertComments,
-    useCreateAlertComment,
-    useDeleteAlertComment,
-    useUpdateAlertComment,
+	useAlertComments,
+	useCreateAlertComment,
+	useDeleteAlertComment,
+	useUpdateAlertComment,
 } from '@/hooks/queries/alertComments';
 import { useUsers } from '@/hooks/queries/users/useUsers';
 import { getCurrentUser } from '@/lib/auth';
