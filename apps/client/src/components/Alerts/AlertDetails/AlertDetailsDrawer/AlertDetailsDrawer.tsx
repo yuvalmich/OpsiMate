@@ -1,5 +1,6 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Alert } from '@OpsiMate/shared';
 import { AlertActionsSection } from '../AlertActionsSection';
 import { AlertHistorySection } from '../AlertHistorySection';
 import { AlertInfoSection } from '../AlertInfoSection';
@@ -9,7 +10,16 @@ import { AlertTimestampsSection } from '../AlertTimestampsSection';
 import { CommentsWall } from '../CommentsWall';
 import { useAlertHistory } from '../hooks';
 import { DRAWER_COMMENTS_WIDTH, DRAWER_DETAILS_WIDTH, DRAWER_WIDTH } from './AlertDetailsDrawer.constants';
-import { AlertDetailsDrawerProps } from './AlertDetailsDrawer.types';
+
+interface AlertDetailsDrawerProps {
+	open: boolean;
+	alert: Alert | null;
+	isActive: boolean;
+	onClose: () => void;
+	onDismiss?: (alertId: string) => void;
+	onUndismiss?: (alertId: string) => void;
+	onDelete?: (alertId: string) => void;
+}
 
 export const AlertDetailsDrawer = ({
 	open,

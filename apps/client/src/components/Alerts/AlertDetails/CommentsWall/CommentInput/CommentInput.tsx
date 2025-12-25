@@ -3,7 +3,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
 import { KeyboardEvent } from 'react';
 import { SUBMIT_BUTTON_TEXT, WRITE_COMMENT_PLACEHOLDER } from '../CommentsWall.constants';
-import { CommentInputProps } from '../CommentsWall.types';
+
+interface CommentInputProps {
+	value: string;
+	onChange: (value: string) => void;
+	onSubmit: () => void;
+	isSubmitting: boolean;
+	placeholder?: string;
+}
 
 export const CommentInput = ({
 	value,

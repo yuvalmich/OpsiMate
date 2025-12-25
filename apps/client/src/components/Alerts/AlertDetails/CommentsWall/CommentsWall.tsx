@@ -1,9 +1,9 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-	useAlertComments,
-	useCreateAlertComment,
-	useDeleteAlertComment,
-	useUpdateAlertComment,
+    useAlertComments,
+    useCreateAlertComment,
+    useDeleteAlertComment,
+    useUpdateAlertComment,
 } from '@/hooks/queries/alertComments';
 import { useUsers } from '@/hooks/queries/users/useUsers';
 import { getCurrentUser } from '@/lib/auth';
@@ -12,7 +12,10 @@ import { useMemo, useState } from 'react';
 import { CommentInput } from './CommentInput';
 import { CommentItem } from './CommentItem';
 import { COMMENTS_HEADER, NO_COMMENTS_MESSAGE } from './CommentsWall.constants';
-import { CommentsWallProps } from './CommentsWall.types';
+
+interface CommentsWallProps {
+	alertId: string;
+}
 
 export const CommentsWall = ({ alertId }: CommentsWallProps) => {
 	const [newComment, setNewComment] = useState('');

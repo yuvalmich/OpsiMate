@@ -1,5 +1,5 @@
 import { API_BASE_URL, ApiResponse } from '@/lib/api';
-import { AlertComment } from './alertComments.types';
+import { AlertComment } from '@OpsiMate/shared';
 
 const getAuthHeaders = () => {
 	const token = localStorage.getItem('jwt');

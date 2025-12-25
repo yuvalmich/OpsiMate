@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { alertCommentsApi } from './alertComments.api';
 import { queryKeys } from '../queryKeys';
+import { alertCommentsApi } from './alertComments.api';
 
 interface CreateCommentParams {
 	alertId: string;

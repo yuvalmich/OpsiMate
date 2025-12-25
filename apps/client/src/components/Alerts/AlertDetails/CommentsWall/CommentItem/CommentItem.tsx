@@ -1,9 +1,19 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { AlertComment } from '@OpsiMate/shared';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
-import { CommentItemProps } from '../CommentsWall.types';
+
+interface CommentItemProps {
+	comment: AlertComment;
+	currentUserId: string | number;
+	userMap: Map<string, { fullName: string; email: string }>;
+	onEdit: (commentId: string, newText: string) => void;
+	onDelete: (commentId: string) => void;
+	isDeleting: boolean;
+	isUpdating: boolean;
+}
 
 export const CommentItem = ({
 	comment,
