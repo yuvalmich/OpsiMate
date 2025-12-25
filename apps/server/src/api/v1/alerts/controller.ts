@@ -382,16 +382,19 @@ export class AlertController {
 		}
 	}
 
-	async updateComment(req: Request, res: Response) {
+	async updateComment(req: AuthenticatedRequest, res: Response) {
 		try {
 			const { commentId } = req.params;
 			if (!commentId) {
 				return res.status(400).json({ success: false, error: 'Comment id is required' });
 			}
+			if (!req.user) {
+				return res.status(400).json({ success: false, error: 'user id is required' });
+			}
 
 			const { comment } = UpdateCommentSchema.parse(req.body);
 
-			const updatedComment = await this.alertBL.updateComment(commentId, comment);
+			const updatedComment = await this.alertBL.updateComment(commentId, req.user.id, comment);
 			if (!updatedComment) {
 				return res.status(404).json({ success: false, error: 'Comment not found' });
 			}
@@ -406,14 +409,17 @@ export class AlertController {
 		}
 	}
 
-	async deleteComment(req: Request, res: Response) {
+	async deleteComment(req: AuthenticatedRequest, res: Response) {
 		try {
 			const { commentId } = req.params;
 			if (!commentId) {
 				return res.status(400).json({ success: false, error: 'Comment id is required' });
 			}
+			if (!req.user) {
+				return res.status(400).json({ success: false, error: 'user id is required' });
+			}
 
-			await this.alertBL.deleteComment(commentId);
+			await this.alertBL.deleteComment(commentId, req.user.id);
 			return res.json({ success: true, message: 'Comment deleted successfully' });
 		} catch (error) {
 			logger.error('Error deleting comment:', error);

@@ -1,7 +1,7 @@
 import { AlertRepository } from '../../dal/alertRepository';
 import { ArchivedAlertRepository } from '../../dal/archivedAlertRepository';
-import { Alert, AlertHistory, AlertType, Logger } from '@OpsiMate/shared';
-import { AlertComment, AlertCommentsRepository } from '../../dal/alertCommentsRepository.ts';
+import { Alert, AlertComment, AlertHistory, AlertType, Logger } from '@OpsiMate/shared';
+import { AlertCommentsRepository } from '../../dal/alertCommentsRepository.ts';
 
 const logger = new Logger('bl/alert.bl');
 
@@ -146,20 +146,16 @@ export class AlertBL {
 		return await this.alertCommentsRepo.createComment(comment);
 	}
 
-	async updateComment(id: string, comment: string): Promise<AlertComment | null> {
-		return await this.alertCommentsRepo.updateComment(id, comment);
+	async updateComment(id: string, userId: string, comment: string): Promise<AlertComment | null> {
+		return await this.alertCommentsRepo.updateComment(id, userId, comment);
 	}
 
-	async deleteComment(id: string): Promise<void> {
-		return await this.alertCommentsRepo.deleteComment(id);
+	async deleteComment(id: string, userId: string): Promise<void> {
+		return await this.alertCommentsRepo.deleteComment(id, userId);
 	}
 
 	async getCommentsByAlertId(alertId: string): Promise<AlertComment[]> {
 		return await this.alertCommentsRepo.getCommentsByAlertId(alertId);
-	}
-
-	async deleteCommentsByAlertId(alertId: string): Promise<void> {
-		return await this.alertCommentsRepo.deleteCommentsByAlertId(alertId);
 	}
 	// endregion
 }
