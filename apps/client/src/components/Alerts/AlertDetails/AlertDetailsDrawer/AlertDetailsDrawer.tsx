@@ -1,6 +1,7 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Alert } from '@OpsiMate/shared';
+import { useEffect, useState } from 'react';
 import { AlertActionsSection } from '../AlertActionsSection';
 import { AlertHistorySection } from '../AlertHistorySection';
 import { AlertInfoSection } from '../AlertInfoSection';
@@ -30,9 +31,15 @@ export const AlertDetailsDrawer = ({
 	onUndismiss,
 	onDelete,
 }: AlertDetailsDrawerProps) => {
-	const historyData = useAlertHistory(alert?.id);
+	const [renderedAlert, setRenderedAlert] = useState<Alert | null>(alert);
 
-	if (!alert) return null;
+	useEffect(() => {
+		if (alert) {
+			setRenderedAlert(alert);
+		}
+	}, [alert]);
+
+	const historyData = useAlertHistory(renderedAlert?.id);
 
 	return (
 		<Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -46,29 +53,31 @@ export const AlertDetailsDrawer = ({
 					<div className={`${DRAWER_DETAILS_WIDTH} flex flex-col min-h-0`}>
 						<ScrollArea className="flex-1">
 							<div className="p-4 space-y-4">
-								<AlertInfoSection alert={alert} />
+								{renderedAlert && <AlertInfoSection alert={renderedAlert} />}
 
-								{alert.summary && <AlertSummarySection summary={alert.summary} />}
+								{renderedAlert?.summary && <AlertSummarySection summary={renderedAlert.summary} />}
 
-								<AlertTimestampsSection alert={alert} />
+								{renderedAlert && <AlertTimestampsSection alert={renderedAlert} />}
 
 								{historyData && <AlertHistorySection historyData={historyData} />}
 
-								<AlertLinksSection alert={alert} />
+								{renderedAlert && <AlertLinksSection alert={renderedAlert} />}
 
-								<AlertActionsSection
-									alert={alert}
-									isActive={isActive}
-									onDismiss={onDismiss}
-									onUndismiss={onUndismiss}
-									onDelete={onDelete}
-								/>
+								{renderedAlert && (
+									<AlertActionsSection
+										alert={renderedAlert}
+										isActive={isActive}
+										onDismiss={onDismiss}
+										onUndismiss={onUndismiss}
+										onDelete={onDelete}
+									/>
+								)}
 							</div>
 						</ScrollArea>
 					</div>
 
 					<div className={DRAWER_COMMENTS_WIDTH}>
-						<CommentsWall alertId={alert.id} />
+						{renderedAlert && <CommentsWall alertId={renderedAlert.id} />}
 					</div>
 				</div>
 			</SheetContent>
