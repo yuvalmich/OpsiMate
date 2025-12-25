@@ -268,9 +268,7 @@ export const DashboardTagSchema = z.object({
 	tagId: z.number(),
 });
 
-
 export const CreateCommentSchema = z.object({
-	userId: z.string().min(1, 'User ID is required'),
 	comment: z.string().min(1, 'Comment cannot be empty').max(5000, 'Comment is too long'),
 });
 

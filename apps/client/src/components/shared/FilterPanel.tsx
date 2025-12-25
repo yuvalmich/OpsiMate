@@ -12,6 +12,7 @@ export type FilterFacet = {
 	value: string;
 	count: number;
 	displayValue?: string;
+	disabled?: boolean;
 };
 
 export type FilterFacets = Record<string, FilterFacet[]>;
@@ -126,7 +127,15 @@ export const FilterPanel = ({
 							const fieldFacets = facets[field] || [];
 							const activeValues = filters[field] || [];
 
-							if (fieldFacets.length === 0) return null;
+							// Include active filter values that are no longer in the data (with count 0)
+							const existingValues = new Set(fieldFacets.map((f) => f.value));
+							const orphanedFilters = activeValues
+								.filter((v) => !existingValues.has(v))
+								.map((value) => ({ value, count: 0 }));
+							const allFacets = [...fieldFacets, ...orphanedFilters];
+
+							// Hide field only if there are no facets AND no active filters
+							if (allFacets.length === 0) return null;
 
 							return (
 								<AccordionItem key={field} value={field} className="border-b">
@@ -146,7 +155,7 @@ export const FilterPanel = ({
 										</div>
 									</AccordionTrigger>
 									<AccordionContent className="pb-2 overflow-hidden">
-										{shouldShowSearch(fieldFacets) && (
+										{shouldShowSearch(allFacets) && (
 											<div className="px-2 pb-2">
 												<Input
 													placeholder="Search..."
@@ -159,29 +168,33 @@ export const FilterPanel = ({
 										<div className="space-y-1 px-2 w-full">
 											{(() => {
 												const { filteredAndLimitedFacets, hasMore, remaining, searchTerm } =
-													getFilteredAndLimitedFacets(field, fieldFacets);
+													getFilteredAndLimitedFacets(field, allFacets);
 
 												return (
 													<>
 														{filteredAndLimitedFacets.map(
-															({ value, count, displayValue }) => {
+															({ value, count, displayValue, disabled }) => {
 																const isChecked = activeValues.includes(value);
 																const label = displayValue || value;
+																const isDisabled = disabled === true;
 																return (
 																	<label
 																		key={value}
 																		className={cn(
-																			'flex items-center gap-2 py-1 px-1 rounded cursor-pointer transition-colors w-full overflow-hidden',
-																			'hover:bg-muted/50',
+																			'flex items-center gap-2 py-1 px-1 rounded transition-colors w-full overflow-hidden',
+																			isDisabled
+																				? 'cursor-not-allowed opacity-50'
+																				: 'cursor-pointer hover:bg-muted/50',
 																			isChecked && 'bg-muted'
 																		)}
 																	>
 																		<Checkbox
 																			checked={isChecked}
+																			disabled={isDisabled}
 																			onCheckedChange={() =>
 																				handleFilterToggle(field, value)
 																			}
-																			className="h-3 w-3 border-2 flex-shrink-0 data-[state=checked]:bg-primary data-[state=checked]:border-primary cursor-pointer hover:bg-primary/10 transition-colors"
+																			className="h-3 w-3 border-2 flex-shrink-0 data-[state=checked]:bg-primary data-[state=checked]:border-primary cursor-pointer hover:bg-primary/10 transition-colors disabled:cursor-not-allowed"
 																		/>
 																		<span
 																			className="text-xs overflow-hidden text-ellipsis whitespace-nowrap block max-w-[100px] text-foreground"

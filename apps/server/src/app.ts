@@ -42,7 +42,7 @@ import { TagRepository } from './dal/tagRepository';
 import { UserRepository } from './dal/userRepository';
 import { PullGrafanaAlertsJob } from './jobs/pull-grafana-alerts-job';
 import { RefreshJob } from './jobs/refresh-job';
-import {AlertCommentsRepository} from "./dal/alertCommentsRepository.ts";
+import { AlertCommentsRepository } from './dal/alertCommentsRepository.ts';
 
 export enum AppMode {
 	SERVER = 'SERVER',
