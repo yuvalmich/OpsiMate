@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import {AlertHistory, AlertStatus, CreateCommentSchema, Logger, UpdateCommentSchema} from '@OpsiMate/shared';
+import { AlertHistory, AlertStatus, CreateCommentSchema, Logger, UpdateCommentSchema } from '@OpsiMate/shared';
 import { AlertBL } from '../../../bl/alerts/alert.bl';
 import {
 	DatadogAlertWebhookSchema,
@@ -365,7 +365,7 @@ export class AlertController {
 			const newComment = await this.alertBL.createComment({
 				alertId: alertId,
 				userId: userId,
-				comment: comment
+				comment: comment,
 			});
 
 			return res.status(201).json({ success: true, data: { comment: newComment } });
