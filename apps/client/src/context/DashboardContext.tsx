@@ -3,6 +3,28 @@ import { clearStorage, loadFromStorage, saveToStorage } from './DashboardContext
 
 export type DashboardType = 'services' | 'alerts';
 
+export type QuickPreset =
+	| 'last1m'
+	| 'last5m'
+	| 'last15m'
+	| 'last30m'
+	| 'last1h'
+	| 'last2h'
+	| 'last6h'
+	| 'last12h'
+	| 'last24h'
+	| 'today'
+	| 'last2d'
+	| 'last3d'
+	| 'last5d'
+	| 'last7d';
+
+export interface TimeRange {
+	from: Date | null;
+	to: Date | null;
+	preset: QuickPreset | 'custom' | null;
+}
+
 export interface DashboardState {
 	id: string | null;
 	name: string;
@@ -13,6 +35,7 @@ export interface DashboardState {
 	columnOrder: string[];
 	groupBy: string[];
 	query: string;
+	timeRange: TimeRange;
 }
 
 interface DashboardContextType {
@@ -42,6 +65,7 @@ const defaultState: DashboardState = {
 	columnOrder: [],
 	groupBy: [],
 	query: '',
+	timeRange: { from: null, to: null, preset: null },
 };
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -76,17 +100,26 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
 		const initialGroupBy = JSON.stringify(initialState.groupBy);
 		const currentFilters = JSON.stringify(dashboardState.filters);
 		const initialFilters = JSON.stringify(initialState.filters);
+		const currentVisibleColumns = JSON.stringify(dashboardState.visibleColumns);
+		const initialVisibleColumns = JSON.stringify(initialState.visibleColumns);
 
 		return (
 			currentName !== initialName ||
 			currentDescription !== initialDescription ||
 			currentGroupBy !== initialGroupBy ||
-			currentFilters !== initialFilters
+			currentFilters !== initialFilters ||
+			currentVisibleColumns !== initialVisibleColumns
 		);
 	}, [dashboardState, initialState, hasUserMadeChanges]);
 
 	const updateDashboardField = useCallback(<K extends keyof DashboardState>(field: K, value: DashboardState[K]) => {
-		const userEditableFields: (keyof DashboardState)[] = ['name', 'description', 'groupBy', 'filters'];
+		const userEditableFields: (keyof DashboardState)[] = [
+			'name',
+			'description',
+			'groupBy',
+			'filters',
+			'visibleColumns',
+		];
 		if (userEditableFields.includes(field)) {
 			setHasUserMadeChanges(true);
 		}
