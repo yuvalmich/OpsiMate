@@ -10,6 +10,7 @@ import {
 } from './models';
 import { isZodError } from '../../../utils/isZodError.ts';
 import { v4 } from 'uuid';
+import {AuthenticatedRequest} from "../../../middleware/auth.ts";
 
 const logger: Logger = new Logger('alerts.controller');
 
@@ -353,18 +354,21 @@ export class AlertController {
 		}
 	}
 
-	async createComment(req: Request, res: Response) {
+	async createComment(req: AuthenticatedRequest, res: Response) {
 		try {
 			const { alertId } = req.params;
 			if (!alertId) {
 				return res.status(400).json({ success: false, error: 'Alert id is required' });
 			}
+			if (!req.user) {
+				return res.status(400).json({ success: false, error: 'user id is required' });
+			}
 
-			const { userId, comment } = CreateCommentSchema.parse(req.body);
+			const { comment } = CreateCommentSchema.parse(req.body);
 
 			const newComment = await this.alertBL.createComment({
 				alertId: alertId,
-				userId: userId,
+				userId: req.user.id,
 				comment: comment,
 			});
 
