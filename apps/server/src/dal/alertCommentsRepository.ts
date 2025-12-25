@@ -1,15 +1,7 @@
 import Database from 'better-sqlite3';
 import { runAsync } from './db';
 import { AlertCommentRow } from './models.ts';
-
-export interface AlertComment {
-	id: string;
-	alertId: string;
-	userId: string;
-	comment: string;
-	createdAt: string;
-	updatedAt: string;
-}
+import { AlertComment } from '@OpsiMate/shared';
 
 export class AlertCommentsRepository {
 	private db: Database.Database;
