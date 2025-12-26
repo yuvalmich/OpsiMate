@@ -47,6 +47,7 @@ export const AlertsTable = ({
 	onSearchTermChange,
 	timeRange,
 	onTimeRangeChange,
+	isArchived = false,
 }: AlertsTableProps) => {
 	const parentRef = useRef<HTMLDivElement>(null);
 
@@ -230,6 +231,7 @@ export const AlertsTable = ({
 									onDeleteAlert={onDeleteAlert}
 									onSelectAlerts={onSelectAlerts}
 									columnLabels={allColumnLabels}
+									isArchived={isArchived}
 								/>
 							)}
 						</div>
