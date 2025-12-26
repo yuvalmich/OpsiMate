@@ -333,6 +333,8 @@ const Alerts = () => {
 										tagKeys={tagKeys}
 										timeRange={dashboardState.timeRange}
 										onTimeRangeChange={(range) => updateDashboardField('timeRange', range)}
+										searchTerm={dashboardState.query}
+										onSearchTermChange={(term) => updateDashboardField('query', term)}
 									/>
 								</div>
 
@@ -373,6 +375,8 @@ const Alerts = () => {
 									tagKeys={tagKeys}
 									timeRange={dashboardState.timeRange}
 									onTimeRangeChange={(range) => updateDashboardField('timeRange', range)}
+									searchTerm={dashboardState.query}
+									onSearchTermChange={(term) => updateDashboardField('query', term)}
 								/>
 							</div>
 						)}

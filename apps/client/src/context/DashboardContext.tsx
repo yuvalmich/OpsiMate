@@ -102,13 +102,16 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
 		const initialFilters = JSON.stringify(initialState.filters);
 		const currentVisibleColumns = JSON.stringify(dashboardState.visibleColumns);
 		const initialVisibleColumns = JSON.stringify(initialState.visibleColumns);
+		const currentQuery = dashboardState.query;
+		const initialQuery = initialState.query;
 
 		return (
 			currentName !== initialName ||
 			currentDescription !== initialDescription ||
 			currentGroupBy !== initialGroupBy ||
 			currentFilters !== initialFilters ||
-			currentVisibleColumns !== initialVisibleColumns
+			currentVisibleColumns !== initialVisibleColumns ||
+			currentQuery !== initialQuery
 		);
 	}, [dashboardState, initialState, hasUserMadeChanges]);
 
@@ -119,6 +122,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
 			'groupBy',
 			'filters',
 			'visibleColumns',
+			'query',
 		];
 		if (userEditableFields.includes(field)) {
 			setHasUserMadeChanges(true);

@@ -32,6 +32,8 @@ export interface AlertsTableProps {
 	tagKeys?: TagKeyInfo[];
 	timeRange?: TimeRange;
 	onTimeRangeChange?: (range: TimeRange) => void;
+	searchTerm: string;
+	onSearchTermChange: (term: string) => void;
 }
 
 export interface SortConfig {

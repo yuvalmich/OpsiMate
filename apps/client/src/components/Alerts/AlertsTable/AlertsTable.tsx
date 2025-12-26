@@ -43,11 +43,12 @@ export const AlertsTable = ({
 	onGroupByChange,
 	onColumnToggle,
 	tagKeys = [],
+	searchTerm,
+	onSearchTermChange,
 	timeRange,
 	onTimeRangeChange,
 	isArchived = false,
 }: AlertsTableProps) => {
-	const [searchTerm, setSearchTerm] = useState('');
 	const parentRef = useRef<HTMLDivElement>(null);
 
 	const filteredAlerts = useMemo(() => filterAlerts(alerts, searchTerm), [alerts, searchTerm]);
@@ -88,7 +89,7 @@ export const AlertsTable = ({
 		<div className={cn('flex flex-col h-full', className)}>
 			<div className="mb-2 flex items-center gap-2">
 				<div className="flex-1">
-					<SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+					<SearchBar searchTerm={searchTerm} onSearchChange={onSearchTermChange} />
 				</div>
 				{onTimeRangeChange && (
 					<TimeFilter value={timeRange ?? createEmptyTimeRange()} onChange={onTimeRangeChange} />
