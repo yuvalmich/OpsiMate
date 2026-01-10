@@ -3,8 +3,8 @@ import { Command, CommandGroup, CommandItem, CommandList, CommandSeparator } fro
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { GripVertical, Layers, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ChevronsDownUp, ChevronsUpDown, GripVertical, Layers, X } from 'lucide-react';
+import { useMemo, useState, type DragEvent } from 'react';
 import { ACTIONS_COLUMN, COLUMN_LABELS } from './AlertsTable.constants';
 import { GROUP_BY_CONTROLS_TEXT } from './GroupByControls.constants';
 
@@ -13,6 +13,8 @@ interface GroupByControlsProps {
 	onGroupByChange: (columns: string[]) => void;
 	availableColumns: string[];
 	columnLabels?: Record<string, string>;
+	onExpandAll?: () => void;
+	onCollapseAll?: () => void;
 }
 
 const reorderArray = <T,>(arr: T[], fromIndex: number, toIndex: number): T[] => {
@@ -22,11 +24,51 @@ const reorderArray = <T,>(arr: T[], fromIndex: number, toIndex: number): T[] => 
 	return result;
 };
 
+interface ExpandCollapseButtonsProps {
+	onExpandAll: () => void;
+	onCollapseAll: () => void;
+}
+
+const ExpandCollapseButtons = ({ onExpandAll, onCollapseAll }: ExpandCollapseButtonsProps) => (
+	<div className="flex items-center gap-1">
+		<Tooltip>
+			<TooltipTrigger asChild>
+				<Button
+					variant="ghost"
+					size="icon"
+					className="h-6 w-6"
+					onClick={onExpandAll}
+					aria-label={GROUP_BY_CONTROLS_TEXT.EXPAND_ALL}
+				>
+					<ChevronsUpDown className="h-3.5 w-3.5" />
+				</Button>
+			</TooltipTrigger>
+			<TooltipContent>{GROUP_BY_CONTROLS_TEXT.EXPAND_ALL}</TooltipContent>
+		</Tooltip>
+		<Tooltip>
+			<TooltipTrigger asChild>
+				<Button
+					variant="ghost"
+					size="icon"
+					className="h-6 w-6"
+					onClick={onCollapseAll}
+					aria-label={GROUP_BY_CONTROLS_TEXT.COLLAPSE_ALL}
+				>
+					<ChevronsDownUp className="h-3.5 w-3.5" />
+				</Button>
+			</TooltipTrigger>
+			<TooltipContent>{GROUP_BY_CONTROLS_TEXT.COLLAPSE_ALL}</TooltipContent>
+		</Tooltip>
+	</div>
+);
+
 export const GroupByControls = ({
 	groupByColumns,
 	onGroupByChange,
 	availableColumns,
 	columnLabels = COLUMN_LABELS,
+	onExpandAll,
+	onCollapseAll,
 }: GroupByControlsProps) => {
 	const groupableColumns = availableColumns.filter((col) => col !== ACTIONS_COLUMN);
 	const getLabel = (col: string) => columnLabels[col] || COLUMN_LABELS[col] || col;
@@ -48,7 +90,7 @@ export const GroupByControls = ({
 		onGroupByChange(groupByColumns.filter((c) => c !== col));
 	};
 
-	const handleDragStart = (e: React.DragEvent, index: number) => {
+	const handleDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
 		setDraggedIndex(index);
 		e.dataTransfer.effectAllowed = 'move';
 		e.dataTransfer.setData('text/plain', index.toString());
@@ -64,14 +106,14 @@ export const GroupByControls = ({
 		setTimeout(() => document.body.removeChild(dragImage), 0);
 	};
 
-	const handleDragOver = (e: React.DragEvent, index: number) => {
+	const handleDragOver = (e: DragEvent<HTMLDivElement>, index: number) => {
 		e.preventDefault();
 		e.dataTransfer.dropEffect = 'move';
 		if (draggedIndex === null) return;
 		setDragOverIndex(index);
 	};
 
-	const handleDrop = (e: React.DragEvent) => {
+	const handleDrop = (e: DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
 		e.stopPropagation();
 		if (draggedIndex === null || dragOverIndex === null || draggedIndex === dragOverIndex) {
@@ -131,6 +173,13 @@ export const GroupByControls = ({
 				</Tooltip>
 				<PopoverContent className="w-[240px] p-0" align="start">
 					<Command>
+						<div className="flex items-center justify-between px-2 py-1.5">
+							<span className="text-sm font-semibold">{GROUP_BY_CONTROLS_TEXT.HEADLINE}</span>
+							{groupByColumns.length > 0 && onExpandAll && onCollapseAll && (
+								<ExpandCollapseButtons onExpandAll={onExpandAll} onCollapseAll={onCollapseAll} />
+							)}
+						</div>
+						<CommandSeparator />
 						<CommandList>
 							{groupByColumns.length > 0 && (
 								<CommandGroup heading={GROUP_BY_CONTROLS_TEXT.GROUPED_BY_HEADING}>

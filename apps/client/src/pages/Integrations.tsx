@@ -1,5 +1,10 @@
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { CoralogixIcon } from '@/components/icons/CoralogixIcon';
+import { DatadogIcon } from '@/components/icons/DatadogIcon';
+import { GCPIcon } from '@/components/icons/GCPIcon';
+import { GrafanaIcon } from '@/components/icons/GrafanaIcon';
 import { UptimeKumaIcon } from '@/components/icons/UptimeKumaIcon';
+import { ZabbixIcon } from '@/components/icons/ZabbixIcon';
 import { GCPSetupModal } from '@/components/Integrations/GCPSetupModal';
 import { UptimeKumaSetupModal } from '@/components/Integrations/UptimeKumaSetupModal';
 import { DatadogSetupModal } from '@/components/Integrations/DatadogSetupModal';
@@ -54,7 +59,6 @@ const logger = new Logger('Integrations');
 // Define IntegrationType locally until shared package export is fixed
 enum IntegrationType {
 	Grafana = 'Grafana',
-	Kibana = 'Kibana',
 	Datadog = 'Datadog',
 	UptimeKuma = 'UptimeKuma',
 }
@@ -84,7 +88,7 @@ const INTEGRATIONS: Integration[] = [
 		supported: true,
 		name: 'Google Cloud Platform',
 		description: 'Receive monitoring alerts from Google Cloud Platform via webhook.',
-		logo: 'https://www.gstatic.com/images/branding/product/2x/google_cloud_48dp.png',
+		logo: GCPIcon,
 		tags: ['Monitoring', 'Alerts', 'Cloud'],
 		documentationUrl: 'https://opsimate.vercel.app/docs/integrations/gcp',
 		configFields: [],
@@ -106,7 +110,7 @@ const INTEGRATIONS: Integration[] = [
 		supported: true,
 		name: 'Grafana',
 		description: 'Open source analytics & monitoring solution for every database.',
-		logo: 'https://grafana.com/static/img/menu/grafana2.svg',
+		logo: GrafanaIcon,
 		tags: ['Monitoring', 'Visualization', 'Alerts'],
 		documentationUrl: 'https://opsimate.vercel.app/docs/integrations/grafana',
 		configFields: [
@@ -121,30 +125,11 @@ const INTEGRATIONS: Integration[] = [
 		],
 	},
 	{
-		id: 'kibana',
-		supported: true,
-		name: 'Kibana',
-		description: 'Visualize and explore data from Elasticsearch.',
-		logo: 'https://static-www.elastic.co/v3/assets/bltefdd0b53724fa2ce/blt8781708f8f37ed16/5c11ec2edf09df047814db23/logo-elastic-kibana-lt.svg',
-		tags: ['Monitoring', 'Visualization', 'Elasticsearch'],
-		documentationUrl: 'https://opsimate.vercel.app/docs/integrations/kibana',
-		configFields: [
-			{
-				name: 'url',
-				label: 'Kibana URL',
-				type: 'text',
-				placeholder: 'https://your-kibana-instance.com',
-				required: true,
-			},
-			{ name: 'apiKey', label: 'API Key', type: 'password', required: true },
-		],
-	},
-	{
 		id: 'datadog',
 		supported: true,
 		name: 'Datadog',
 		description: 'Cloud monitoring and analytics platform for infrastructure, applications, and logs.',
-		logo: 'https://imgix.datadoghq.com/img/dd_logo_n_70x75.png',
+		logo: DatadogIcon,
 		tags: ['Monitoring', 'APM', 'Logs', 'Metrics', 'Alerts'],
 		documentationUrl: 'https://opsimate.vercel.app/docs/integrations/datadog',
 		// Datadog alert webhooks are supported by default (via /alerts/custom/datadog)
@@ -166,7 +151,7 @@ const INTEGRATIONS: Integration[] = [
 		supported: true,
 		name: 'Zabbix',
 		description: 'Enterprise-class open source monitoring solution for networks and applications.',
-		logo: 'https://assets.zabbix.com/img/logo/zabbix_logo_500x131.png',
+		logo: ZabbixIcon,
 		tags: ['Monitoring', 'Alerts', 'Infrastructure'],
 		documentationUrl: 'https://www.zabbix.com/documentation/current/en/manual/config/notifications/media/webhook',
 		configFields: [],
@@ -177,7 +162,7 @@ const INTEGRATIONS: Integration[] = [
 		supported: false,
 		name: 'Coralogix',
 		description: 'Log analytics platform powered by machine learning.',
-		logo: 'https://cdn.brandfetch.io/idCh7aU0wN/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1667744703603',
+		logo: CoralogixIcon,
 		tags: ['Logging', 'Analytics', 'Monitoring'],
 		documentationUrl: 'https://opsimate.vercel.app/docs/integrations/overview',
 		configFields: [
@@ -551,7 +536,7 @@ const Integrations = () => {
 															appKey: existingIntegration.credentials?.appKey || '',
 														});
 													} else {
-														// Default for other integrations like Grafana and Kibana
+														// Default for other integrations like Grafana
 														setFormData({
 															url: existingIntegration.externalUrl || '',
 															apiKey: existingIntegration.credentials?.apiKey || '',
@@ -704,7 +689,6 @@ const Integrations = () => {
 													// Map integration id to the correct IntegrationType
 													const typeMapping = {
 														grafana: IntegrationType.Grafana,
-														kibana: IntegrationType.Kibana,
 														datadog: IntegrationType.Datadog,
 														// Add other integration types as needed
 													};
@@ -719,7 +703,7 @@ const Integrations = () => {
 															appKey: formData.appKey || '',
 														};
 													} else {
-														// Default for other integrations like Grafana and Kibana
+														// Default for other integrations like Grafana
 														credentials = {
 															apiKey: formData.apiKey || '',
 														};
