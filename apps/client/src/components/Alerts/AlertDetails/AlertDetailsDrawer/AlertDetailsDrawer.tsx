@@ -89,7 +89,7 @@ export const AlertDetailsDrawer = ({
 				<Button
 					variant="ghost"
 					size="icon"
-					className="h-8 w-8"
+					className="h-8 w-8 text-foreground"
 					onClick={handleClose}
 					aria-label="Close alert details panel"
 				>
