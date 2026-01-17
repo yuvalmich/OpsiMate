@@ -124,7 +124,7 @@ export class MailClient {
 	 * @returns string
 	 */
 	private getPlaygroundDemoTemplate(options: SendMailOptions): string {
-		return playgroundDemoTemplate(options.to, options.token);
+		return playgroundDemoTemplate(options.demo_user_email, options.demo_user_tracking_id);
 	}
 
 	/**
