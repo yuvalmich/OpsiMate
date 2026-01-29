@@ -40,23 +40,23 @@ export const PersonPicker = ({
 					size="sm"
 					disabled={disabled}
 					className={cn(
-						'h-6 px-2 gap-1.5 text-xs font-normal justify-start',
-						!selectedUser && 'text-muted-foreground',
+						'h-6 px-2 gap-1.5 text-xs font-normal justify-start text-foreground max-w-full overflow-hidden',
 						className
 					)}
 					onClick={(e) => e.stopPropagation()}
+					title={selectedUser?.fullName || placeholder}
 				>
 					{selectedUser ? (
 						<>
-							<div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-medium">
+							<div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-medium flex-shrink-0">
 								{getInitials(selectedUser.fullName)}
 							</div>
-							<span className="truncate max-w-[100px]">{selectedUser.fullName}</span>
+							<span className="truncate">{selectedUser.fullName}</span>
 						</>
 					) : (
 						<>
-							<User className="h-3.5 w-3.5" />
-							<span>{placeholder}</span>
+							<User className="h-3.5 w-3.5 flex-shrink-0" />
+							<span className="truncate">{placeholder}</span>
 						</>
 					)}
 				</Button>
@@ -74,8 +74,8 @@ export const PersonPicker = ({
 									!selectedUserId && 'bg-muted'
 								)}
 							>
-								<UserX className="h-4 w-4 text-muted-foreground" />
-								<span className="text-muted-foreground flex-1">Unassigned</span>
+								<UserX className="h-4 w-4 text-foreground" />
+								<span className="text-foreground flex-1">Unassigned</span>
 								{!selectedUserId && <Check className="h-4 w-4 text-primary" />}
 							</CommandItem>
 							{users.map((user) => {
@@ -93,8 +93,8 @@ export const PersonPicker = ({
 											{getInitials(user.fullName)}
 										</div>
 										<div className="flex flex-col flex-1">
-											<span className="text-sm">{user.fullName}</span>
-											<span className="text-xs text-muted-foreground">{user.email}</span>
+											<span className="text-sm text-foreground">{user.fullName}</span>
+											<span className="text-xs text-foreground opacity-70">{user.email}</span>
 										</div>
 										{isSelected && <Check className="h-4 w-4 text-primary" />}
 									</CommandItem>

@@ -15,19 +15,20 @@ export const AlertTagKeyColumn = ({ alert, tagKey, className }: AlertTagKeyColum
 	const colors = value ? getTagKeyColor(tagKey) : undefined;
 
 	return (
-		<TableCell className={cn('py-1 px-2', className)}>
+		<TableCell className={cn('py-1 px-2 overflow-hidden', className)}>
 			{value && colors ? (
 				<Badge
-					className="text-xs px-1.5 py-0.5 border-0"
+					className="text-xs px-1.5 py-0.5 border-0 max-w-full truncate"
 					style={{
 						backgroundColor: colors.background,
 						color: colors.text,
 					}}
+					title={value}
 				>
 					{value}
 				</Badge>
 			) : (
-				<span className="text-muted-foreground text-xs">-</span>
+				<span className="text-foreground text-xs">-</span>
 			)}
 		</TableCell>
 	);

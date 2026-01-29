@@ -9,8 +9,8 @@ export interface AlertSummaryColumnProps {
 
 export const AlertSummaryColumn = ({ alert, className }: AlertSummaryColumnProps) => {
 	return (
-		<TableCell className={cn('py-1 px-2', className)}>
-			<span className="text-sm text-muted-foreground truncate block">{alert.summary || '-'}</span>
+		<TableCell className={cn('py-1 px-2 overflow-hidden', className)}>
+			<span className="text-sm text-foreground truncate block">{alert.summary || '-'}</span>
 		</TableCell>
 	);
 };
